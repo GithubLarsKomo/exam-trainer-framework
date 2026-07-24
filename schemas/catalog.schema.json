@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/etf/catalog.schema.json",
+  "title": "ETF Card Catalog",
+  "type": "object",
+  "required": ["schemaVersion", "catalogId", "version", "title", "language", "releasedAt", "cards"],
+  "properties": {
+    "schemaVersion": {"type": "string"},
+    "catalogId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "version": {"type": "string"},
+    "title": {"type": "string", "minLength": 1},
+    "language": {"type": "string", "minLength": 2},
+    "releasedAt": {"type": "string", "format": "date-time"},
+    "cards": {"type": "array", "items": {"$ref": "#/$defs/card"}}
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["fileName", "chapter", "examQuestion"],
+      "properties": {
+        "fileName": {"type": "string"},
+        "pdfPage": {"type": "integer", "minimum": 1},
+        "printedPage": {"type": "string"},
+        "chapter": {"type": "string"},
+        "section": {"type": "string"},
+        "examQuestion": {"type": "string"},
+        "note": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "card": {
+      "type": "object",
+      "required": ["id", "version", "changedAt", "changeReason", "status", "topicId", "examPriority", "questionType", "prompt", "answer", "source"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "integer", "minimum": 1},
+        "changedAt": {"type": "string", "format": "date-time"},
+        "changeReason": {"type": "string"},
+        "status": {"enum": ["draft", "reviewed", "released", "needs_review"]},
+        "topicId": {"type": "string"},
+        "subtopicId": {"type": "string"},
+        "examPriority": {"type": "integer", "minimum": 0, "maximum": 100},
+        "questionType": {"enum": ["free_text", "numeric", "image_labels", "drawing"]},
+        "prompt": {"type": "string", "minLength": 1},
+        "points": {"type": "number", "minimum": 0},
+        "difficulty": {"type": "integer", "minimum": 1, "maximum": 5},
+        "variantGroupId": {"type": "string"},
+        "answer": {"type": "object"},
+        "source": {"$ref": "#/$defs/source"},
+        "media": {"type": "array", "items": {"type": "object"}},
+        "tags": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
