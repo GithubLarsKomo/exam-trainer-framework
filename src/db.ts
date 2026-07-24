@@ -1,0 +1,114 @@
+export type PersistedState = {
+  schemaVersion: number;
+  progress: Record<string, unknown>;
+  history: unknown[];
+  review: Record<string, string>;
+  activeCatalog?: unknown;
+  sessions?: Record<string, unknown>;
+  examAttempts?: unknown[];
+  migrationLog?: Array<{from:number;to:number;at:string;status:string;message?:string}>;
+};
+
+const DB_NAME = 'exam-trainer-framework';
+const DB_VERSION = 1;
+const STORE = 'kv';
+const STATE_KEY = 'state';
+const LEGACY_KEY = 'etf-state-v1';
+
+function request<T>(req: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'));
+  });
+}
+
+function openDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error ?? new Error('IndexedDB could not be opened'));
+  });
+}
+
+async function read<T>(key: string): Promise<T | undefined> {
+  const db = await openDb();
+  try {
+    return await request(db.transaction(STORE, 'readonly').objectStore(STORE).get(key)) as T | undefined;
+  } finally {
+    db.close();
+  }
+}
+
+async function write<T>(key: string, value: T): Promise<void> {
+  const db = await openDb();
+  try {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(value, key);
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export async function loadState(fallback: PersistedState): Promise<PersistedState> {
+  const stored = await read<PersistedState>(STATE_KEY);
+  if (stored) return migrate(stored);
+
+  const legacy = localStorage.getItem(LEGACY_KEY);
+  if (legacy) {
+    try {
+      const parsed = JSON.parse(legacy) as Partial<PersistedState>;
+      const migrated = migrate({ ...fallback, ...parsed, schemaVersion: 1 });
+      await write(STATE_KEY, migrated);
+      localStorage.removeItem(LEGACY_KEY);
+      return migrated;
+    } catch {
+      // Keep fallback and do not destroy malformed legacy data.
+    }
+  }
+  await write(STATE_KEY, fallback);
+  return fallback;
+}
+
+export async function saveState(state: PersistedState): Promise<void> {
+  await write(STATE_KEY, state);
+}
+
+export async function createSnapshot(state: PersistedState, reason: string): Promise<string> {
+  const id = `snapshot:${new Date().toISOString()}:${reason}`;
+  await write(id, structuredClone(state));
+  return id;
+}
+
+export async function replaceState(next: PersistedState, current: PersistedState, reason: string): Promise<PersistedState> {
+  await createSnapshot(current, reason);
+  const migrated = migrate(next);
+  await write(STATE_KEY, migrated);
+  return migrated;
+}
+
+export function migrate(input: PersistedState): PersistedState {
+  const state: PersistedState = {
+    schemaVersion: Number(input.schemaVersion || 1),
+    progress: input.progress ?? {},
+    history: Array.isArray(input.history) ? input.history : [],
+    review: input.review ?? {},
+    activeCatalog: input.activeCatalog,
+    sessions: input.sessions ?? {},
+    examAttempts: Array.isArray(input.examAttempts) ? input.examAttempts : [],
+    migrationLog: Array.isArray(input.migrationLog) ? input.migrationLog : [],
+  };
+  if (state.schemaVersion < 2) {
+    state.migrationLog!.push({from: state.schemaVersion, to: 2, at: new Date().toISOString(), status: 'success'});
+    state.schemaVersion = 2;
+  }
+  return state;
+}
