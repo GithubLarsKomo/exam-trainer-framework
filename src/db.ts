@@ -1,11 +1,26 @@
+export type PersistedHistoryEntry = {
+  cardId: string;
+  outcome: 'correct' | 'partial' | 'incorrect';
+  at: string;
+};
+
+export type PersistedExamAttempt = {
+  id: string;
+  at: string;
+  points: number;
+  maxPoints: number;
+  percentage: number;
+  items: number;
+};
+
 export type PersistedState = {
   schemaVersion: number;
   progress: Record<string, unknown>;
-  history: unknown[];
+  history: PersistedHistoryEntry[];
   review: Record<string, string>;
   activeCatalog?: unknown;
   sessions?: Record<string, unknown>;
-  examAttempts?: unknown[];
+  examAttempts?: PersistedExamAttempt[];
   migrationLog?: Array<{from:number;to:number;at:string;status:string;message?:string}>;
 };
 
