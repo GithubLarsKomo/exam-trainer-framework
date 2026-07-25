@@ -6,52 +6,141 @@
 - [x] Define repository structure
 - [x] Add catalog schema baseline
 - [x] Add Fügetechnik catalog placeholders
-- [ ] Initialize Vite and TypeScript application
-- [ ] Add linting, formatting, and tests
+- [x] Initialize Vite and TypeScript application
+- [x] Add automated build and tests
 
 ## 0.2 — Learning core
 
-- [ ] IndexedDB repositories
-- [ ] Scheduling engine
-- [ ] Session engine
-- [ ] Backup and restore
-- [ ] Statistics
+- [x] IndexedDB repositories
+- [x] Scheduling engine
+- [x] Session engine
+- [x] Backup and restore
+- [x] Statistics
 
-## 0.3 — Question renderers
+## 0.3 — MVP question renderers
 
-- [ ] Free text
-- [ ] Numeric
+- [x] Free text
+- [x] Numeric
+- [x] Drawing and criteria checklist
+- [ ] Image labels with assets
+
+## 0.4 — UX/UI and local catalog authoring
+
+Decisions: [docs/grill-decisions-v0.4.md](docs/grill-decisions-v0.4.md)
+
+### Phase A — Information architecture and design system
+
+- [ ] Mobile bottom navigation
+- [ ] Desktop/tablet navigation
+- [ ] Redesigned start dashboard
+- [ ] Responsive component and spacing system
+- [ ] Accessible focus states and 44 px touch targets
+- [ ] Offline, persistence and backup indicators
+
+### Phase B — Learning and examination UX
+
+- [ ] Focused learning card layout
+- [ ] Session progress and remaining-time estimate
+- [ ] Autosaved active session
+- [ ] Improved reveal and self-grading flow
+- [ ] Optional touch gestures with button fallback
+- [ ] Examination overview and answer navigation
+- [ ] Fixed and dynamic examination profiles
+- [ ] Dependent examination tasks
+
+### Phase C — Multiple local catalogs
+
+- [ ] Catalog repository separated from learner state
+- [ ] Migrate built-in and imported catalogs
+- [ ] Catalog list and active learning catalog
+- [ ] Create, duplicate, archive and delete catalog
+- [ ] Complete catalog import and export
+- [ ] Snapshot before destructive catalog operations
+
+### Phase D — Full card editor
+
+- [ ] Card list, search, filters and sorting
+- [ ] Multi-select and bulk editing
+- [ ] Create, edit, duplicate and archive cards
+- [ ] Mobile-first editor
+- [ ] Live preview using production renderer
+- [ ] JSON view
+- [ ] Per-card synonyms and typo tolerance
+- [ ] Source metadata editor
+
+### Phase E — All question types
+
+- [x] Free text
+- [x] Numeric
+- [ ] Single choice
+- [ ] Multiple choice
+- [ ] Cloze
+- [ ] Matching
+- [ ] Ordering
 - [ ] Image labels
-- [ ] Drawing and criteria checklist
+- [x] Drawing
+- [ ] Case study
 
-## 0.4 — Fügetechnik pilot
+### Phase F — Versioning and publication
 
-- [ ] Author at least 40 cards
-- [ ] Cover exam-memory questions 1–11
-- [ ] Add one or two variants
-- [ ] Add approved local assets
-- [ ] Complete chapter review
-- [ ] Release all pilot cards
+- [ ] Immutable released card versions
+- [ ] New draft generated from released card
+- [ ] Workflow states and transition log
+- [ ] Version history and comparison
+- [ ] Restore earlier version as new draft
+- [ ] Catalog validation report
+- [ ] Blocking errors and confirmable warnings
 
-## 0.5 — Exam simulation
+### Phase G — Asset library
 
-- [ ] Exam profiles
-- [ ] 57-task selection
-- [ ] 202-point validation
-- [ ] Review and error transfer
+- [ ] IndexedDB asset store
+- [ ] Upload from iPhone files and photo library
+- [ ] Hash, metadata, rights and alt text
+- [ ] Asset usage references
+- [ ] Image-label hotspot editor
+- [ ] Orphan asset validation
+
+### Phase H — Acceptance
+
+- [ ] Unit tests for catalog validation and versioning
+- [ ] Tests for all question renderers
+- [ ] Migration tests preserving learner progress
+- [ ] Production build and CI pass
+- [ ] iPhone Safari acceptance
+- [ ] Tablet and desktop acceptance
+- [ ] Version 0.4 release notes
+
+## 0.5 — Fügetechnik catalog completion
+
+- [x] Author at least 40 pilot cards
+- [x] Cover available exam-memory questions 1–11
+- [ ] Add approved local examination assets
+- [ ] Complete source-page metadata
+- [ ] Resolve remaining `needs_review` cards
+- [ ] Validate historical task and point distribution
 
 ## 0.6 — PWA and deployment
 
-- [ ] Offline service worker
-- [ ] Install manifest
-- [ ] Update lifecycle
-- [ ] Netlify deployment
-- [ ] Local deployment documentation
+- [x] Offline service worker
+- [x] Install manifest
+- [x] Netlify deployment
+- [ ] Improved update lifecycle and update notice
+- [ ] Manual local deployment acceptance
 
 ## 1.0 — Full release
 
 - [ ] Full Fügetechnik catalog
 - [ ] Cross-device acceptance
 - [ ] Complete automated test suite
-- [ ] Documentation
+- [ ] User and author documentation
 - [ ] Tagged release
+
+## Explicitly deferred
+
+- User accounts and roles
+- PIN-protected authoring
+- Cross-device synchronization
+- WebDAV, iCloud or server synchronization
+- GitHub synchronization from the app
+- LLM grading
+- Automatic partial scoring for complex responses
