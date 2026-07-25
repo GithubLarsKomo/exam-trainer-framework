@@ -1,4 +1,4 @@
-const CACHE = 'etf-v0.4.1';
+const CACHE = 'etf-v0.5.0';
 const CORE = ['./manifest.webmanifest'];
 
 self.addEventListener('install', event => {
