@@ -83,7 +83,6 @@ export async function storeAsset(input: StoreAssetInput): Promise<AssetManifestE
   try {
     const readTx = db.transaction(ASSET_STORE, 'readonly');
     const existing = await request(readTx.objectStore(ASSET_STORE).index('sha256').get(sha256)) as StoredAssetRecord | undefined;
-    await transactionDone(readTx);
     if (existing) {
       const next: StoredAssetRecord = {
         ...existing,
@@ -91,8 +90,9 @@ export async function storeAsset(input: StoreAssetInput): Promise<AssetManifestE
         catalogIds: [...new Set([...existing.catalogIds, input.catalogId])],
       };
       const writeTx = db.transaction(ASSET_STORE, 'readwrite');
+      const done = transactionDone(writeTx);
       writeTx.objectStore(ASSET_STORE).put(next);
-      await transactionDone(writeTx);
+      await done;
       return manifest(next, input.fileName, input.source);
     }
 
@@ -109,8 +109,9 @@ export async function storeAsset(input: StoreAssetInput): Promise<AssetManifestE
       bytes: new Uint8Array(input.bytes),
     };
     const writeTx = db.transaction(ASSET_STORE, 'readwrite');
+    const done = transactionDone(writeTx);
     writeTx.objectStore(ASSET_STORE).add(record);
-    await transactionDone(writeTx);
+    await done;
     return manifest(record, input.fileName, input.source);
   } finally {
     db.close();
@@ -121,9 +122,7 @@ export async function getStoredAsset(assetId: string): Promise<StoredAssetRecord
   const db = await openExamTrainerDb();
   try {
     const tx = db.transaction(ASSET_STORE, 'readonly');
-    const record = await request(tx.objectStore(ASSET_STORE).get(assetId)) as StoredAssetRecord | undefined;
-    await transactionDone(tx);
-    return record;
+    return await request(tx.objectStore(ASSET_STORE).get(assetId)) as StoredAssetRecord | undefined;
   } finally {
     db.close();
   }
@@ -134,7 +133,6 @@ export async function listStoredAssets(catalogId?: string): Promise<StoredAssetR
   try {
     const tx = db.transaction(ASSET_STORE, 'readonly');
     const records = await request(tx.objectStore(ASSET_STORE).getAll()) as StoredAssetRecord[];
-    await transactionDone(tx);
     return catalogId ? records.filter(record => record.catalogIds.includes(catalogId)) : records;
   } finally {
     db.close();
@@ -145,8 +143,9 @@ export async function deleteAsset(assetId: string): Promise<void> {
   const db = await openExamTrainerDb();
   try {
     const tx = db.transaction(ASSET_STORE, 'readwrite');
+    const done = transactionDone(tx);
     tx.objectStore(ASSET_STORE).delete(assetId);
-    await transactionDone(tx);
+    await done;
   } finally {
     db.close();
   }
