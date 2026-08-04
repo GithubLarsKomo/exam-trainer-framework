@@ -26,3 +26,5 @@ if (Array.isArray(extended.catalogs)) {
 }
 
 await import('./v04');
+const { installImportFeature } = await import('./import-feature');
+installImportFeature();
