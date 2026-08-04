@@ -34,3 +34,5 @@ const { installBackupFeature } = await import('./backup-feature');
 installBackupFeature();
 const { installImageLabelFeature } = await import('./image-label-feature');
 installImageLabelFeature();
+const { installStructuredQuestionFeature } = await import('./structured-question-feature');
+installStructuredQuestionFeature();
