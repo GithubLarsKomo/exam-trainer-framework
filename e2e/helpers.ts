@@ -111,10 +111,15 @@ export async function seedCatalog(page: Page, cards: SeedCard[], assets: SeedAss
     activeCatalogId: catalogId,
   };
 
-  // Let the real app create/upgrade the database once, then reset its stores in-place.
-  // Deleting an open IndexedDB database is intentionally avoided because the app keeps
-  // its own connection alive and browsers correctly report the delete as blocked.
+  // v0.5 imports v0.4, whose async init intentionally runs without top-level await.
+  // Wait until that boot path has persisted and rendered once before replacing stores;
+  // otherwise its late default-state write can overwrite the E2E catalog on WebKit.
   await page.goto('/');
+  await expect(page.locator('.app-header h1')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('nav.bottom-nav')).toBeVisible({ timeout: 10_000 });
+
+  // Reset the real app stores in-place. Deleting an open IndexedDB database is
+  // intentionally avoided because browsers correctly report the delete as blocked.
   await page.evaluate(async ({ catalog, state, assets }) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open('exam-trainer-framework');
@@ -146,8 +151,6 @@ export async function seedCatalog(page: Page, cards: SeedCard[], assets: SeedAss
     db.close();
   }, { catalog, state, assets });
   await page.reload();
-  // Wait for the v0.5 boot chain and its additive feature modules to settle on the
-  // seeded catalog, rather than racing a transient app header during PWA startup.
   await expect(page.locator('.app-header h1')).toHaveText('E2E Katalog', { timeout: 10_000 });
   await expect(page.locator('nav.bottom-nav')).toBeVisible();
 }
