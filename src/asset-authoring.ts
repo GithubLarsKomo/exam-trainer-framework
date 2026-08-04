@@ -110,7 +110,7 @@ export function analyzeCatalogAssets(catalog: Catalog, storedAssetIds: Iterable<
     if ((usageCounts.get(asset.id) ?? 0) === 0) issues.push({ code:'ORPHAN_ASSET', assetId:asset.id, message:`${asset.fileName ?? asset.id} wird von keiner Karte verwendet.` });
   }
   for (const assetId of stored) {
-    if (!manifest.has(assetId)) issues.push({ code:'UNMANIFESTED_BINARY', assetId, message:`Lokale Binärdaten ${assetId} sind diesem Katalog zugeordnet, fehlen aber im Manifest.` });
+    if (!manifest.has(assetId) && (usageCounts.get(assetId) ?? 0) === 0) issues.push({ code:'UNMANIFESTED_BINARY', assetId, message:`Unreferenzierte lokale Binärdaten ${assetId} fehlen im Katalogmanifest.` });
   }
 
   return {
