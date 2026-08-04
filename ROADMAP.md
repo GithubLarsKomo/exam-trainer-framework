@@ -169,7 +169,7 @@ Diagnostics are evidence-based observations over review history. They must not c
 - [x] Detect regression after earlier correct responses
 - [x] Classify persistent problem items as leeches
 - [x] Show diagnostic observations and Readiness trend in the progress UI
-- [ ] Add targeted intervention suggestions per observable diagnostic pattern
+- [x] Add targeted intervention suggestions per observable diagnostic pattern
 - [ ] Feed confirmed leech state into the Adaptive Queue as a controlled reason code
 - [ ] Add optional AI-assisted cause hypotheses behind explicit learner/content-review approval
 

@@ -8,11 +8,20 @@ export type LearningDiagnosticCode =
   | 'LOW_MASTERY_AFTER_REVIEWS'
   | 'REGRESSION_AFTER_SUCCESS';
 
+export type LearningInterventionCode =
+  | 'REVIEW_EXPLANATION'
+  | 'TRY_ALTERNATE_VARIANT'
+  | 'SHORT_RECALL_DRILL'
+  | 'RETEST_UNDER_EXAM_CONDITIONS'
+  | 'BREAK_DOWN_KNOWLEDGE_ITEM'
+  | 'COMPARE_WITH_PRIOR_SUCCESS';
+
 export interface LearningDiagnostic {
   knowledgeItemId: string;
   leech: boolean;
   severity: 'medium' | 'high';
   codes: LearningDiagnosticCode[];
+  interventions: LearningInterventionCode[];
   reviewCount: number;
   recentIncorrect: number;
   recentPartial: number;
@@ -34,6 +43,20 @@ function median(values: number[]): number | undefined {
   const sorted = [...values].sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+export function interventionsFor(codes: LearningDiagnosticCode[]): LearningInterventionCode[] {
+  const interventions = new Set<LearningInterventionCode>();
+  if (codes.includes('REPEATED_FAILURE')) {
+    interventions.add('REVIEW_EXPLANATION');
+    interventions.add('TRY_ALTERNATE_VARIANT');
+  }
+  if (codes.includes('REPEATED_UNCERTAINTY')) interventions.add('REVIEW_EXPLANATION');
+  if (codes.includes('SLOW_RECALL')) interventions.add('SHORT_RECALL_DRILL');
+  if (codes.includes('EXAM_FAILURE')) interventions.add('RETEST_UNDER_EXAM_CONDITIONS');
+  if (codes.includes('LOW_MASTERY_AFTER_REVIEWS')) interventions.add('BREAK_DOWN_KNOWLEDGE_ITEM');
+  if (codes.includes('REGRESSION_AFTER_SUCCESS')) interventions.add('COMPARE_WITH_PRIOR_SUCCESS');
+  return [...interventions];
 }
 
 export function analyzeLearningDiagnostics(
@@ -91,6 +114,7 @@ export function analyzeLearningDiagnostics(
       leech,
       severity,
       codes,
+      interventions: interventionsFor(codes),
       reviewCount: ordered.length,
       recentIncorrect,
       recentPartial,
