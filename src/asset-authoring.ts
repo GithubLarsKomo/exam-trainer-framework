@@ -1,6 +1,6 @@
 import type { AssetManifestEntry, AssetRole, CardAssetRef, Catalog } from './model';
 
-export type AssetValidationCode = 'ORPHAN_ASSET' | 'MISSING_BINARY' | 'MISSING_MANIFEST' | 'DUPLICATE_REF';
+export type AssetValidationCode = 'ORPHAN_ASSET' | 'MISSING_BINARY' | 'MISSING_MANIFEST' | 'UNMANIFESTED_BINARY' | 'DUPLICATE_REF';
 export interface AssetValidationIssue {
   code: AssetValidationCode;
   assetId: string;
@@ -13,6 +13,7 @@ export interface AssetUsageAnalysis {
   issues: AssetValidationIssue[];
   orphanAssetIds: string[];
   missingBinaryIds: string[];
+  unmanifestedBinaryIds: string[];
 }
 
 export function upsertCatalogAsset(catalog: Catalog, entry: AssetManifestEntry): AssetManifestEntry {
@@ -108,11 +109,15 @@ export function analyzeCatalogAssets(catalog: Catalog, storedAssetIds: Iterable<
     if (!stored.has(asset.id)) issues.push({ code:'MISSING_BINARY', assetId:asset.id, message:`Binärdaten für ${asset.fileName ?? asset.id} fehlen lokal.` });
     if ((usageCounts.get(asset.id) ?? 0) === 0) issues.push({ code:'ORPHAN_ASSET', assetId:asset.id, message:`${asset.fileName ?? asset.id} wird von keiner Karte verwendet.` });
   }
+  for (const assetId of stored) {
+    if (!manifest.has(assetId)) issues.push({ code:'UNMANIFESTED_BINARY', assetId, message:`Lokale Binärdaten ${assetId} sind diesem Katalog zugeordnet, fehlen aber im Manifest.` });
+  }
 
   return {
     usageCounts,
     issues,
     orphanAssetIds: issues.filter(issue => issue.code === 'ORPHAN_ASSET').map(issue => issue.assetId),
     missingBinaryIds: issues.filter(issue => issue.code === 'MISSING_BINARY').map(issue => issue.assetId),
+    unmanifestedBinaryIds: issues.filter(issue => issue.code === 'UNMANIFESTED_BINARY').map(issue => issue.assetId),
   };
 }
