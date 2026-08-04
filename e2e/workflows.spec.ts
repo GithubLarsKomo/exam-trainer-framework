@@ -13,7 +13,8 @@ test('restores an interrupted learning session including the answer draft', asyn
   })).toBe(true);
 
   await page.reload();
-  await expect(page.locator('[data-recoverable-resume-banner]')).toBeVisible();
+  await expect(page.locator('[data-recoverable-resume-banner]')).toHaveCount(1);
+  await expect(page.locator('[data-recoverable-resume]')).toHaveCount(1);
   await page.locator('[data-recoverable-resume]').click();
   await expect(page.locator('[data-recoverable-session]')).toBeVisible();
   await expect(page.locator('textarea#answer')).toHaveValue('persistierte Browserantwort');
