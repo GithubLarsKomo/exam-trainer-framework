@@ -30,3 +30,5 @@ const { installImportFeature } = await import('./import-feature');
 installImportFeature();
 const { installAssetFeature } = await import('./asset-feature');
 installAssetFeature();
+const { installBackupFeature } = await import('./backup-feature');
+installBackupFeature();
