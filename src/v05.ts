@@ -38,3 +38,5 @@ const { installStructuredQuestionFeature } = await import('./structured-question
 installStructuredQuestionFeature();
 const { installUxPolishFeature } = await import('./ux-polish-feature');
 installUxPolishFeature();
+const { installRecoverableSessionFeature } = await import('./recoverable-session-feature');
+installRecoverableSessionFeature();
