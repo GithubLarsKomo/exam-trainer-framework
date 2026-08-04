@@ -1,4 +1,4 @@
-import { legacyQuestionVariantId, type Catalog, type FsrsShadowState, type ReadinessSnapshot, type ReviewEvent } from './model';
+import { legacyQuestionVariantId, type AssetKind, type Catalog, type FsrsShadowState, type ReadinessSnapshot, type ReviewEvent } from './model';
 
 export type PersistedHistoryEntry = {
   cardId: string;
@@ -14,6 +14,19 @@ export type PersistedExamAttempt = {
   percentage: number;
   items: number;
 };
+
+export interface PersistedAssetRecord {
+  id: string;
+  sha256: string;
+  mediaType: string;
+  kind: AssetKind;
+  byteLength: number;
+  fileNames: string[];
+  catalogIds: string[];
+  source: 'anki' | 'local';
+  createdAt: string;
+  bytes: Uint8Array;
+}
 
 export type PersistedState = {
   schemaVersion: number;
@@ -46,6 +59,14 @@ function request<T>(req: IDBRequest<T>): Promise<T> {
   });
 }
 
+function transactionDone(tx: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
+    tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+  });
+}
+
 export function openExamTrainerDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -75,12 +96,9 @@ async function write<T>(key: string, value: T): Promise<void> {
   const db = await openExamTrainerDb();
   try {
     const tx = db.transaction(STATE_STORE, 'readwrite');
+    const done = transactionDone(tx);
     tx.objectStore(STATE_STORE).put(value, key);
-    await new Promise<void>((resolve, reject) => {
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
-      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
-    });
+    await done;
   } finally {
     db.close();
   }
@@ -122,6 +140,25 @@ export async function replaceState(next: PersistedState, current: PersistedState
   const migrated = migrate(next);
   await write(STATE_KEY, migrated);
   return migrated;
+}
+
+/** Replaces learner state and binary assets in one IndexedDB transaction. */
+export async function replaceStateAndAssetsAtomically(next: PersistedState, assets: PersistedAssetRecord[]): Promise<PersistedState> {
+  const migrated = migrate(next);
+  const db = await openExamTrainerDb();
+  try {
+    const tx = db.transaction([STATE_STORE, ASSET_STORE], 'readwrite');
+    const done = transactionDone(tx);
+    tx.objectStore(STATE_STORE).put(migrated, STATE_KEY);
+    const assetStore = tx.objectStore(ASSET_STORE);
+    assetStore.clear();
+    for (const asset of assets) assetStore.add(asset);
+    await done;
+    localStorage.removeItem(LEGACY_KEY);
+    return migrated;
+  } finally {
+    db.close();
+  }
 }
 
 function canonicalLegacyCardId(cardId: string): string {
