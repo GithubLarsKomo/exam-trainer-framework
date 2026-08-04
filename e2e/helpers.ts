@@ -187,8 +187,10 @@ export async function openCardEditor(page: Page, cardId: string): Promise<void> 
   const catalogsNav = page.locator('nav.bottom-nav [data-view="catalogs"]');
   await expect(catalogsNav).toBeVisible();
   await catalogsNav.click();
-  // The additive editor module injects filters and reorders the card rows once.
-  // Wait for that initialization boundary before selecting a row.
+  // Publication validation and the full editor are independently installed additive
+  // modules. Both insert catalog UI after IndexedDB reads; waiting for only one leaves
+  // a legitimate layout shift that WebKit correctly treats as an unstable click target.
+  await expect(page.locator('[data-catalog-validation]')).toBeVisible();
   await expect(page.locator('[data-full-editor-toolbar]')).toBeVisible();
   const row = page.locator(`[data-edit-card="${cardId}"]`);
   await expect(row).toBeVisible();
