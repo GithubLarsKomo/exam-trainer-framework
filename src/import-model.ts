@@ -99,7 +99,7 @@ export interface ImportCandidate {
   source: string;
   tags: string[];
   questionType: QuestionType;
-  mediaRefs: ImportCandidateMediaRef[];
+  mediaRefs?: ImportCandidateMediaRef[];
   variants: Array<{
     sourceCardId?: string;
     deckPath: string[];
