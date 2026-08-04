@@ -1,4 +1,4 @@
-import { legacyQuestionVariantId, type FsrsShadowState, type ReviewEvent } from './model';
+import { legacyQuestionVariantId, type Catalog, type FsrsShadowState, type ReadinessSnapshot, type ReviewEvent } from './model';
 
 export type PersistedHistoryEntry = {
   cardId: string;
@@ -21,11 +21,15 @@ export type PersistedState = {
   history: PersistedHistoryEntry[];
   reviewEvents?: ReviewEvent[];
   fsrsShadow?: Record<string, FsrsShadowState>;
+  readinessSnapshots?: ReadinessSnapshot[];
   review: Record<string, string>;
   activeCatalog?: unknown;
+  catalogs?: Catalog[];
+  activeCatalogId?: string;
   sessions?: Record<string, unknown>;
   examAttempts?: PersistedExamAttempt[];
   migrationLog?: Array<{from:number;to:number;at:string;status:string;message?:string}>;
+  lastBackupAt?: string;
 };
 
 const DB_NAME = 'exam-trainer-framework';
@@ -141,11 +145,15 @@ export function migrate(input: PersistedState): PersistedState {
     history: Array.isArray(input.history) ? input.history : [],
     reviewEvents: Array.isArray(input.reviewEvents) ? input.reviewEvents : [],
     fsrsShadow: input.fsrsShadow ?? {},
+    readinessSnapshots: Array.isArray(input.readinessSnapshots) ? input.readinessSnapshots : [],
     review: input.review ?? {},
     activeCatalog: input.activeCatalog,
+    catalogs: Array.isArray(input.catalogs) ? input.catalogs : undefined,
+    activeCatalogId: input.activeCatalogId,
     sessions: input.sessions ?? {},
     examAttempts: Array.isArray(input.examAttempts) ? input.examAttempts : [],
     migrationLog: Array.isArray(input.migrationLog) ? input.migrationLog : [],
+    lastBackupAt: input.lastBackupAt,
   };
   if (state.schemaVersion < 2) {
     state.migrationLog!.push({from: state.schemaVersion, to: 2, at: new Date().toISOString(), status: 'success'});
