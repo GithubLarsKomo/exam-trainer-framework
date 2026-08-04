@@ -127,6 +127,21 @@ Decisions: [docs/grill-decisions-v0.4.md](docs/grill-decisions-v0.4.md)
 - [ ] Improved update lifecycle and update notice
 - [ ] Manual local deployment acceptance
 
+## 0.7 — Adaptive learning foundation
+
+The existing five-stage scheduler remains authoritative while the new FSRS scheduler runs in shadow mode. Activation of FSRS is explicitly deferred until shadow data demonstrates equal or better retention with lower review effort.
+
+- [x] Introduce `KnowledgeItem` and `QuestionVariant` projection for legacy cards
+- [x] Add immutable `ReviewEvent` history with source and response-time context
+- [x] Migrate learner state to schema v3 without reconstructing historical FSRS state
+- [x] Extract the classic five-stage scheduler behind a scheduler interface
+- [x] Add FSRS 5.4.1 in non-authoritative shadow mode
+- [x] Route learning and exam reviews through the common review engine
+- [x] Keep examination clone IDs from creating separate learner-progress records
+- [x] Add deterministic trajectory and 500-item population simulation harness
+- [ ] Collect sufficient shadow data for classic-vs-FSRS comparison
+- [ ] Define activation thresholds for retention and review workload
+
 ## 1.0 — Full release
 
 - [ ] Full Fügetechnik catalog
