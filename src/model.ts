@@ -14,6 +14,8 @@ export interface AssetManifestEntry {
   sha256: string;
   source: 'anki' | 'local';
   createdAt: string;
+  altText?: string;
+  rights?: string;
 }
 
 export interface CardAssetRef {

@@ -139,6 +139,24 @@ export async function listStoredAssets(catalogId?: string): Promise<StoredAssetR
   }
 }
 
+export async function detachAssetFromCatalog(assetId: string, catalogId: string): Promise<'deleted' | 'retained' | 'missing'> {
+  const db = await openExamTrainerDb();
+  try {
+    const readTx = db.transaction(ASSET_STORE, 'readonly');
+    const record = await request(readTx.objectStore(ASSET_STORE).get(assetId)) as StoredAssetRecord | undefined;
+    if (!record) return 'missing';
+    const catalogIds = record.catalogIds.filter(id => id !== catalogId);
+    const writeTx = db.transaction(ASSET_STORE, 'readwrite');
+    const done = transactionDone(writeTx);
+    if (!catalogIds.length) writeTx.objectStore(ASSET_STORE).delete(assetId);
+    else writeTx.objectStore(ASSET_STORE).put({ ...record, catalogIds });
+    await done;
+    return catalogIds.length ? 'retained' : 'deleted';
+  } finally {
+    db.close();
+  }
+}
+
 export async function deleteAsset(assetId: string): Promise<void> {
   const db = await openExamTrainerDb();
   try {

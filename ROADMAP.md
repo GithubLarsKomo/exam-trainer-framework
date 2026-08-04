@@ -101,9 +101,9 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 - [x] Card and question-variant asset references for resolved imports
 - [x] Offline image/audio rendering from asset references with a fail-closed media allowlist
 - [x] Read-only Asset Library inventory with usage and local-presence status
-- [ ] Upload from iPhone files and photo library
-- [ ] Rights and alt-text metadata authoring
-- [ ] Asset usage and orphan validation across catalogs
+- [x] Upload from iPhone files and photo library
+- [x] Rights and alt-text metadata authoring
+- [x] Asset usage and orphan validation across catalogs
 - [ ] Image-label hotspot editor
 - [x] Backup/export including binary assets with atomic restore
 

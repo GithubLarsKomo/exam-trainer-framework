@@ -1,14 +1,17 @@
 import { builtinCatalog } from './builtin-v04';
-import { getStoredAsset, listStoredAssets } from './asset-store';
+import { analyzeCatalogAssets, linkAssetToCard, removeAssetFromCatalog, unlinkAssetFromCard, updateCatalogAssetMetadata, upsertCatalogAsset } from './asset-authoring';
+import { detachAssetFromCatalog, getStoredAsset, inferMediaType, listStoredAssets, storeAsset } from './asset-store';
 import { assetRenderKind, formatAssetBytes, isAssetRoleVisible } from './asset-rendering';
-import { loadState, type PersistedState } from './db';
-import type { CardVersion, Catalog } from './model';
+import { loadState, saveState, type PersistedState } from './db';
+import type { AssetRole, CardVersion, Catalog } from './model';
 
 let observer: MutationObserver | undefined;
 let renderScheduled = false;
 let renderGeneration = 0;
 let renderedSignature = '';
 const activeObjectUrls: string[] = [];
+const MAX_LOCAL_ASSET_BYTES = 128 * 1024 * 1024;
+const MAX_UPLOAD_BATCH_BYTES = 512 * 1024 * 1024;
 
 const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;',
@@ -18,10 +21,18 @@ function fallbackState(): PersistedState {
   return { schemaVersion:3, progress:{}, history:[], review:{}, sessions:{}, examAttempts:[], migrationLog:[] };
 }
 
-async function activeCatalog(): Promise<Catalog> {
+async function activeContext(): Promise<{ state: PersistedState; catalog: Catalog }> {
   const state = await loadState(fallbackState());
-  const catalogs = Array.isArray(state.catalogs) && state.catalogs.length ? state.catalogs : [structuredClone(builtinCatalog)];
-  return catalogs.find(catalog => catalog.catalogId === state.activeCatalogId) ?? catalogs[0];
+  if (!Array.isArray(state.catalogs) || !state.catalogs.length) {
+    state.catalogs = [structuredClone(builtinCatalog)];
+    state.activeCatalogId = builtinCatalog.catalogId;
+  }
+  const catalog = state.catalogs.find(entry => entry.catalogId === state.activeCatalogId) ?? state.catalogs[0];
+  return { state, catalog };
+}
+
+async function activeCatalog(): Promise<Catalog> {
+  return (await activeContext()).catalog;
 }
 
 function app(): HTMLElement | undefined {
@@ -130,19 +141,144 @@ function shell(content: string): string {
   return `<div class="app-shell"><header class="app-header"><div><div class="eyebrow">Exam Trainer Framework</div><h1>Asset Library</h1></div><button data-asset-back>← Zur App</button></header><main>${content}</main></div>`;
 }
 
-async function renderAssetLibrary(): Promise<void> {
+function cardOptions(catalog: Catalog): string {
+  return catalog.cards.map(card => `<option value="${esc(card.id)}">${esc(card.id)} · ${esc(card.prompt.slice(0,80))}</option>`).join('');
+}
+
+function roleOptions(): string {
+  const roles: Array<[AssetRole,string]> = [['prompt','Frage'],['answer','Musterlösung'],['reference','Referenz nach Aufdecken'],['attachment','Anhang sofort']];
+  return roles.map(([role,label]) => `<option value="${role}">${label}</option>`).join('');
+}
+
+function issueLabel(code: string): string {
+  return ({ORPHAN_ASSET:'nicht verwendet',MISSING_BINARY:'Binärdaten fehlen',MISSING_MANIFEST:'Manifest fehlt',UNMANIFESTED_BINARY:'Binärdaten ohne Manifest',DUPLICATE_REF:'doppelte Referenz'} as Record<string,string>)[code] ?? code;
+}
+
+async function renderAssetLibrary(message = ''): Promise<void> {
   const root = app();
   if (!root) return;
-  const catalog = await activeCatalog();
+  const { catalog } = await activeContext();
   const manifest = catalog.assets ?? [];
   const stored = await listStoredAssets(catalog.catalogId);
   const storedIds = new Set(stored.map(asset => asset.id));
-  const linkCounts = new Map<string, number>();
-  for (const card of catalog.cards) for (const ref of card.assetRefs ?? []) linkCounts.set(ref.assetId, (linkCounts.get(ref.assetId) ?? 0) + 1);
+  const analysis = analyzeCatalogAssets(catalog, storedIds);
   const bytes = manifest.reduce((sum, asset) => sum + asset.byteLength, 0);
-  const rows = manifest.map(asset => `<tr><td>${esc(asset.fileName ?? asset.id.slice(0, 22))}</td><td>${esc(asset.kind)}</td><td>${esc(asset.mediaType)}</td><td>${formatAssetBytes(asset.byteLength)}</td><td>${linkCounts.get(asset.id) ?? 0}</td><td>${storedIds.has(asset.id) ? 'lokal' : 'fehlt'}</td></tr>`).join('');
-  root.innerHTML = shell(`<section class="panel"><span class="eyebrow">${esc(catalog.title)}</span><h2>${manifest.length} Assets</h2><p>${formatAssetBytes(bytes)} Manifestgröße · ${stored.length} Binärdatensätze lokal vorhanden.</p><p class="muted">SVG, HTML, PDF und unbekannte Medientypen werden aus importierten Daten nicht direkt gerendert. Rasterbilder und unterstützte Audiodateien bleiben vollständig offline.</p></section><section class="panel"><h2>Bestand</h2>${rows ? `<div class="table-scroll"><table><thead><tr><th>Datei</th><th>Art</th><th>Typ</th><th>Größe</th><th>Links</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p>Für diesen Katalog sind noch keine Assets hinterlegt.</p>'}</section>`);
-  root.querySelector<HTMLElement>('[data-asset-back]')?.addEventListener('click', () => location.reload());
+  const linkedByAsset = new Map<string, Array<{cardId:string;role:AssetRole}>>();
+  for (const card of catalog.cards) for (const ref of card.assetRefs ?? []) {
+    const list = linkedByAsset.get(ref.assetId) ?? [];
+    list.push({cardId:card.id,role:ref.role});
+    linkedByAsset.set(ref.assetId,list);
+  }
+  const issueList = analysis.issues.length
+    ? `<ul>${analysis.issues.slice(0,50).map(issue => `<li><strong>${esc(issueLabel(issue.code))}:</strong> ${esc(issue.message)}</li>`).join('')}</ul>`
+    : '<p>Keine Asset-Inkonsistenzen gefunden.</p>';
+  const assetEntries = manifest.map(asset => {
+    const links = linkedByAsset.get(asset.id) ?? [];
+    const linkList = links.length ? `<ul>${links.map(link => `<li>${esc(link.cardId)} · ${esc(link.role)} <button data-asset-unlink data-asset-id="${esc(asset.id)}" data-card-id="${esc(link.cardId)}" data-role="${esc(link.role)}">lösen</button></li>`).join('')}</ul>` : '<p class="muted">Noch nicht mit einer Karte verknüpft.</p>';
+    return `<details class="panel" data-asset-entry="${esc(asset.id)}"><summary><strong>${esc(asset.fileName ?? asset.id.slice(0,22))}</strong> · ${esc(asset.kind)} · ${formatAssetBytes(asset.byteLength)} · ${analysis.usageCounts.get(asset.id) ?? 0} Links · ${storedIds.has(asset.id)?'lokal':'fehlt'}</summary><div class="form-grid"><label>Alt-Text<input data-asset-alt value="${esc(asset.altText ?? '')}" placeholder="Was ist auf dem Bild zu erkennen?"></label><label>Rechte / Quelle<input data-asset-rights value="${esc(asset.rights ?? '')}" placeholder="z. B. eigene Aufnahme / Lizenz / Quelle"></label></div><div class="question-actions"><button data-asset-save-metadata data-asset-id="${esc(asset.id)}">Metadaten speichern</button></div><h3>Kartenverknüpfung</h3>${linkList}${catalog.cards.length?`<div class="form-grid"><label>Karte<select data-asset-card>${cardOptions(catalog)}</select></label><label>Rolle<select data-asset-role>${roleOptions()}</select></label></div><button data-asset-link data-asset-id="${esc(asset.id)}">Mit Karte verknüpfen</button>`:'<p>Dieser Katalog enthält noch keine Karten.</p>'}${(analysis.usageCounts.get(asset.id)??0)===0?`<div class="question-actions"><button class="danger" data-asset-remove data-asset-id="${esc(asset.id)}">Unverwendetes Asset entfernen</button></div>`:''}</details>`;
+  }).join('');
+  const cleanupCount = analysis.orphanAssetIds.length + analysis.unmanifestedBinaryIds.length;
+  root.innerHTML = shell(`<section class="panel"><span class="eyebrow">${esc(catalog.title)}</span><h2>${manifest.length} Assets</h2><p>${formatAssetBytes(bytes)} im Manifest · ${stored.length} Binärdatensätze diesem Katalog zugeordnet.</p>${message?`<div class="notice">${esc(message)}</div>`:''}<label class="button-like">Bilder / Audio hinzufügen<input id="asset-upload" hidden type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm"></label><p class="muted">Auf iPhone/iPad öffnet dies den System-Datei-/Fotoauswahldialog. Pro Datei maximal 128 MiB, pro Auswahl maximal 512 MiB. Andere Dateitypen werden nicht übernommen.</p></section><section class="panel"><h2>Validierung</h2>${issueList}${cleanupCount?`<button data-asset-cleanup>${cleanupCount} unreferenzierte Speicherobjekte bereinigen</button>`:''}</section>${assetEntries || '<section class="panel"><p>Für diesen Katalog sind noch keine Assets hinterlegt.</p></section>'}`);
+  bindAssetLibrary();
+}
+
+async function uploadAssets(files: File[]): Promise<void> {
+  if (!files.length) return;
+  const total = files.reduce((sum,file)=>sum+file.size,0);
+  if (total > MAX_UPLOAD_BATCH_BYTES) throw new Error('Die gewählte Dateigruppe überschreitet 512 MiB.');
+  const { state, catalog } = await activeContext();
+  let imported = 0;
+  let skipped = 0;
+  for (const file of files) {
+    const mediaType = file.type || inferMediaType(file.name);
+    if (file.size > MAX_LOCAL_ASSET_BYTES || !assetRenderKind(mediaType)) {
+      skipped++;
+      continue;
+    }
+    const entry = await storeAsset({ bytes:new Uint8Array(await file.arrayBuffer()), catalogId:catalog.catalogId, fileName:file.name, mediaType, source:'local' });
+    upsertCatalogAsset(catalog, entry);
+    imported++;
+  }
+  catalog.updatedAt = new Date().toISOString();
+  await saveState(state);
+  await renderAssetLibrary(`${imported} Assets hinzugefügt${skipped?`; ${skipped} wegen Typ/Größe übersprungen`:''}.`);
+}
+
+async function saveMetadata(details: HTMLElement, assetId: string): Promise<void> {
+  const { state, catalog } = await activeContext();
+  updateCatalogAssetMetadata(catalog, assetId, {
+    altText:details.querySelector<HTMLInputElement>('[data-asset-alt]')?.value,
+    rights:details.querySelector<HTMLInputElement>('[data-asset-rights]')?.value,
+  });
+  await saveState(state);
+  await renderAssetLibrary('Asset-Metadaten gespeichert.');
+}
+
+async function linkAsset(details: HTMLElement, assetId: string): Promise<void> {
+  const cardId = details.querySelector<HTMLSelectElement>('[data-asset-card]')?.value;
+  const role = details.querySelector<HTMLSelectElement>('[data-asset-role]')?.value as AssetRole | undefined;
+  if (!cardId || !role) return;
+  const { state, catalog } = await activeContext();
+  linkAssetToCard(catalog, assetId, cardId, role);
+  await saveState(state);
+  await renderAssetLibrary('Asset-Verknüpfung gespeichert.');
+}
+
+async function unlinkAsset(assetId: string, cardId: string, role: AssetRole): Promise<void> {
+  const { state, catalog } = await activeContext();
+  unlinkAssetFromCard(catalog, assetId, cardId, role);
+  await saveState(state);
+  await renderAssetLibrary('Asset-Verknüpfung entfernt.');
+}
+
+async function removeUnusedAsset(assetId: string): Promise<void> {
+  const { state, catalog } = await activeContext();
+  removeAssetFromCatalog(catalog, assetId);
+  await saveState(state);
+  await detachAssetFromCatalog(assetId, catalog.catalogId);
+  await renderAssetLibrary('Unverwendetes Asset aus diesem Katalog entfernt.');
+}
+
+async function cleanupUnusedAssets(): Promise<void> {
+  const { state, catalog } = await activeContext();
+  const stored = await listStoredAssets(catalog.catalogId);
+  const analysis = analyzeCatalogAssets(catalog, stored.map(asset => asset.id));
+  const detachIds = [...new Set([...analysis.orphanAssetIds, ...analysis.unmanifestedBinaryIds])];
+  for (const assetId of analysis.orphanAssetIds) removeAssetFromCatalog(catalog, assetId);
+  await saveState(state);
+  for (const assetId of detachIds) await detachAssetFromCatalog(assetId, catalog.catalogId);
+  await renderAssetLibrary(`${detachIds.length} unreferenzierte Speicherobjekte bereinigt.`);
+}
+
+function bindAssetLibrary(): void {
+  document.querySelector<HTMLElement>('[data-asset-back]')?.addEventListener('click', () => location.reload());
+  document.querySelector<HTMLInputElement>('#asset-upload')?.addEventListener('change', event => {
+    const target = event.target as HTMLInputElement;
+    const files = Array.from(target.files ?? []);
+    target.value = '';
+    void uploadAssets(files).catch(error => alert(`Asset-Upload fehlgeschlagen: ${String(error)}`));
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-asset-save-metadata]').forEach(button => button.addEventListener('click', () => {
+    const details = button.closest<HTMLElement>('[data-asset-entry]');
+    const assetId = button.dataset.assetId;
+    if (details && assetId) void saveMetadata(details, assetId).catch(error => alert(String(error)));
+  }));
+  document.querySelectorAll<HTMLButtonElement>('[data-asset-link]').forEach(button => button.addEventListener('click', () => {
+    const details = button.closest<HTMLElement>('[data-asset-entry]');
+    const assetId = button.dataset.assetId;
+    if (details && assetId) void linkAsset(details, assetId).catch(error => alert(String(error)));
+  }));
+  document.querySelectorAll<HTMLButtonElement>('[data-asset-unlink]').forEach(button => button.addEventListener('click', () => {
+    const {assetId,cardId,role} = button.dataset;
+    if (assetId && cardId && role) void unlinkAsset(assetId, cardId, role as AssetRole).catch(error => alert(String(error)));
+  }));
+  document.querySelectorAll<HTMLButtonElement>('[data-asset-remove]').forEach(button => button.addEventListener('click', () => {
+    const assetId = button.dataset.assetId;
+    if (assetId && confirm('Dieses unverwendete Asset aus dem Katalog entfernen?')) void removeUnusedAsset(assetId).catch(error => alert(String(error)));
+  }));
+  document.querySelector<HTMLElement>('[data-asset-cleanup]')?.addEventListener('click', () => {
+    if (confirm('Alle unreferenzierten Asset-Manifeste und diesem Katalog zugeordneten Speicherobjekte bereinigen?')) void cleanupUnusedAssets().catch(error => alert(String(error)));
+  });
 }
 
 function injectSettingsButton(): void {
