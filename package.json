@@ -10,6 +10,9 @@
     "test": "vitest run",
     "check": "npm run test && npm run build"
   },
+  "dependencies": {
+    "ts-fsrs": "^5.4.1"
+  },
   "devDependencies": {
     "typescript": "^5.9.2",
     "vite": "^7.0.6",
