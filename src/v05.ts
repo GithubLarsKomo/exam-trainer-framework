@@ -36,3 +36,5 @@ const { installImageLabelFeature } = await import('./image-label-feature');
 installImageLabelFeature();
 const { installStructuredQuestionFeature } = await import('./structured-question-feature');
 installStructuredQuestionFeature();
+const { installUxPolishFeature } = await import('./ux-polish-feature');
+installUxPolishFeature();

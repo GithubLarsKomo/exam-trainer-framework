@@ -27,22 +27,23 @@
 ## 0.4 — UX/UI and local catalog authoring
 
 Decisions: [docs/grill-decisions-v0.4.md](docs/grill-decisions-v0.4.md)
+Acceptance matrix: [docs/acceptance-v0.5.md](docs/acceptance-v0.5.md)
 
 ### Phase A — Information architecture and design system
 
-- [ ] Mobile bottom navigation
-- [ ] Desktop/tablet navigation
-- [ ] Redesigned start dashboard
-- [ ] Responsive component and spacing system
-- [ ] Accessible focus states and 44 px touch targets
-- [ ] Offline, persistence and backup indicators
+- [x] Mobile bottom navigation
+- [x] Desktop/tablet navigation
+- [x] Redesigned start dashboard
+- [x] Responsive component and spacing system
+- [x] Accessible focus states and 44 px touch targets
+- [x] Offline, persistence and backup indicators
 
 ### Phase B — Learning and examination UX
 
-- [ ] Focused learning card layout
-- [ ] Session progress and remaining-time estimate
-- [ ] Autosaved active session
-- [ ] Improved reveal and self-grading flow
+- [x] Focused learning card layout
+- [x] Session progress and remaining-time estimate
+- [ ] Autosaved active session queue and exact resume after browser termination
+- [x] Improved reveal and self-grading flow with answer-draft recovery
 - [ ] Optional touch gestures with button fallback
 - [ ] Examination overview and answer navigation
 - [ ] Fixed and dynamic examination profiles
@@ -112,12 +113,12 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 ### Phase H — Acceptance
 
 - [ ] Unit tests for catalog validation and versioning
-- [ ] Tests for all question renderers
-- [ ] Migration tests preserving learner progress
-- [ ] Production build and CI pass
+- [ ] Browser-level tests for all question renderers
+- [x] Migration tests preserving learner progress
+- [x] Production build and CI pass for the consolidated v0.5 acceptance head
 - [ ] iPhone Safari acceptance
-- [ ] Tablet and desktop acceptance
-- [ ] Version 0.4 release notes
+- [ ] Tablet and desktop manual acceptance
+- [x] Version 0.5 release notes
 
 ## 0.5 — Fügetechnik catalog completion
 
@@ -133,7 +134,7 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 - [x] Offline service worker
 - [x] Install manifest
 - [x] Netlify deployment
-- [ ] Improved update lifecycle and update notice
+- [x] Improved update lifecycle and update notice
 - [ ] Manual local deployment acceptance
 
 ## 0.7 — Adaptive learning foundation

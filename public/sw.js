@@ -1,9 +1,12 @@
-const CACHE = 'etf-v0.5.0';
+const CACHE = 'etf-v0.5.1';
 const CORE = ['./manifest.webmanifest'];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
+});
+
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
