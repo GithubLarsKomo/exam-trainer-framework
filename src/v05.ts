@@ -42,3 +42,5 @@ const { installRecoverableSessionFeature } = await import('./recoverable-session
 installRecoverableSessionFeature();
 const { installRecoverableOrderingBridge } = await import('./recoverable-ordering-bridge');
 installRecoverableOrderingBridge();
+const { installCatalogLifecycleFeature } = await import('./catalog-lifecycle-feature');
+installCatalogLifecycleFeature();

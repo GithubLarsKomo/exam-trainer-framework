@@ -53,12 +53,14 @@ Recoverable sessions persist queue order, current position, reveal state, respon
 
 ### Phase C — Multiple local catalogs
 
-- [ ] Catalog repository separated from learner state
-- [ ] Migrate built-in and imported catalogs
-- [ ] Catalog list and active learning catalog
-- [ ] Create, duplicate, archive and delete catalog
-- [ ] Complete catalog import and export
-- [ ] Snapshot before destructive catalog operations
+Catalog metadata/content are persisted in a dedicated IndexedDB catalog store while learner state keeps only the active-catalog reference. `loadState`/`saveState` hydrate this separation transparently for existing features and full backups.
+
+- [x] Catalog repository separated from learner state
+- [x] Migrate built-in and imported catalogs
+- [x] Catalog list and active learning catalog
+- [x] Create, duplicate, archive and delete catalog
+- [x] Complete catalog import and export
+- [x] Snapshot before destructive catalog operations
 
 ### Phase D — Full card editor
 
