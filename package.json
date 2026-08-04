@@ -11,9 +11,13 @@
     "check": "npm run test && npm run build"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
+    "fzstd": "^0.1.1",
+    "sql.js": "^1.14.1",
     "ts-fsrs": "^5.4.1"
   },
   "devDependencies": {
+    "@types/sql.js": "^1.4.9",
     "typescript": "^5.9.2",
     "vite": "^7.0.6",
     "vitest": "^3.2.4"
