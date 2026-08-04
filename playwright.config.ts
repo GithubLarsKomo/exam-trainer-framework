@@ -21,8 +21,11 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-    { name: 'mobile-webkit', use: { ...devices['iPhone 15'] } },
+    // WebKit is materially slower on the hosted Ubuntu runner, especially during the
+    // first parallel app boots. Keep Chromium's strict 15 s budget, but give WebKit a
+    // still-bounded budget below Playwright's 30 s default and reduce CPU contention.
+    { name: 'webkit', timeout: 25_000, workers: process.env.CI ? 2 : undefined, use: { ...devices['Desktop Safari'] } },
+    { name: 'mobile-webkit', timeout: 25_000, workers: process.env.CI ? 2 : undefined, use: { ...devices['iPhone 15'] } },
   ],
   webServer: {
     command: 'npm run preview -- --host 127.0.0.1 --port 4173',
