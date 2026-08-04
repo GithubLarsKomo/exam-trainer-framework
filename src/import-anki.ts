@@ -10,6 +10,11 @@ function loadSql(): Promise<SqlJsStatic> {
   return sqlPromise;
 }
 
+export interface ApkgParseOptions {
+  sql?: SqlJsStatic;
+  decompressZstd?: (bytes: Uint8Array) => Uint8Array;
+}
+
 type SqlValue = string | number | Uint8Array | null;
 type Row = Record<string, SqlValue>;
 
@@ -20,8 +25,7 @@ function rows(db: Database, sql: string): Row[] {
 }
 
 function stringValue(value: SqlValue | undefined): string {
-  if (value === null || value === undefined) return '';
-  if (value instanceof Uint8Array) return '';
+  if (value === null || value === undefined || value instanceof Uint8Array) return '';
   return String(value);
 }
 
@@ -63,7 +67,6 @@ function parseLegacyMetadata(db: Database): {
   const noteTypes = new Map<string, string>();
   const templates = new Map<string, Map<number, LegacyTemplate>>();
   const decks = new Map<string, string>();
-
   for (const [mid, model] of Object.entries(models)) {
     noteTypes.set(mid, model.name ?? `Notetype ${mid}`);
     const orderedFields = [...(model.flds ?? [])].sort((a, b) => (a.ord ?? 0) - (b.ord ?? 0));
@@ -86,7 +89,6 @@ function parseModernMetadata(db: Database): {
   const noteTypes = new Map<string, string>();
   const templateNames = new Map<string, Map<number, string>>();
   const decks = new Map<string, string>();
-
   for (const row of rows(db, 'SELECT id, name FROM notetypes')) noteTypes.set(stringValue(row.id), stringValue(row.name));
   const fieldsByType = new Map<string, Array<{ ord: number; name: string }>>();
   for (const row of rows(db, 'SELECT ntid, ord, name FROM fields ORDER BY ntid, ord')) {
@@ -133,25 +135,29 @@ function extractMedia(entries: Record<string, Uint8Array>, bundle: NormalizedImp
   const mediaEntries = Object.entries(entries).filter(([name]) => !control.has(name));
   const mediaMapBytes = entries.media;
   let map: Record<string, string> = {};
+  let unresolvedMap = false;
   if (mediaMapBytes) {
     try {
       const text = strFromU8(mediaMapBytes).trim();
       if (text.startsWith('{')) map = JSON.parse(text) as Record<string, string>;
-      else bundle.warnings.push({ code: 'MODERN_MEDIA_MAP_UNRESOLVED', message: 'Das moderne binäre Anki-Medienverzeichnis wird noch nicht semantisch dekodiert. Mediendateien bleiben im Import-Bundle erhalten, aber ihre Originalnamen können fehlen.' });
+      else unresolvedMap = true;
     } catch {
-      bundle.warnings.push({ code: 'MODERN_MEDIA_MAP_UNRESOLVED', message: 'Das Anki-Medienverzeichnis konnte nicht gelesen werden. Mediendateien bleiben im Import-Bundle erhalten.' });
+      unresolvedMap = true;
     }
   }
-  for (const [archiveName, bytes] of mediaEntries) {
-    bundle.media.push({ archiveName, fileName: map[archiveName], bytes });
-    if (!map[archiveName] && mediaMapBytes) bundle.warnings.push({ code: 'UNMAPPED_MEDIA', message: `Medieneintrag ${archiveName} hat noch keinen aufgelösten Dateinamen.`, sourceId: archiveName });
-  }
+  for (const [archiveName, mediaBytes] of mediaEntries) bundle.media.push({ archiveName, fileName: map[archiveName], bytes: mediaBytes });
+  if (unresolvedMap) bundle.warnings.push({ code: 'MODERN_MEDIA_MAP_UNRESOLVED', message: 'Das moderne binäre Anki-Medienverzeichnis wird noch nicht semantisch dekodiert. Mediendateien bleiben im Import-Bundle erhalten, aber ihre Originalnamen können fehlen.' });
+  const unresolvedCount = bundle.media.filter(media => !media.fileName).length;
+  if (unresolvedCount && mediaMapBytes) bundle.warnings.push({ code: 'UNMAPPED_MEDIA', message: `${unresolvedCount} Medieneinträge haben noch keinen aufgelösten Originaldateinamen.` });
 }
 
-function selectCollection(entries: Record<string, Uint8Array>): { name: 'collection.anki2' | 'collection.anki21' | 'collection.anki21b'; bytes: Uint8Array } {
+function selectCollection(
+  entries: Record<string, Uint8Array>,
+  decompressZstd: (bytes: Uint8Array) => Uint8Array,
+): { name: 'collection.anki2' | 'collection.anki21' | 'collection.anki21b'; bytes: Uint8Array } {
   if (entries['collection.anki21b']) {
     try {
-      return { name: 'collection.anki21b', bytes: decompress(entries['collection.anki21b']) };
+      return { name: 'collection.anki21b', bytes: decompressZstd(entries['collection.anki21b']) };
     } catch (error) {
       throw new Error(`Moderne Anki-Sammlung (collection.anki21b) konnte nicht zstd-dekomprimiert werden: ${String(error)}`);
     }
@@ -161,14 +167,14 @@ function selectCollection(entries: Record<string, Uint8Array>): { name: 'collect
   throw new Error('Das APKG enthält keine unterstützte Anki-Sammlungsdatei.');
 }
 
-export async function parseApkgImport(bytes: Uint8Array, sourceName?: string): Promise<NormalizedImportBundle> {
+export async function parseApkgImport(bytes: Uint8Array, sourceName?: string, options: ApkgParseOptions = {}): Promise<NormalizedImportBundle> {
   const bundle = emptyImportBundle('apkg', sourceName);
   const entries = unzipSync(bytes);
-  const collection = selectCollection(entries);
+  const collection = selectCollection(entries, options.decompressZstd ?? decompress);
   bundle.metadata.collectionFile = collection.name;
   extractMedia(entries, bundle);
 
-  const SQL = await loadSql();
+  const SQL = options.sql ?? await loadSql();
   const db = new SQL.Database(collection.bytes);
   try {
     const tables = tableNames(db);
@@ -186,7 +192,6 @@ export async function parseApkgImport(bytes: Uint8Array, sourceName?: string): P
     const cardsByNote = new Map<string, NormalizedImportCard[]>();
     const noteTypeByNote = new Map<string, string>();
     for (const note of rows(db, 'SELECT id, mid FROM notes')) noteTypeByNote.set(stringValue(note.id), stringValue(note.mid));
-
     for (const card of rows(db, 'SELECT id, nid, did, ord FROM cards ORDER BY id')) {
       const noteId = stringValue(card.nid);
       const mid = noteTypeByNote.get(noteId) ?? '';
