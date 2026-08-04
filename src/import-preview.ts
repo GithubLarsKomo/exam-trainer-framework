@@ -1,5 +1,6 @@
 import type {
   ImportCandidate,
+  ImportCandidateMediaRef,
   ImportMapping,
   ImportPreview,
   ImportWarning,
@@ -122,6 +123,26 @@ function topicFor(note: NormalizedImportNote, mapping: ImportMapping): string {
   return mapping.defaultTopic?.trim() || 'Import';
 }
 
+function mediaNames(value: string): string[] {
+  const names: string[] = [];
+  for (const match of value.matchAll(/<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>/gi)) names.push(decodeEntities(match[1]).trim());
+  for (const match of value.matchAll(/\[sound:([^\]]+)\]/gi)) names.push(decodeEntities(match[1]).trim());
+  return [...new Set(names.filter(Boolean))];
+}
+
+function mediaRefs(questionRaw: string, answerRaw: string, explanationRaw: string): ImportCandidateMediaRef[] {
+  const refs: ImportCandidateMediaRef[] = [];
+  const add = (value: string, role: ImportCandidateMediaRef['role']) => {
+    for (const fileName of mediaNames(value)) {
+      if (!refs.some(ref => ref.fileName === fileName && ref.role === role)) refs.push({ fileName, role });
+    }
+  };
+  add(questionRaw, 'prompt');
+  add(answerRaw, 'answer');
+  add(explanationRaw, 'reference');
+  return refs;
+}
+
 export function createImportPreview(bundle: NormalizedImportBundle, mapping: ImportMapping = suggestImportMapping(bundle)): ImportPreview {
   const warnings = [...bundle.warnings];
   if (!mapping.questionField || !mapping.answerField) {
@@ -133,6 +154,7 @@ export function createImportPreview(bundle: NormalizedImportBundle, mapping: Imp
   for (const note of bundle.notes) {
     const questionRaw = mappedFieldValue(note, bundle, mapping.questionField, 'Fragefeld', warnings);
     const answerRaw = mappedFieldValue(note, bundle, mapping.answerField, 'Antwortfeld', warnings);
+    const explanationRaw = mappedFieldValue(note, bundle, mapping.explanationField, 'Erklärungsfeld', warnings);
     const question = importedContentToPlainText(questionRaw);
     const answer = importedContentToPlainText(answerRaw);
     if (!question || !answer) {
@@ -153,7 +175,7 @@ export function createImportPreview(bundle: NormalizedImportBundle, mapping: Imp
     seenIds.add(id);
 
     const source = importedContentToPlainText(mappedFieldValue(note, bundle, mapping.sourceField, 'Quellenfeld', warnings)) || mapping.defaultSource?.trim() || 'Import';
-    const explanation = importedContentToPlainText(mappedFieldValue(note, bundle, mapping.explanationField, 'Erklärungsfeld', warnings)) || undefined;
+    const explanation = importedContentToPlainText(explanationRaw) || undefined;
     const isCloze = note.clozeDetected && /\{\{c\d+::/i.test(questionRaw);
     candidates.push({
       sourceNoteId: note.sourceNoteId,
@@ -165,6 +187,7 @@ export function createImportPreview(bundle: NormalizedImportBundle, mapping: Imp
       source,
       tags: mapping.tagsAsTags === false ? [] : [...note.tags],
       questionType: isCloze ? 'cloze' : 'free_text',
+      mediaRefs: mediaRefs(questionRaw, answerRaw, explanationRaw),
       variants: note.cards.map(card => ({
         sourceCardId: card.sourceCardId,
         deckPath: [...card.deckPath],

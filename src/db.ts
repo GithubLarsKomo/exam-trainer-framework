@@ -32,9 +32,10 @@ export type PersistedState = {
   lastBackupAt?: string;
 };
 
-const DB_NAME = 'exam-trainer-framework';
-const DB_VERSION = 1;
-const STORE = 'kv';
+export const DB_NAME = 'exam-trainer-framework';
+export const DB_VERSION = 2;
+export const STATE_STORE = 'kv';
+export const ASSET_STORE = 'assets';
 const STATE_KEY = 'state';
 const LEGACY_KEY = 'etf-state-v1';
 
@@ -45,12 +46,16 @@ function request<T>(req: IDBRequest<T>): Promise<T> {
   });
 }
 
-function openDb(): Promise<IDBDatabase> {
+export function openExamTrainerDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      if (!db.objectStoreNames.contains(STATE_STORE)) db.createObjectStore(STATE_STORE);
+      if (!db.objectStoreNames.contains(ASSET_STORE)) {
+        const assets = db.createObjectStore(ASSET_STORE, { keyPath: 'id' });
+        assets.createIndex('sha256', 'sha256', { unique: true });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error ?? new Error('IndexedDB could not be opened'));
@@ -58,19 +63,19 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 async function read<T>(key: string): Promise<T | undefined> {
-  const db = await openDb();
+  const db = await openExamTrainerDb();
   try {
-    return await request(db.transaction(STORE, 'readonly').objectStore(STORE).get(key)) as T | undefined;
+    return await request(db.transaction(STATE_STORE, 'readonly').objectStore(STATE_STORE).get(key)) as T | undefined;
   } finally {
     db.close();
   }
 }
 
 async function write<T>(key: string, value: T): Promise<void> {
-  const db = await openDb();
+  const db = await openExamTrainerDb();
   try {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put(value, key);
+    const tx = db.transaction(STATE_STORE, 'readwrite');
+    tx.objectStore(STATE_STORE).put(value, key);
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));

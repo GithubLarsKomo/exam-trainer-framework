@@ -1,4 +1,4 @@
-import type { QuestionType } from './model';
+import type { AssetRole, QuestionType } from './model';
 
 export type ImportSourceKind = 'csv' | 'tsv' | 'apkg';
 export type ImportWarningCode =
@@ -84,6 +84,11 @@ export interface ImportMapping {
   tagsAsTags?: boolean;
 }
 
+export interface ImportCandidateMediaRef {
+  fileName: string;
+  role: Extract<AssetRole, 'prompt' | 'answer' | 'reference'>;
+}
+
 export interface ImportCandidate {
   sourceNoteId: string;
   id: string;
@@ -94,6 +99,7 @@ export interface ImportCandidate {
   source: string;
   tags: string[];
   questionType: QuestionType;
+  mediaRefs?: ImportCandidateMediaRef[];
   variants: Array<{
     sourceCardId?: string;
     deckPath: string[];

@@ -2,6 +2,26 @@ export type Outcome = 'correct' | 'partial' | 'incorrect';
 export type CardStatus = 'draft' | 'in_review' | 'changes_requested' | 'approved' | 'released' | 'retired';
 export type QuestionType = 'free_text' | 'numeric' | 'single_choice' | 'multiple_choice' | 'cloze' | 'matching' | 'ordering' | 'image_labels' | 'drawing' | 'case_study';
 export type ReviewSource = 'learning' | 'exam';
+export type AssetKind = 'image' | 'audio' | 'other';
+export type AssetRole = 'prompt' | 'answer' | 'reference' | 'attachment';
+
+export interface AssetManifestEntry {
+  id: string;
+  fileName?: string;
+  mediaType: string;
+  kind: AssetKind;
+  byteLength: number;
+  sha256: string;
+  source: 'anki' | 'local';
+  createdAt: string;
+}
+
+export interface CardAssetRef {
+  assetId: string;
+  role: AssetRole;
+  sourceFileName?: string;
+  altText?: string;
+}
 
 export interface Choice { id: string; text: string; correct?: boolean }
 export interface CardAnswer {
@@ -26,6 +46,7 @@ export interface CardVersion {
   tags: string[];
   questionType: QuestionType;
   answer: CardAnswer;
+  assetRefs?: CardAssetRef[];
   source: string;
   sourcePage?: string;
   changeReason?: string;
@@ -48,6 +69,7 @@ export interface QuestionVariant {
   tags: string[];
   questionType: QuestionType;
   answer: CardAnswer;
+  assetRefs?: CardAssetRef[];
   source: string;
   sourcePage?: string;
   changedAt: string;
@@ -90,6 +112,7 @@ export function cardVersionToKnowledgeItem(card: CardVersion): KnowledgeItem {
     tags: [...card.tags],
     questionType: card.questionType,
     answer: structuredClone(card.answer),
+    assetRefs: card.assetRefs?.map(ref => ({ ...ref })),
     source: card.source,
     sourcePage: card.sourcePage,
     changedAt: card.changedAt,
@@ -174,6 +197,7 @@ export interface Catalog {
   archived?: boolean;
   cards: CardVersion[];
   knowledgeItems?: KnowledgeItem[];
+  assets?: AssetManifestEntry[];
   examBlueprint?: ExamBlueprint;
 }
 export interface Progress {
