@@ -35,8 +35,13 @@ function visibleCardId(catalog: Catalog): string | undefined {
 async function refreshStatus(): Promise<void> {
   const pill=document.querySelector<HTMLElement>('.status-pill');
   if(pill){
-    pill.textContent=navigator.onLine?'● lokal · online':'● lokal · offline';
-    pill.title=navigator.onLine?'Lernstand liegt lokal; Netzwerk ist verfügbar.':'Lernstand liegt lokal; die App arbeitet ohne Netzwerk.';
+    const text=navigator.onLine?'● lokal · online':'● lokal · offline';
+    const title=navigator.onLine?'Lernstand liegt lokal; Netzwerk ist verfügbar.':'Lernstand liegt lokal; die App arbeitet ohne Netzwerk.';
+    // MutationObserver watches childList changes. Replacing identical text on every
+    // observer pass would therefore trigger this feature again indefinitely and
+    // keep interactive controls permanently "unstable" for browsers/assistive tools.
+    if(pill.textContent!==text) pill.textContent=text;
+    if(pill.title!==title) pill.title=title;
   }
   const settings=document.querySelector<HTMLElement>('.settings-list');
   if(!settings) return;
@@ -50,7 +55,8 @@ async function refreshStatus(): Promise<void> {
     estimate=await navigator.storage?.estimate?.();
   }catch{/* Status is advisory only. */}
   const backup=state.lastBackupAt?new Date(state.lastBackupAt).toLocaleString('de-DE'):'noch keines';
-  panel.innerHTML=`<strong>Lokale Datensicherheit</strong><br>${navigator.onLine?'Netzwerk verfügbar':'Offline-Modus'} · ${persisted?'persistenter Browserspeicher':'Browser-verwalteter Speicher'} · ${esc(storageUsageLabel(estimate?.usage,estimate?.quota))}<br>Letztes Backup: ${esc(backup)}`;
+  const html=`<strong>Lokale Datensicherheit</strong><br>${navigator.onLine?'Netzwerk verfügbar':'Offline-Modus'} · ${persisted?'persistenter Browserspeicher':'Browser-verwalteter Speicher'} · ${esc(storageUsageLabel(estimate?.usage,estimate?.quota))}<br>Letztes Backup: ${esc(backup)}`;
+  if(panel.innerHTML!==html) panel.innerHTML=html;
 }
 
 function parseSessionPosition(): {current:number;total:number}|undefined {
