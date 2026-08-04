@@ -10,13 +10,36 @@ function loadSql(): Promise<SqlJsStatic> {
   return sqlPromise;
 }
 
+export interface ApkgSafetyLimits {
+  maxArchiveBytes: number;
+  maxCollectionEntryBytes: number;
+  maxDecodedCollectionBytes: number;
+  maxControlEntryBytes: number;
+  maxMediaEntryBytes: number;
+  maxTotalMediaBytes: number;
+}
+
+const MIB = 1024 * 1024;
+export const DEFAULT_APKG_SAFETY_LIMITS: ApkgSafetyLimits = {
+  maxArchiveBytes: 512 * MIB,
+  maxCollectionEntryBytes: 256 * MIB,
+  maxDecodedCollectionBytes: 768 * MIB,
+  maxControlEntryBytes: 32 * MIB,
+  maxMediaEntryBytes: 128 * MIB,
+  maxTotalMediaBytes: 1024 * MIB,
+};
+
 export interface ApkgParseOptions {
   sql?: SqlJsStatic;
   decompressZstd?: (bytes: Uint8Array) => Uint8Array;
+  safetyLimits?: Partial<ApkgSafetyLimits>;
 }
 
 type SqlValue = string | number | Uint8Array | null;
 type Row = Record<string, SqlValue>;
+
+const CONTROL_NAMES = new Set(['collection.anki2', 'collection.anki21', 'collection.anki21b', 'media', 'meta']);
+const COLLECTION_NAMES = new Set(['collection.anki2', 'collection.anki21', 'collection.anki21b']);
 
 function rows(db: Database, sql: string): Row[] {
   const result = db.exec(sql)[0];
@@ -130,9 +153,69 @@ function containsCloze(fields: NormalizedImportField[]): boolean {
   return fields.some(field => /\{\{c\d+::[\s\S]+?\}\}/i.test(field.value));
 }
 
+function unzipControlEntries(
+  bytes: Uint8Array,
+  bundle: NormalizedImportBundle,
+  limits: ApkgSafetyLimits,
+): Record<string, Uint8Array> | undefined {
+  const skipped: string[] = [];
+  const entries = unzipSync(bytes, {
+    filter: file => {
+      if (!CONTROL_NAMES.has(file.name)) return false;
+      const originalSize = Math.max(0, file.originalSize);
+      const limit = COLLECTION_NAMES.has(file.name) ? limits.maxCollectionEntryBytes : limits.maxControlEntryBytes;
+      if (originalSize > limit) {
+        skipped.push(file.name);
+        return false;
+      }
+      return true;
+    },
+  });
+  const skippedCollection = skipped.find(name => COLLECTION_NAMES.has(name));
+  if (skippedCollection) {
+    bundle.warnings.push({
+      code: 'ARCHIVE_LIMIT',
+      message: `Die Anki-Sammlungsdatei ${skippedCollection} überschreitet das Sicherheitslimit und wurde nicht entpackt.`,
+      sourceId: skippedCollection,
+      blocking: true,
+    });
+    return undefined;
+  }
+  for (const name of skipped) {
+    bundle.warnings.push({ code: 'ARCHIVE_LIMIT', message: `Kontrolldatei ${name} überschreitet das Sicherheitslimit und wurde übersprungen.`, sourceId: name });
+  }
+  return entries;
+}
+
+function unzipMediaEntries(
+  bytes: Uint8Array,
+  bundle: NormalizedImportBundle,
+  limits: ApkgSafetyLimits,
+): Record<string, Uint8Array> {
+  let acceptedBytes = 0;
+  let skippedCount = 0;
+  const entries = unzipSync(bytes, {
+    filter: file => {
+      if (CONTROL_NAMES.has(file.name) || file.name.endsWith('/')) return false;
+      const originalSize = Math.max(0, file.originalSize);
+      if (originalSize > limits.maxMediaEntryBytes || acceptedBytes + originalSize > limits.maxTotalMediaBytes) {
+        skippedCount++;
+        return false;
+      }
+      acceptedBytes += originalSize;
+      return true;
+    },
+  });
+  if (skippedCount) {
+    bundle.warnings.push({
+      code: 'ARCHIVE_LIMIT',
+      message: `${skippedCount} Mediendateien wurden wegen Einzeldatei- oder Gesamtgrößenlimit übersprungen.`,
+    });
+  }
+  return entries;
+}
+
 function extractMedia(entries: Record<string, Uint8Array>, bundle: NormalizedImportBundle): void {
-  const control = new Set(['collection.anki2', 'collection.anki21', 'collection.anki21b', 'media', 'meta']);
-  const mediaEntries = Object.entries(entries).filter(([name]) => !control.has(name));
   const mediaMapBytes = entries.media;
   let map: Record<string, string> = {};
   let unresolvedMap = false;
@@ -145,7 +228,9 @@ function extractMedia(entries: Record<string, Uint8Array>, bundle: NormalizedImp
       unresolvedMap = true;
     }
   }
-  for (const [archiveName, mediaBytes] of mediaEntries) bundle.media.push({ archiveName, fileName: map[archiveName], bytes: mediaBytes });
+  for (const [archiveName, mediaBytes] of Object.entries(entries)) {
+    if (!CONTROL_NAMES.has(archiveName)) bundle.media.push({ archiveName, fileName: map[archiveName], bytes: mediaBytes });
+  }
   if (unresolvedMap) bundle.warnings.push({ code: 'MODERN_MEDIA_MAP_UNRESOLVED', message: 'Das moderne binäre Anki-Medienverzeichnis wird noch nicht semantisch dekodiert. Mediendateien bleiben im Import-Bundle erhalten, aber ihre Originalnamen können fehlen.' });
   const unresolvedCount = bundle.media.filter(media => !media.fileName).length;
   if (unresolvedCount && mediaMapBytes) bundle.warnings.push({ code: 'UNMAPPED_MEDIA', message: `${unresolvedCount} Medieneinträge haben noch keinen aufgelösten Originaldateinamen.` });
@@ -169,10 +254,27 @@ function selectCollection(
 
 export async function parseApkgImport(bytes: Uint8Array, sourceName?: string, options: ApkgParseOptions = {}): Promise<NormalizedImportBundle> {
   const bundle = emptyImportBundle('apkg', sourceName);
-  const entries = unzipSync(bytes);
-  const collection = selectCollection(entries, options.decompressZstd ?? decompress);
+  const limits: ApkgSafetyLimits = { ...DEFAULT_APKG_SAFETY_LIMITS, ...options.safetyLimits };
+  if (bytes.byteLength > limits.maxArchiveBytes) {
+    bundle.warnings.push({ code: 'ARCHIVE_LIMIT', message: `Das APKG überschreitet das Sicherheitslimit von ${Math.round(limits.maxArchiveBytes / MIB)} MiB.`, blocking: true });
+    return bundle;
+  }
+
+  const controlEntries = unzipControlEntries(bytes, bundle, limits);
+  if (!controlEntries) return bundle;
+  const collection = selectCollection(controlEntries, options.decompressZstd ?? decompress);
+  if (collection.bytes.byteLength > limits.maxDecodedCollectionBytes) {
+    bundle.warnings.push({
+      code: 'ARCHIVE_LIMIT',
+      message: `Die dekodierte Anki-Sammlung überschreitet das Sicherheitslimit von ${Math.round(limits.maxDecodedCollectionBytes / MIB)} MiB.`,
+      sourceId: collection.name,
+      blocking: true,
+    });
+    return bundle;
+  }
   bundle.metadata.collectionFile = collection.name;
-  extractMedia(entries, bundle);
+  const mediaEntries = unzipMediaEntries(bytes, bundle, limits);
+  extractMedia({ ...controlEntries, ...mediaEntries }, bundle);
 
   const SQL = options.sql ?? await loadSql();
   const db = new SQL.Database(collection.bytes);
