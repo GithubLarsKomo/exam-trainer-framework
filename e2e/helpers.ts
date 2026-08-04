@@ -111,32 +111,33 @@ export async function seedCatalog(page: Page, cards: SeedCard[], assets: SeedAss
     activeCatalogId: catalogId,
   };
 
+  // Let the real app create/upgrade the database once, then reset its stores in-place.
+  // Deleting an open IndexedDB database is intentionally avoided because the app keeps
+  // its own connection alive and browsers correctly report the delete as blocked.
   await page.goto('/');
   await page.evaluate(async ({ catalog, state, assets }) => {
-    await new Promise<void>((resolve, reject) => {
-      const req = indexedDB.deleteDatabase('exam-trainer-framework');
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-      req.onblocked = () => reject(new Error('IndexedDB delete blocked'));
-    });
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('exam-trainer-framework', 3);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
-        if (!db.objectStoreNames.contains('catalogs')) db.createObjectStore('catalogs', { keyPath: 'catalogId' });
-        if (!db.objectStoreNames.contains('assets')) {
-          const store = db.createObjectStore('assets', { keyPath: 'id' });
-          store.createIndex('sha256', 'sha256', { unique: true });
-        }
-      };
+      const req = indexedDB.open('exam-trainer-framework');
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
-    const tx = db.transaction(['kv', 'catalogs', 'assets'], 'readwrite');
-    tx.objectStore('kv').put(state, 'state');
-    tx.objectStore('catalogs').put(catalog);
-    for (const asset of assets) tx.objectStore('assets').put({ ...asset, bytes: new Uint8Array(asset.bytes) });
+    const required = ['kv', 'catalogs', 'assets'];
+    for (const name of required) {
+      if (!db.objectStoreNames.contains(name)) {
+        db.close();
+        throw new Error(`Missing IndexedDB store: ${name}`);
+      }
+    }
+    const tx = db.transaction(required, 'readwrite');
+    const stateStore = tx.objectStore('kv');
+    const catalogStore = tx.objectStore('catalogs');
+    const assetStore = tx.objectStore('assets');
+    stateStore.clear();
+    catalogStore.clear();
+    assetStore.clear();
+    stateStore.put(state, 'state');
+    catalogStore.put(catalog);
+    for (const asset of assets) assetStore.put({ ...asset, bytes: new Uint8Array(asset.bytes) });
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
