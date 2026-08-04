@@ -15,6 +15,9 @@ This document separates automated evidence from device-specific manual acceptanc
 - [x] Structured question-domain tests cover single choice, multiple choice, cloze, matching, ordering and case study.
 - [x] Image-label hotspot tests cover normalized coordinates and KnowledgeItem synchronization.
 - [x] Asset tests cover IndexedDB upgrade, hashing, deduplication, linking and orphan validation.
+- [x] Recoverable-session tests cover exact queue rotation, position, reveal/outcome state, response timing and non-linear examination navigation.
+- [x] IndexedDB roundtrip test preserves an active examination session including structured responses.
+- [x] Examination selection tests prove dynamic blueprint weighting is independent of raw question counts and fixed profiles keep unique question IDs.
 
 ## Responsive and accessibility acceptance
 
@@ -38,6 +41,10 @@ Implemented and verified by code/build review:
 - [x] The learner's answer remains visible next to the model answer after reveal.
 - [x] Structured question answers survive the reveal redraw.
 - [x] Self-grading remains authoritative for scheduler state.
+- [x] Active learning and examination sessions persist exact queue/order, position, reveal state, response timing and answer state in IndexedDB.
+- [x] Interrupted sessions produce an explicit resume/discard entry point instead of silently restarting.
+- [x] Examination outcomes remain editable during navigation and are committed to learner progress only once, on final submission.
+- [x] Examination overview exposes unanswered, revealed and graded states with direct numbered navigation.
 
 ## Offline / persistence / update acceptance
 
@@ -51,14 +58,14 @@ Implemented and verified by code/build review:
 
 These items require real-device/browser interaction and must not be inferred from CI:
 
-- [ ] iPhone Safari: install PWA, launch offline, complete a learning session, reveal/grade, reload with an unfinished answer, export/import `.etfb`, upload a photo, edit an image-label hotspot.
-- [ ] iPad Safari: repeat core learning, authoring, import, backup and hotspot flows in portrait and landscape.
-- [ ] Desktop Chrome/Edge/Safari: keyboard-only navigation, visible focus, offline reload, update banner and structured question interactions.
-- [ ] Confirm no horizontal overflow at 320 px CSS viewport width.
-- [ ] Confirm VoiceOver/NVDA labels for navigation, update banner, structured controls and image-label inputs.
+- [ ] iPhone Safari: install PWA, launch offline, complete a learning session, reveal/grade, terminate/reopen during a mixed structured session and verify exact resume, export/import `.etfb`, upload a photo, edit an image-label hotspot.
+- [ ] iPad Safari: repeat core learning, exact-resume, examination navigation, authoring, import, backup and hotspot flows in portrait and landscape.
+- [ ] Desktop Chrome/Edge/Safari: keyboard-only navigation, visible focus, offline reload, exact session resume, examination overview/navigation, update banner and structured question interactions.
+- [ ] Confirm no horizontal overflow at 320 px CSS viewport width, including the examination number grid.
+- [ ] Confirm VoiceOver/NVDA labels for navigation, update banner, examination question buttons, structured controls and image-label inputs.
 
 ## Deferred acceptance
 
 - Cross-device synchronization is explicitly out of scope; device migration is handled by `.etfb` full backup/restore.
-- Full active-session queue restoration after browser termination remains separate from answer-draft recovery.
-- Examination answer navigation and dependent examination tasks remain separate roadmap items.
+- Optional gesture navigation remains a separate roadmap item; all essential actions have button-based controls.
+- Dependent examination tasks remain a separate roadmap item.
