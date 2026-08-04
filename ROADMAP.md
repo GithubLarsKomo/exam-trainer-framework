@@ -22,7 +22,7 @@
 - [x] Free text
 - [x] Numeric
 - [x] Drawing and criteria checklist
-- [ ] Image labels with assets
+- [x] Image labels with assets
 
 ## 0.4 — UX/UI and local catalog authoring
 
@@ -77,7 +77,7 @@ Decisions: [docs/grill-decisions-v0.4.md](docs/grill-decisions-v0.4.md)
 - [ ] Cloze
 - [ ] Matching
 - [ ] Ordering
-- [ ] Image labels
+- [x] Image labels
 - [x] Drawing
 - [ ] Case study
 
@@ -104,7 +104,7 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 - [x] Upload from iPhone files and photo library
 - [x] Rights and alt-text metadata authoring
 - [x] Asset usage and orphan validation across catalogs
-- [ ] Image-label hotspot editor
+- [x] Image-label hotspot editor
 - [x] Backup/export including binary assets with atomic restore
 
 ### Phase H — Acceptance
