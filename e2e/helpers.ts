@@ -146,7 +146,10 @@ export async function seedCatalog(page: Page, cards: SeedCard[], assets: SeedAss
     db.close();
   }, { catalog, state, assets });
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'E2E Katalog' })).toBeVisible();
+  // Wait for the v0.5 boot chain and its additive feature modules to settle on the
+  // seeded catalog, rather than racing a transient app header during PWA startup.
+  await expect(page.locator('.app-header h1')).toHaveText('E2E Katalog', { timeout: 10_000 });
+  await expect(page.locator('nav.bottom-nav')).toBeVisible();
 }
 
 export async function readCatalogs(page: Page): Promise<Array<Record<string, unknown>>> {
@@ -168,15 +171,25 @@ export async function readCatalogs(page: Page): Promise<Array<Record<string, unk
 }
 
 export async function startLearning(page: Page): Promise<void> {
-  await page.locator('[data-view="learn"]').first().click();
+  const learnNav = page.locator('nav.bottom-nav [data-view="learn"]');
+  await expect(learnNav).toBeVisible();
+  await learnNav.click();
+  await expect(page.locator('#mode')).toBeVisible();
   await page.locator('#mode').selectOption('all');
   await page.locator('[data-start-custom]').click();
   await expect(page.locator('.question-card')).toBeVisible();
 }
 
 export async function openCardEditor(page: Page, cardId: string): Promise<void> {
-  await page.locator('[data-view="catalogs"]').first().click();
-  await page.locator(`[data-edit-card="${cardId}"]`).click();
+  const catalogsNav = page.locator('nav.bottom-nav [data-view="catalogs"]');
+  await expect(catalogsNav).toBeVisible();
+  await catalogsNav.click();
+  // The additive editor module injects filters and reorders the card rows once.
+  // Wait for that initialization boundary before selecting a row.
+  await expect(page.locator('[data-full-editor-toolbar]')).toBeVisible();
+  const row = page.locator(`[data-edit-card="${cardId}"]`);
+  await expect(row).toBeVisible();
+  await row.click();
   await expect(page.locator('#card-form')).toBeVisible();
 }
 
