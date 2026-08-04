@@ -1,0 +1,126 @@
+import './publication-feature.css';
+import { loadState, saveState, type PersistedState } from './db';
+import { updateCardFromForm, type EditorCard } from './card-editor-domain';
+import {
+  availableTransitions,
+  createDraftFromReleased,
+  diffCardVersions,
+  ensureVersionHistory,
+  logicalCardId,
+  releaseApprovedDraft,
+  releaseValidation,
+  restoreVersionAsDraft,
+  transitionCard,
+  validateCatalog,
+  type VersionedCatalog,
+} from './publication-workflow';
+import type { CardStatus, CardVersion, Catalog } from './model';
+
+let observer: MutationObserver | undefined;
+let scheduled = false;
+const fallback = (): PersistedState => ({schemaVersion:3,progress:{},history:[],review:{},sessions:{},examAttempts:[],migrationLog:[]});
+const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]!));
+
+async function context(): Promise<{state:PersistedState;catalog:VersionedCatalog}> {
+  const state=await loadState(fallback());
+  const raw=(state.catalogs??[]).find(c=>c.catalogId===state.activeCatalogId)??state.catalogs?.[0];
+  if(!raw) throw new Error('Kein aktiver Katalog.');
+  return {state,catalog:ensureVersionHistory(raw)};
+}
+
+async function persistCatalog(state: PersistedState, catalog: Catalog): Promise<void> {
+  state.catalogs=(state.catalogs??[]).map(current=>current.catalogId===catalog.catalogId?catalog:current);
+  await saveState(state);
+}
+
+function currentEditorId(): string | undefined {
+  const form=document.querySelector<HTMLFormElement>('#card-form');
+  if(!form) return undefined;
+  return String(new FormData(form).get('id')??'').trim() || undefined;
+}
+
+function workflowLabel(status: CardStatus): string {
+  const labels:Record<CardStatus,string>={draft:'Entwurf',in_review:'In Prüfung',changes_requested:'Änderungen angefordert',approved:'Freigeprüft',released:'Veröffentlicht',retired:'Archiviert'};
+  return labels[status];
+}
+function actionLabel(status: CardStatus): string {
+  const labels:Partial<Record<CardStatus,string>>={draft:'Zurück zum Entwurf',in_review:'Zur Prüfung einreichen',changes_requested:'Änderungen anfordern',approved:'Freigeben',retired:'Archivieren'};
+  return labels[status]??status;
+}
+
+function versionRows(catalog: VersionedCatalog, card: CardVersion): string {
+  const logicalId=logicalCardId(card);
+  const versions=catalog.versionHistory?.[logicalId]??[];
+  if(!versions.length) return '<p class="muted">Noch keine veröffentlichte Versionshistorie.</p>';
+  return `<div class="table-scroll"><table><thead><tr><th>Version</th><th>Datum</th><th>Grund</th><th>Aktion</th></tr></thead><tbody>${versions.slice().sort((a,b)=>b.version-a.version).map(version=>`<tr><td>v${version.version}</td><td>${esc(new Date(version.changedAt).toLocaleString('de-DE'))}</td><td>${esc(version.changeReason??'–')}</td><td><button type="button" data-version-compare="${version.version}">Vergleichen</button> <button type="button" data-version-restore="${version.version}">Als Entwurf wiederherstellen</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function workflowLogRows(catalog: VersionedCatalog, card: CardVersion): string {
+  const logicalId=logicalCardId(card);
+  const rows=(catalog.workflowLog??[]).filter(entry=>entry.logicalCardId===logicalId).slice(-10).reverse();
+  if(!rows.length) return '<p class="muted">Noch keine protokollierten Übergänge.</p>';
+  return `<div class="table-scroll"><table><thead><tr><th>Zeit</th><th>Übergang</th><th>Hinweis</th></tr></thead><tbody>${rows.map(entry=>`<tr><td>${esc(new Date(entry.at).toLocaleString('de-DE'))}</td><td>${esc(workflowLabel(entry.from))} → ${esc(workflowLabel(entry.to))}</td><td>${esc(entry.note??'–')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+async function injectEditorWorkflow(): Promise<void> {
+  const form=document.querySelector<HTMLFormElement>('#card-form');
+  if(!form||form.querySelector('[data-publication-workflow]')) return;
+  const id=currentEditorId(); if(!id) return;
+  const {catalog}=await context(); const card=catalog.cards.find(c=>c.id===id); if(!card) return;
+  const statusSelect=form.querySelector<HTMLSelectElement>('select[name="status"]');
+  if(statusSelect){statusSelect.disabled=true;statusSelect.title='Statusänderungen erfolgen ausschließlich über den Publikationsworkflow.';}
+  const transitions=availableTransitions(card.status).filter(status=>status!=='retired');
+  const panel=document.createElement('section'); panel.dataset.publicationWorkflow=''; panel.className='publication-panel';
+  const special=card.status==='released'?'<button type="button" class="primary" data-create-release-draft>Neuen Entwurf aus Release</button>':card.status==='approved'?'<button type="button" class="primary" data-release-approved>Veröffentlichen</button>':'';
+  const standard=transitions.map(status=>`<button type="button" data-workflow-to="${status}">${esc(actionLabel(status))}</button>`).join('');
+  panel.innerHTML=`<hr><span class="eyebrow">Publikationsworkflow</span><div class="workflow-state"><strong>${esc(workflowLabel(card.status))}</strong><span>v${card.version} · logische ID ${esc(logicalCardId(card))}</span></div><label>Workflow-Hinweis / Änderungsgrund<input data-workflow-note value="${esc(card.changeReason??'')}"></label><div class="workflow-actions">${special}${standard}</div><details open><summary>Versionshistorie</summary>${versionRows(catalog,card)}</details><details><summary>Workflow-Protokoll</summary>${workflowLogRows(catalog,card)}</details>`;
+  form.querySelector('.editor-actions')?.insertAdjacentElement('beforebegin',panel);
+  bindWorkflowPanel(panel,card,catalog);
+}
+
+function noteFrom(panel: HTMLElement): string { return panel.querySelector<HTMLInputElement>('[data-workflow-note]')?.value.trim()??''; }
+async function performCatalogMutation(mutate:(catalog:VersionedCatalog)=>VersionedCatalog):Promise<void>{const {state,catalog}=await context();const next=mutate(catalog);await persistCatalog(state,next);location.reload();}
+
+function bindWorkflowPanel(panel: HTMLElement, card: CardVersion, catalogAtRender: VersionedCatalog): void {
+  panel.querySelectorAll<HTMLElement>('[data-workflow-to]').forEach(button=>button.addEventListener('click',()=>{
+    const to=button.dataset.workflowTo as CardStatus;
+    void performCatalogMutation(catalog=>transitionCard(catalog,card.id,to,noteFrom(panel))).catch(error=>alert(String(error)));
+  }));
+  panel.querySelector<HTMLElement>('[data-create-release-draft]')?.addEventListener('click',()=>void performCatalogMutation(catalog=>createDraftFromReleased(catalog,card.id,noteFrom(panel)||'Entwurf aus veröffentlichter Version')).catch(error=>alert(String(error))));
+  panel.querySelector<HTMLElement>('[data-release-approved]')?.addEventListener('click',async()=>{
+    const {state,catalog}=await context();const issues=releaseValidation(catalog,card.id);const errors=issues.filter(issue=>issue.severity==='error');const warnings=issues.filter(issue=>issue.severity==='warning');
+    if(errors.length){alert(`Freigabe blockiert:\n\n${errors.map(issue=>`• ${issue.message}`).join('\n')}`);return;}
+    if(warnings.length&&!confirm(`Freigabe mit Warnungen fortsetzen?\n\n${warnings.map(issue=>`• ${issue.message}`).join('\n')}`))return;
+    const next=releaseApprovedDraft(catalog,card.id,noteFrom(panel)||'Veröffentlicht');await persistCatalog(state,next);location.reload();
+  });
+  panel.querySelectorAll<HTMLElement>('[data-version-restore]').forEach(button=>button.addEventListener('click',()=>{const version=Number(button.dataset.versionRestore);void performCatalogMutation(catalog=>restoreVersionAsDraft(catalog,logicalCardId(card),version,`Version ${version} als Entwurf wiederhergestellt`)).catch(error=>alert(String(error)));}));
+  panel.querySelectorAll<HTMLElement>('[data-version-compare]').forEach(button=>button.addEventListener('click',()=>{const version=Number(button.dataset.versionCompare);const historical=catalogAtRender.versionHistory?.[logicalCardId(card)]?.find(entry=>entry.version===version);if(!historical)return;showDiff(historical,card);}));
+}
+
+function showDiff(before: CardVersion, after: CardVersion): void {
+  const diffs=diffCardVersions(before,after);const dialog=document.createElement('dialog');dialog.className='publication-dialog';dialog.innerHTML=`<form method="dialog"><div class="section-head"><div><span class="eyebrow">Versionsvergleich</span><h2>v${before.version} → v${after.version}</h2></div><button>Schließen</button></div>${diffs.length?`<div class="table-scroll"><table><thead><tr><th>Feld</th><th>Vorher</th><th>Aktuell</th></tr></thead><tbody>${diffs.map(diff=>`<tr><td>${esc(diff.field)}</td><td><pre>${esc(diff.before)}</pre></td><td><pre>${esc(diff.after)}</pre></td></tr>`).join('')}</tbody></table></div>`:'<p>Keine inhaltlichen Unterschiede.</p>'}</form>`;document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();
+}
+
+async function injectCatalogValidation(): Promise<void> {
+  const host=document.querySelector<HTMLElement>('.card-list')?.parentElement;if(!host||host.querySelector('[data-catalog-validation]'))return;
+  const {catalog}=await context();const issues=validateCatalog(catalog);const errors=issues.filter(i=>i.severity==='error'),warnings=issues.filter(i=>i.severity==='warning');const panel=document.createElement('section');panel.dataset.catalogValidation='';panel.className='panel validation-panel';panel.innerHTML=`<div class="section-head"><div><span class="eyebrow">Validierung</span><h2>Katalogbericht</h2></div><strong class="${errors.length?'validation-error':warnings.length?'validation-warning':'validation-ok'}">${errors.length} Fehler · ${warnings.length} Warnungen</strong></div>${issues.length?`<div class="table-scroll"><table><thead><tr><th>Schweregrad</th><th>Karte</th><th>Meldung</th></tr></thead><tbody>${issues.map(issue=>`<tr><td>${issue.severity==='error'?'Fehler':'Warnung'}</td><td>${esc(issue.cardId??'–')}</td><td>${esc(issue.message)}</td></tr>`).join('')}</tbody></table></div>`:'<p>Keine Validierungsprobleme gefunden.</p>'}`;host.insertAdjacentElement('beforebegin',panel);
+  const bulkStatus=document.querySelector<HTMLSelectElement>('[data-bulk-status]');if(bulkStatus){bulkStatus.disabled=true;bulkStatus.title='Workflow-Status darf nicht über Bulk-Editing geändert werden.';}
+}
+
+async function interceptReleasedSave(event: Event, form: HTMLFormElement): Promise<void> {
+  const id=currentEditorId();if(!id)return;const {state,catalog}=await context();const release=catalog.cards.find(c=>c.id===id) as EditorCard|undefined;if(!release||release.status!=='released')return;
+  event.preventDefault();event.stopImmediatePropagation();
+  const note=form.querySelector<HTMLInputElement>('[data-workflow-note]')?.value.trim()||String(new FormData(form).get('changeReason')??'').trim()||'Bearbeitung einer freigegebenen Version';
+  const draftId=`${logicalCardId(release)}:draft:${crypto.randomUUID().slice(0,8)}`;
+  let next=createDraftFromReleased(catalog,release.id,note,new Date(),draftId);const draft=next.cards.find(c=>c.id===draftId) as EditorCard;const updated=updateCardFromForm(draft,new FormData(form));updated.id=draft.id;updated.parentId=draft.parentId;updated.version=draft.version;updated.status='draft';updated.changedAt=new Date().toISOString();updated.changeReason=note;next.cards=next.cards.map(c=>c.id===draftId?updated:c);next.updatedAt=updated.changedAt;await persistCatalog(state,next);alert('Die freigegebene Version blieb unverändert. Deine Änderungen wurden als neuer Entwurf gespeichert.');location.reload();
+}
+
+async function interceptArchive(event:Event, form:HTMLFormElement):Promise<void>{const id=currentEditorId();if(!id)return;const {state,catalog}=await context();const card=catalog.cards.find(c=>c.id===id);if(!card)return;if(!availableTransitions(card.status).includes('retired'))return;event.preventDefault();event.stopImmediatePropagation();if(!confirm('Karte über den Workflow archivieren?'))return;const next=transitionCard(catalog,id,'retired','Archiviert');await persistCatalog(state,next);location.reload();}
+
+function capture(event: Event): void {
+  const target=event.target as Element|null;const form=document.querySelector<HTMLFormElement>('#card-form');if(!form)return;
+  if(target?.closest('[data-save-card]'))void interceptReleasedSave(event,form).catch(error=>alert(String(error)));
+  if(target?.closest('[data-delete-card]'))void interceptArchive(event,form).catch(error=>alert(String(error)));
+}
+function schedule():void{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;void injectEditorWorkflow().catch(()=>{});void injectCatalogValidation().catch(()=>{});});}
+export function installPublicationFeature():void{document.addEventListener('click',capture,true);schedule();const root=document.querySelector('#app');if(root){observer?.disconnect();observer=new MutationObserver(schedule);observer.observe(root,{childList:true,subtree:true});}}
