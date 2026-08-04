@@ -93,12 +93,18 @@ Decisions: [docs/grill-decisions-v0.4.md](docs/grill-decisions-v0.4.md)
 
 ### Phase G — Asset library
 
-- [ ] IndexedDB asset store
+Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries only manifests and references so learner state stays compact and assets can be deduplicated by content hash.
+
+- [x] IndexedDB asset store with database upgrade path
+- [x] SHA-256 content hashing and binary deduplication
+- [x] Asset manifest metadata for type, size, source and filename
+- [x] Card and question-variant asset references for resolved imports
 - [ ] Upload from iPhone files and photo library
-- [ ] Hash, metadata, rights and alt text
-- [ ] Asset usage references
+- [ ] Rights and alt-text metadata authoring
+- [ ] Offline image/audio rendering from asset references
+- [ ] Asset usage and orphan validation across catalogs
 - [ ] Image-label hotspot editor
-- [ ] Orphan asset validation
+- [ ] Backup/export including binary assets
 
 ### Phase H — Acceptance
 
@@ -187,10 +193,11 @@ Anki is an inbound content source, not a second runtime model. Imported decks ar
 - [x] Never execute or render imported template HTML/JavaScript
 - [x] Explicitly ignore Anki scheduling and review history
 - [x] Enforce archive and decompressed-entry safety budgets for untrusted APKG files
+- [x] Add production Import Preview and field-mapping UI
+- [x] Commit approved Preview candidates into a new Exam Trainer catalog
+- [x] Persist APKG media in the asset library and link resolved image/audio references
 - [ ] Decode modern binary media maps to original filenames
-- [ ] Add production Import Preview and field-mapping UI
-- [ ] Commit approved Preview candidates into a new Exam Trainer catalog
-- [ ] Connect imported media to the future asset library
+- [ ] Render linked imported media offline in learning and examination flows
 
 ## 1.0 — Full release
 
