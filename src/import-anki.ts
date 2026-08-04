@@ -2,6 +2,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { decompress } from 'fzstd';
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
+import { archiveNameForMediaEntry, decodeAnkiMediaEntries, type AnkiMediaMapEntry } from './anki-media-map';
 import { emptyImportBundle, type NormalizedImportBundle, type NormalizedImportCard, type NormalizedImportField } from './import-model';
 
 let sqlPromise: Promise<SqlJsStatic> | undefined;
@@ -209,31 +210,138 @@ function unzipMediaEntries(
   if (skippedCount) {
     bundle.warnings.push({
       code: 'ARCHIVE_LIMIT',
-      message: `${skippedCount} Mediendateien wurden wegen Einzeldatei- oder Gesamtgrößenlimit übersprungen.`,
+      message: `${skippedCount} Mediendateien wurden bereits auf ZIP-Ebene wegen Einzeldatei- oder Gesamtgrößenlimit übersprungen.`,
     });
   }
   return entries;
 }
 
-function extractMedia(entries: Record<string, Uint8Array>, bundle: NormalizedImportBundle): void {
+function bytesEqual(left: Uint8Array, right: Uint8Array): boolean {
+  if (left.byteLength !== right.byteLength) return false;
+  for (let index = 0; index < left.byteLength; index++) if (left[index] !== right[index]) return false;
+  return true;
+}
+
+async function sha1Matches(bytes: Uint8Array, expected: Uint8Array): Promise<boolean | undefined> {
+  if (!expected.byteLength || !globalThis.crypto?.subtle) return undefined;
+  try {
+    const input = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-1', input));
+    return bytesEqual(digest, expected);
+  } catch {
+    return undefined;
+  }
+}
+
+function decodeModernMediaMap(
+  mediaMapBytes: Uint8Array,
+  decompressZstd: (bytes: Uint8Array) => Uint8Array,
+  bundle: NormalizedImportBundle,
+  limits: ApkgSafetyLimits,
+): Map<string, AnkiMediaMapEntry> | undefined {
+  try {
+    const decoded = decompressZstd(mediaMapBytes);
+    if (decoded.byteLength > limits.maxControlEntryBytes) {
+      bundle.warnings.push({ code:'ARCHIVE_LIMIT', message:'Das dekodierte moderne Anki-Medienverzeichnis überschreitet das Sicherheitslimit.' });
+      return undefined;
+    }
+    const entries = decodeAnkiMediaEntries(decoded);
+    return new Map(entries.map((entry, index) => [archiveNameForMediaEntry(entry, index), entry]));
+  } catch (error) {
+    bundle.warnings.push({
+      code: 'MODERN_MEDIA_MAP_UNRESOLVED',
+      message: `Das moderne Anki-Medienverzeichnis konnte nicht dekodiert werden; komprimierte Medien werden aus Sicherheitsgründen nicht übernommen. (${String(error)})`,
+    });
+    return undefined;
+  }
+}
+
+async function extractLegacyMedia(
+  entries: Record<string, Uint8Array>,
+  bundle: NormalizedImportBundle,
+): Promise<void> {
   const mediaMapBytes = entries.media;
   let map: Record<string, string> = {};
-  let unresolvedMap = false;
   if (mediaMapBytes) {
     try {
       const text = strFromU8(mediaMapBytes).trim();
       if (text.startsWith('{')) map = JSON.parse(text) as Record<string, string>;
-      else unresolvedMap = true;
     } catch {
-      unresolvedMap = true;
+      // Legacy media can still be retained without a filename mapping.
     }
   }
   for (const [archiveName, mediaBytes] of Object.entries(entries)) {
     if (!CONTROL_NAMES.has(archiveName)) bundle.media.push({ archiveName, fileName: map[archiveName], bytes: mediaBytes });
   }
-  if (unresolvedMap) bundle.warnings.push({ code: 'MODERN_MEDIA_MAP_UNRESOLVED', message: 'Das moderne binäre Anki-Medienverzeichnis wird noch nicht semantisch dekodiert. Mediendateien bleiben im Import-Bundle erhalten, aber ihre Originalnamen können fehlen.' });
   const unresolvedCount = bundle.media.filter(media => !media.fileName).length;
-  if (unresolvedCount && mediaMapBytes) bundle.warnings.push({ code: 'UNMAPPED_MEDIA', message: `${unresolvedCount} Medieneinträge haben noch keinen aufgelösten Originaldateinamen.` });
+  if (unresolvedCount && mediaMapBytes) bundle.warnings.push({ code: 'UNMAPPED_MEDIA', message: `${unresolvedCount} Medieneinträge haben keinen aufgelösten Originaldateinamen.` });
+}
+
+async function extractModernMedia(
+  entries: Record<string, Uint8Array>,
+  bundle: NormalizedImportBundle,
+  decompressZstd: (bytes: Uint8Array) => Uint8Array,
+  limits: ApkgSafetyLimits,
+): Promise<void> {
+  const mediaMapBytes = entries.media;
+  if (!mediaMapBytes) {
+    bundle.warnings.push({ code:'MODERN_MEDIA_MAP_UNRESOLVED', message:'Das moderne APKG enthält kein Medienverzeichnis; Medien werden nicht übernommen.' });
+    return;
+  }
+  const map = decodeModernMediaMap(mediaMapBytes, decompressZstd, bundle, limits);
+  if (!map) return;
+
+  let acceptedBytes = 0;
+  let missingMap = 0;
+  for (const [archiveName, compressedBytes] of Object.entries(entries)) {
+    if (CONTROL_NAMES.has(archiveName)) continue;
+    const metadata = map.get(archiveName);
+    if (!metadata) {
+      missingMap++;
+      continue;
+    }
+    if (metadata.size > limits.maxMediaEntryBytes || acceptedBytes + metadata.size > limits.maxTotalMediaBytes) {
+      bundle.warnings.push({ code:'ARCHIVE_LIMIT', message:`Medium ${metadata.name} überschreitet das dekodierte Medienlimit und wurde übersprungen.`, sourceId:archiveName });
+      continue;
+    }
+
+    let decoded: Uint8Array;
+    try {
+      decoded = decompressZstd(compressedBytes);
+    } catch (error) {
+      bundle.warnings.push({ code:'MEDIA_INTEGRITY', message:`Medium ${metadata.name} konnte nicht zstd-dekomprimiert werden: ${String(error)}`, sourceId:archiveName });
+      continue;
+    }
+    if (decoded.byteLength !== metadata.size) {
+      bundle.warnings.push({ code:'MEDIA_INTEGRITY', message:`Medium ${metadata.name} hat nach Dekompression ${decoded.byteLength} Byte statt der angekündigten ${metadata.size} Byte und wurde verworfen.`, sourceId:archiveName });
+      continue;
+    }
+    const hashMatches = await sha1Matches(decoded, metadata.sha1);
+    if (hashMatches === false) {
+      bundle.warnings.push({ code:'MEDIA_INTEGRITY', message:`SHA-1-Prüfung für ${metadata.name} ist fehlgeschlagen; das Medium wurde verworfen.`, sourceId:archiveName });
+      continue;
+    }
+    acceptedBytes += decoded.byteLength;
+    bundle.media.push({ archiveName, fileName:metadata.name, bytes:decoded });
+  }
+
+  if (missingMap) bundle.warnings.push({ code:'UNMAPPED_MEDIA', message:`${missingMap} numerische Medieneinträge sind nicht im modernen Anki-Medienverzeichnis beschrieben und wurden nicht übernommen.` });
+  const missingFiles = [...map.keys()].filter(archiveName => !entries[archiveName]).length;
+  if (missingFiles) bundle.warnings.push({ code:'MEDIA_INTEGRITY', message:`${missingFiles} im Medienverzeichnis angekündigte Dateien fehlen im APKG.` });
+}
+
+async function extractMedia(
+  entries: Record<string, Uint8Array>,
+  bundle: NormalizedImportBundle,
+  collectionName: 'collection.anki2' | 'collection.anki21' | 'collection.anki21b',
+  decompressZstd: (bytes: Uint8Array) => Uint8Array,
+  limits: ApkgSafetyLimits,
+): Promise<void> {
+  if (collectionName === 'collection.anki21b') {
+    await extractModernMedia(entries, bundle, decompressZstd, limits);
+  } else {
+    await extractLegacyMedia(entries, bundle);
+  }
 }
 
 function selectCollection(
@@ -262,7 +370,8 @@ export async function parseApkgImport(bytes: Uint8Array, sourceName?: string, op
 
   const controlEntries = unzipControlEntries(bytes, bundle, limits);
   if (!controlEntries) return bundle;
-  const collection = selectCollection(controlEntries, options.decompressZstd ?? decompress);
+  const decompressZstd = options.decompressZstd ?? decompress;
+  const collection = selectCollection(controlEntries, decompressZstd);
   if (collection.bytes.byteLength > limits.maxDecodedCollectionBytes) {
     bundle.warnings.push({
       code: 'ARCHIVE_LIMIT',
@@ -274,7 +383,7 @@ export async function parseApkgImport(bytes: Uint8Array, sourceName?: string, op
   }
   bundle.metadata.collectionFile = collection.name;
   const mediaEntries = unzipMediaEntries(bytes, bundle, limits);
-  extractMedia({ ...controlEntries, ...mediaEntries }, bundle);
+  await extractMedia({ ...controlEntries, ...mediaEntries }, bundle, collection.name, decompressZstd, limits);
 
   const SQL = options.sql ?? await loadSql();
   const db = new SQL.Database(collection.bytes);
