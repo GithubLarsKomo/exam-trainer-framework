@@ -7,7 +7,7 @@ import { buildTodayPlan } from './today-plan';
 import { legacyQuestionVariantId, type AppState, type CardVersion, type Catalog, type ExamBlueprint, type Outcome, type Progress, type QuestionType, type QueueReasonCode } from './model';
 
 const $ = <T extends Element>(s:string) => document.querySelector<T>(s);
-const esc = (v:unknown) => String(v ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[m]!));
+const esc = (v:unknown) => String(v ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]!));
 const now = () => new Date().toISOString();
 const questionTypes:QuestionType[]=['free_text','numeric','single_choice','multiple_choice','cloze','matching','ordering','image_labels','drawing','case_study'];
 const labels:Record<QuestionType,string>={free_text:'Freitext',numeric:'Zahl',single_choice:'Single Choice',multiple_choice:'Multiple Choice',cloze:'Lückentext',matching:'Zuordnung',ordering:'Reihenfolge',image_labels:'Bildbeschriftung',drawing:'Zeichnung',case_study:'Fallaufgabe'};
