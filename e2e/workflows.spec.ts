@@ -13,8 +13,8 @@ test('restores an interrupted learning session including the answer draft', asyn
   })).toBe(true);
 
   await page.reload();
-  const resume=page.getByRole('button',{name:/fortsetzen|wiederaufnehmen/i}).first();
-  if(await resume.count()) await resume.click();
+  await expect(page.locator('[data-recoverable-resume-banner]')).toBeVisible();
+  await page.locator('[data-recoverable-resume]').click();
   await expect(page.locator('[data-recoverable-session]')).toBeVisible();
   await expect(page.locator('textarea#answer')).toHaveValue('persistierte Browserantwort');
 });
@@ -26,9 +26,9 @@ test('provides non-linear examination navigation without committing reviews earl
     card('free_text',{id:'exam-c',prompt:'Prüfungsfrage C'}),
   ]);
   await page.locator('[data-view="exam"]').first().click();
-  const mode=page.locator('#exam-mode');
-  if(await mode.count()) await mode.selectOption('fixed');
-  await page.locator('[data-start-exam]').click();
+  await expect(page.locator('#exam-mode')).toBeVisible();
+  await page.locator('#exam-mode').selectOption('fixed');
+  await page.locator('[data-exam]').click();
   await expect(page.locator('[data-recoverable-exam-nav]')).toHaveCount(3);
   await page.locator('[data-recoverable-exam-nav="1"]').click();
   await expect(page.locator('[data-recoverable-exam-nav="1"]')).toHaveClass(/current/);
@@ -45,7 +45,12 @@ test('editing a released card creates a draft successor and keeps the release im
   await page.locator('textarea[name="prompt"]').fill('Bearbeiteter Entwurf');
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('[data-save-card]').click();
-  await page.waitForLoadState('domcontentloaded');
+
+  await expect.poll(async()=>{
+    const catalogs=await readCatalogs(page);
+    const catalog=catalogs.find(entry=>entry.catalogId==='e2e-catalog') as {cards?:Array<Record<string,unknown>>}|undefined;
+    return catalog?.cards?.some(entry=>entry.parentId==='e2e-publish'&&entry.status==='draft'&&entry.prompt==='Bearbeiteter Entwurf')??false;
+  }).toBe(true);
   const catalogs=await readCatalogs(page);
   const catalog=catalogs.find(entry=>entry.catalogId==='e2e-catalog') as {cards:Array<Record<string,unknown>>};
   const original=catalog.cards.find(entry=>entry.id==='e2e-publish');
