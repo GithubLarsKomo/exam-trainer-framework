@@ -32,3 +32,5 @@ const { installAssetFeature } = await import('./asset-feature');
 installAssetFeature();
 const { installBackupFeature } = await import('./backup-feature');
 installBackupFeature();
+const { installImageLabelFeature } = await import('./image-label-feature');
+installImageLabelFeature();
