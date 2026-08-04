@@ -173,6 +173,25 @@ Diagnostics are evidence-based observations over review history. They must not c
 - [ ] Feed confirmed leech state into the Adaptive Queue as a controlled reason code
 - [ ] Add optional AI-assisted cause hypotheses behind explicit learner/content-review approval
 
+## 0.10 — Anki import
+
+Anki is an inbound content source, not a second runtime model. Imported decks are untrusted input. Scheduling history and template execution are explicitly excluded.
+
+- [x] Add a shared normalized import model for CSV, TSV and APKG
+- [x] Add robust CSV/TSV parsing with quoted fields and embedded newlines
+- [x] Add automatic field-mapping suggestions and safe plain-text Preview candidates
+- [x] Add direct APKG parsing for `collection.anki2`, `collection.anki21` and `collection.anki21b`
+- [x] Read legacy Anki metadata from `col.models` and `col.decks`
+- [x] Read modern schema-15+ fields, note types, templates and decks from normalized tables
+- [x] Preserve note fields, tags, deck hierarchy, template identity, cloze semantics and media bytes
+- [x] Never execute or render imported template HTML/JavaScript
+- [x] Explicitly ignore Anki scheduling and review history
+- [x] Enforce archive and decompressed-entry safety budgets for untrusted APKG files
+- [ ] Decode modern binary media maps to original filenames
+- [ ] Add production Import Preview and field-mapping UI
+- [ ] Commit approved Preview candidates into a new Exam Trainer catalog
+- [ ] Connect imported media to the future asset library
+
 ## 1.0 — Full release
 
 - [ ] Full Fügetechnik catalog
