@@ -68,4 +68,28 @@ describe('schema v3 migration', () => {
     expect(migrated.readinessSnapshots?.[0].readiness).toBe(50);
     expect(migrated.lastBackupAt).toBe('2026-08-04T07:00:00.000Z');
   });
+
+  it('preserves learner progress counters, due date and marks exactly', () => {
+    const progress = {
+      stage: 4,
+      dueAt: '2026-08-10T12:00:00.000Z',
+      correct: 12,
+      partial: 3,
+      incorrect: 2,
+      skipped: 1,
+      marked: true,
+      cardVersion: 7,
+    };
+    const state: PersistedState = {
+      schemaVersion: 2,
+      progress: {'card-progress': progress},
+      history: [],
+      review: {},
+      sessions: {},
+      examAttempts: [],
+      migrationLog: [],
+    };
+    const migrated = migrate(state);
+    expect(migrated.progress['card-progress']).toEqual(progress);
+  });
 });
