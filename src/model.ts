@@ -25,6 +25,13 @@ export interface CardAssetRef {
   altText?: string;
 }
 
+export interface ImageLabelHotspot {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+}
+
 export interface Choice { id: string; text: string; correct?: boolean }
 export interface CardAnswer {
   modelAnswer: string;
@@ -34,6 +41,7 @@ export interface CardAnswer {
   tolerance?: { type: 'absolute' | 'relative'; value: number };
   criteria?: string[];
   choices?: Choice[];
+  imageLabels?: ImageLabelHotspot[];
 }
 export interface CardVersion {
   id: string;
