@@ -44,7 +44,10 @@ test('editing a released card creates a draft successor and keeps the release im
   await openCardEditor(page,released.id);
   await page.locator('textarea[name="prompt"]').fill('Bearbeiteter Entwurf');
   page.once('dialog',dialog=>dialog.accept());
+  const reloaded=page.waitForEvent('framenavigated',frame=>frame===page.mainFrame());
   await page.locator('[data-save-card]').click();
+  await reloaded;
+  await expect(page.locator('.app-header h1')).toHaveText('E2E Katalog');
 
   await expect.poll(async()=>{
     const catalogs=await readCatalogs(page);
