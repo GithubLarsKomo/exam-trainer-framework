@@ -99,9 +99,10 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 - [x] SHA-256 content hashing and binary deduplication
 - [x] Asset manifest metadata for type, size, source and filename
 - [x] Card and question-variant asset references for resolved imports
+- [x] Offline image/audio rendering from asset references with a fail-closed media allowlist
+- [x] Read-only Asset Library inventory with usage and local-presence status
 - [ ] Upload from iPhone files and photo library
 - [ ] Rights and alt-text metadata authoring
-- [ ] Offline image/audio rendering from asset references
 - [ ] Asset usage and orphan validation across catalogs
 - [ ] Image-label hotspot editor
 - [ ] Backup/export including binary assets
@@ -196,8 +197,8 @@ Anki is an inbound content source, not a second runtime model. Imported decks ar
 - [x] Add production Import Preview and field-mapping UI
 - [x] Commit approved Preview candidates into a new Exam Trainer catalog
 - [x] Persist APKG media in the asset library and link resolved image/audio references
+- [x] Render linked imported media offline in learning and examination flows
 - [ ] Decode modern binary media maps to original filenames
-- [ ] Render linked imported media offline in learning and examination flows
 
 ## 1.0 — Full release
 
