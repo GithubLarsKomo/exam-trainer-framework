@@ -1,6 +1,7 @@
 import { builtinCatalog } from './builtin-v04';
 import { loadState, migrate, saveState, type PersistedState } from './db';
 import { parseApkgImport } from './import-anki';
+import { persistImportAssets } from './import-assets';
 import { createCatalogFromImportPreview } from './import-commit';
 import { parseDelimitedImport } from './import-delimited';
 import { createImportPreview, suggestImportMapping } from './import-preview';
@@ -60,8 +61,9 @@ function renderPreview(): void {
   if (!bundle || !preview) return renderChooser();
   const mapping = preview.mapping;
   const sampleRows = preview.candidates.slice(0, 25).map(candidate => `<tr><td>${esc(candidate.topicId)}</td><td>${esc(candidate.prompt)}</td><td>${esc(candidate.modelAnswer)}</td><td>${esc(candidate.questionType)}</td></tr>`).join('');
+  const linkedMediaRefs = preview.candidates.reduce((sum, candidate) => sum + (candidate.mediaRefs?.length ?? 0), 0);
   const mediaNotice = bundle.media.length
-    ? `<div class="notice"><strong>${bundle.media.length} Mediendateien erkannt.</strong> Sie bleiben im Parser-Bundle erhalten, werden aber bis zur Asset-Library noch nicht in den Katalog committed. Bild-/Audio-abhängige Wissenseinheiten im Preview besonders prüfen.</div>`
+    ? `<div class="notice"><strong>${bundle.media.length} Mediendateien erkannt.</strong> Beim Commit werden sie lokal in der Asset-Library gespeichert. ${linkedMediaRefs} Referenzen konnten aus Frage/Antwort/Erklärung erkannt werden; Medien ohne auflösbaren Originaldateinamen bleiben gespeichert, aber unverknüpft.</div>`
     : '';
   const metadata = bundle.sourceKind === 'apkg'
     ? `APKG · ${esc(bundle.metadata.collectionFile ?? 'unbekannte Collection')} · Schema ${esc(bundle.metadata.ankiSchemaVersion ?? 'unbekannt')}`
@@ -111,13 +113,17 @@ async function commitPreview(): Promise<void> {
     title,
     status,
   });
+  const assetResult = await persistImportAssets(catalog, preview, bundle);
   const fallback: PersistedState = { schemaVersion:3, progress:{}, history:[], review:{}, sessions:{}, examAttempts:[], migrationLog:[] };
   const raw = migrate(await loadState(fallback)) as PersistedState & Partial<AppState>;
   const catalogs = Array.isArray(raw.catalogs) && raw.catalogs.length ? raw.catalogs : [structuredClone(builtinCatalog)];
   raw.catalogs = [...catalogs, catalog];
   raw.activeCatalogId = catalog.catalogId;
   await saveState(raw);
-  app().innerHTML = shell(`<section class="panel centered"><div class="success">✓</div><h2>Import übernommen</h2><p>${catalog.cards.length} Wissenseinheiten wurden als neuer Katalog „${esc(catalog.title)}“ gespeichert.</p><p class="muted">Status: ${status === 'released' ? 'freigegeben' : 'Entwurf'}. Anki-Scheduling-Historie wurde nicht übernommen.</p><button class="primary" data-import-reload>Importierten Katalog öffnen</button></section>`);
+  const mediaSummary = assetResult.storedAssets
+    ? ` ${assetResult.storedAssets} Assets wurden offline gespeichert; ${assetResult.linkedReferences} Kartenreferenzen wurden verknüpft.${assetResult.unresolvedMedia ? ` ${assetResult.unresolvedMedia} Medien ohne aufgelösten Dateinamen bleiben unverknüpft.` : ''}`
+    : '';
+  app().innerHTML = shell(`<section class="panel centered"><div class="success">✓</div><h2>Import übernommen</h2><p>${catalog.cards.length} Wissenseinheiten wurden als neuer Katalog „${esc(catalog.title)}“ gespeichert.</p><p class="muted">Status: ${status === 'released' ? 'freigegeben' : 'Entwurf'}. Anki-Scheduling-Historie wurde nicht übernommen.${esc(mediaSummary)}</p><button class="primary" data-import-reload>Importierten Katalog öffnen</button></section>`);
   bindScreen();
 }
 
