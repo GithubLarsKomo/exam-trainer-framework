@@ -92,13 +92,15 @@ Structured question types use a compact local authoring syntax and render as nat
 
 ### Phase F — Versioning and publication
 
-- [ ] Immutable released card versions
-- [ ] New draft generated from released card
-- [ ] Workflow states and transition log
-- [ ] Version history and comparison
-- [ ] Restore earlier version as new draft
-- [ ] Catalog validation report
-- [ ] Blocking errors and confirmable warnings
+Released content is immutable. Each logical card keeps a stable active ID for learner progress, while released snapshots and workflow transitions are retained in catalog history. Publication is gated by validation; blocking errors stop release and warnings require explicit confirmation.
+
+- [x] Immutable released card versions
+- [x] New draft generated from released card
+- [x] Workflow states and transition log
+- [x] Version history and comparison
+- [x] Restore earlier version as new draft
+- [x] Catalog validation report
+- [x] Blocking errors and confirmable warnings
 
 ### Phase G — Asset library
 
@@ -118,7 +120,7 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 
 ### Phase H — Acceptance
 
-- [ ] Unit tests for catalog validation and versioning
+- [x] Unit tests for catalog validation and versioning
 - [ ] Browser-level tests for all question renderers
 - [x] Migration tests preserving learner progress
 - [x] Production build and CI pass for the consolidated v0.5 acceptance head
