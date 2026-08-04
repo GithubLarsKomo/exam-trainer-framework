@@ -40,13 +40,15 @@ Acceptance matrix: [docs/acceptance-v0.5.md](docs/acceptance-v0.5.md)
 
 ### Phase B — Learning and examination UX
 
+Recoverable sessions persist queue order, current position, reveal state, response time and answer state in IndexedDB. Examination reviews are staged inside the recoverable exam session and are applied to learner progress only when the examination is submitted.
+
 - [x] Focused learning card layout
 - [x] Session progress and remaining-time estimate
-- [ ] Autosaved active session queue and exact resume after browser termination
+- [x] Autosaved active session queue and exact resume after browser termination
 - [x] Improved reveal and self-grading flow with answer-draft recovery
 - [ ] Optional touch gestures with button fallback
-- [ ] Examination overview and answer navigation
-- [ ] Fixed and dynamic examination profiles
+- [x] Examination overview and answer navigation
+- [x] Fixed and dynamic examination profiles
 - [ ] Dependent examination tasks
 
 ### Phase C — Multiple local catalogs
