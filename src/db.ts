@@ -1,3 +1,5 @@
+import { legacyQuestionVariantId, type FsrsShadowState, type ReviewEvent } from './model';
+
 export type PersistedHistoryEntry = {
   cardId: string;
   outcome: 'correct' | 'partial' | 'incorrect';
@@ -17,6 +19,8 @@ export type PersistedState = {
   schemaVersion: number;
   progress: Record<string, unknown>;
   history: PersistedHistoryEntry[];
+  reviewEvents?: ReviewEvent[];
+  fsrsShadow?: Record<string, FsrsShadowState>;
   review: Record<string, string>;
   activeCatalog?: unknown;
   sessions?: Record<string, unknown>;
@@ -89,8 +93,9 @@ export async function loadState(fallback: PersistedState): Promise<PersistedStat
       // Keep fallback and do not destroy malformed legacy data.
     }
   }
-  await write(STATE_KEY, fallback);
-  return fallback;
+  const migratedFallback = migrate(fallback);
+  await write(STATE_KEY, migratedFallback);
+  return migratedFallback;
 }
 
 export async function saveState(state: PersistedState): Promise<void> {
@@ -110,11 +115,32 @@ export async function replaceState(next: PersistedState, current: PersistedState
   return migrated;
 }
 
+function canonicalLegacyCardId(cardId: string): string {
+  return cardId.replace(/#exam\d+$/, '');
+}
+
+function migrateLegacyHistory(history: PersistedHistoryEntry[]): ReviewEvent[] {
+  return history.map((entry, index) => {
+    const knowledgeItemId = canonicalLegacyCardId(entry.cardId);
+    return {
+      id: `legacy:${index}:${entry.at}:${knowledgeItemId}`,
+      knowledgeItemId,
+      questionVariantId: legacyQuestionVariantId(knowledgeItemId),
+      source: entry.cardId === knowledgeItemId ? 'learning' : 'exam',
+      outcome: entry.outcome,
+      answeredAt: entry.at,
+      migrationSource: 'legacy-history',
+    };
+  });
+}
+
 export function migrate(input: PersistedState): PersistedState {
   const state: PersistedState = {
     schemaVersion: Number(input.schemaVersion || 1),
     progress: input.progress ?? {},
     history: Array.isArray(input.history) ? input.history : [],
+    reviewEvents: Array.isArray(input.reviewEvents) ? input.reviewEvents : [],
+    fsrsShadow: input.fsrsShadow ?? {},
     review: input.review ?? {},
     activeCatalog: input.activeCatalog,
     sessions: input.sessions ?? {},
@@ -124,6 +150,11 @@ export function migrate(input: PersistedState): PersistedState {
   if (state.schemaVersion < 2) {
     state.migrationLog!.push({from: state.schemaVersion, to: 2, at: new Date().toISOString(), status: 'success'});
     state.schemaVersion = 2;
+  }
+  if (state.schemaVersion < 3) {
+    if (!state.reviewEvents!.length && state.history.length) state.reviewEvents = migrateLegacyHistory(state.history);
+    state.migrationLog!.push({from: state.schemaVersion, to: 3, at: new Date().toISOString(), status: 'success', message: 'Added ReviewEvent and FSRS shadow state containers.'});
+    state.schemaVersion = 3;
   }
   return state;
 }
