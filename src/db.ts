@@ -108,7 +108,7 @@ export async function loadState(fallback: PersistedState): Promise<PersistedStat
   const stored = await read<PersistedState>(STATE_KEY);
   if (stored) return migrate(stored);
 
-  const legacy = localStorage.getItem(LEGACY_KEY);
+  const legacy = typeof localStorage === 'undefined' ? null : localStorage.getItem(LEGACY_KEY);
   if (legacy) {
     try {
       const parsed = JSON.parse(legacy) as Partial<PersistedState>;
@@ -154,7 +154,7 @@ export async function replaceStateAndAssetsAtomically(next: PersistedState, asse
     assetStore.clear();
     for (const asset of assets) assetStore.add(asset);
     await done;
-    localStorage.removeItem(LEGACY_KEY);
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(LEGACY_KEY);
     return migrated;
   } finally {
     db.close();
