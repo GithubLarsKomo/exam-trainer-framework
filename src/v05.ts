@@ -44,3 +44,5 @@ const { installRecoverableOrderingBridge } = await import('./recoverable-orderin
 installRecoverableOrderingBridge();
 const { installCatalogLifecycleFeature } = await import('./catalog-lifecycle-feature');
 installCatalogLifecycleFeature();
+const { installFullCardEditorFeature } = await import('./full-card-editor-feature');
+installFullCardEditorFeature();
