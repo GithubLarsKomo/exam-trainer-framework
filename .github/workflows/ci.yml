@@ -25,6 +25,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package.json') }}
+      - name: Install WebKit system dependencies
+        run: npx playwright install-deps webkit
       - name: Install Playwright browsers
         run: npx playwright install chromium webkit
       - name: Run browser acceptance suite
