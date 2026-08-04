@@ -93,4 +93,25 @@ describe('APKG import',()=>{
     expect(bundle.notes).toHaveLength(0);
     expect(bundle.warnings).toContainEqual(expect.objectContaining({code:'UNSUPPORTED_ANKI_SCHEMA',blocking:true}));
   });
+
+  it('blocks oversized archives before decompression',async()=>{
+    const SQL=await loadSql();
+    const archive=zipSync({'collection.anki2':legacyDb(SQL)});
+    const bundle=await parseApkgImport(archive,'too-large.apkg',{sql:SQL,safetyLimits:{maxArchiveBytes:archive.byteLength-1}});
+    expect(bundle.notes).toHaveLength(0);
+    expect(bundle.warnings).toContainEqual(expect.objectContaining({code:'ARCHIVE_LIMIT',blocking:true}));
+  });
+
+  it('skips oversized media while preserving the collection import',async()=>{
+    const SQL=await loadSql();
+    const archive=zipSync({
+      'collection.anki2':legacyDb(SQL),
+      media:strToU8(JSON.stringify({'0':'large.bin'})),
+      '0':new Uint8Array([1,2,3,4]),
+    });
+    const bundle=await parseApkgImport(archive,'media-limit.apkg',{sql:SQL,safetyLimits:{maxMediaEntryBytes:2}});
+    expect(bundle.notes).toHaveLength(1);
+    expect(bundle.media).toHaveLength(0);
+    expect(bundle.warnings.some(w=>w.code==='ARCHIVE_LIMIT')).toBe(true);
+  });
 });
