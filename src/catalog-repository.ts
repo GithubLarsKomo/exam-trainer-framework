@@ -55,9 +55,16 @@ export function deleteCatalog(catalogs: Catalog[], catalogId: string, activeCata
 
 export function catalogExport(catalog: Catalog): string { return JSON.stringify({format:'etf-catalog',version:1,catalog},null,2); }
 
+function isCatalog(value: unknown): value is Catalog {
+  if(!value||typeof value!=='object')return false;
+  const item=value as Partial<Catalog>;
+  return typeof item.catalogId==='string'&&typeof item.title==='string'&&typeof item.version==='string'&&Array.isArray(item.cards);
+}
+
 export function parseCatalogExport(text: string): Catalog {
-  const parsed=JSON.parse(text) as {format?:string;catalog?:Catalog}|Catalog;
-  const catalog='catalog' in parsed?parsed.catalog:parsed;
-  if(!catalog||typeof catalog.catalogId!=='string'||typeof catalog.title!=='string'||!Array.isArray(catalog.cards)) throw new Error('Ungültiges Katalogformat.');
-  return structuredClone(catalog);
+  const parsed=JSON.parse(text) as unknown;
+  let candidate:unknown=parsed;
+  if(parsed&&typeof parsed==='object'&&'catalog' in parsed) candidate=(parsed as {catalog?:unknown}).catalog;
+  if(!isCatalog(candidate)) throw new Error('Ungültiges Katalogformat.');
+  return structuredClone(candidate);
 }
