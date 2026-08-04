@@ -110,6 +110,60 @@ export function cardVersionToKnowledgeItem(card: CardVersion): KnowledgeItem {
   };
 }
 
+export interface ExamBlueprintSection {
+  topicId: string;
+  weight: number;
+  minItems?: number;
+  maxItems?: number;
+}
+
+export interface ExamBlueprint {
+  id: string;
+  catalogId: string;
+  version: number;
+  title?: string;
+  examDate?: string;
+  totalPoints?: number;
+  totalItems?: number;
+  passThreshold?: number;
+  timeLimitMinutes?: number;
+  sections: ExamBlueprintSection[];
+}
+
+export interface ReadinessTopicSnapshot {
+  topicId: string;
+  weight: number;
+  itemCount: number;
+  coveredItems: number;
+  coverage: number;
+  mastery: number;
+}
+
+export interface ReadinessSnapshot {
+  id: string;
+  catalogId: string;
+  blueprintId: string;
+  calculatedAt: string;
+  readiness: number;
+  mastery: number;
+  coverage: number;
+  coverageAdjustment: number;
+  topics: ReadinessTopicSnapshot[];
+  weakestTopicId?: string;
+}
+
+export type QueueReasonCode =
+  | 'CLASSIC_DUE'
+  | 'FSRS_SHADOW_DUE'
+  | 'LOW_MASTERY'
+  | 'HIGH_EXAM_WEIGHT'
+  | 'COVERAGE_GAP'
+  | 'EXAM_SOON'
+  | 'RECENT_FAILURE'
+  | 'NEW_CONTENT';
+
+export type AdaptiveQueueCategory = 'review' | 'weakness' | 'new';
+
 export interface Catalog {
   catalogId: string;
   title: string;
@@ -120,6 +174,7 @@ export interface Catalog {
   archived?: boolean;
   cards: CardVersion[];
   knowledgeItems?: KnowledgeItem[];
+  examBlueprint?: ExamBlueprint;
 }
 export interface Progress {
   stage: number;
@@ -182,6 +237,7 @@ export interface AppState {
   migrationLog: Array<{ from: number; to: number; at: string; status: string; message?: string }>;
   catalogs: Catalog[];
   activeCatalogId: string;
+  readinessSnapshots?: ReadinessSnapshot[];
   lastBackupAt?: string;
   activeCatalog?: unknown;
 }
