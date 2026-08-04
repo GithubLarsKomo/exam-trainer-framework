@@ -14,6 +14,10 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Functional browser acceptance should exercise the production UI and persistence
+    // deterministically. The PWA/service-worker lifecycle is covered separately and must
+    // not race IndexedDB fixture seeding or serve stale assets between navigations.
+    serviceWorkers: 'block',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
