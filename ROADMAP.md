@@ -115,10 +115,10 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 - [ ] Unit tests for catalog validation and versioning
 - [ ] Browser-level tests for all question renderers
 - [x] Migration tests preserving learner progress
-- [ ] Production build and CI pass for the consolidated v0.5 acceptance head
+- [x] Production build and CI pass for the consolidated v0.5 acceptance head
 - [ ] iPhone Safari acceptance
 - [ ] Tablet and desktop manual acceptance
-- [ ] Version 0.5 release notes
+- [x] Version 0.5 release notes
 
 ## 0.5 — Fügetechnik catalog completion
 
