@@ -36,4 +36,36 @@ describe('schema v3 migration', () => {
       migrationSource: 'legacy-history',
     });
   });
+
+  it('preserves catalogs, active catalog and readiness history during normalization', () => {
+    const state: PersistedState = {
+      schemaVersion: 3,
+      progress: {},
+      history: [],
+      reviewEvents: [],
+      fsrsShadow: {},
+      readinessSnapshots: [{
+        id: 'r1', catalogId: 'catalog', blueprintId: 'bp', calculatedAt: '2026-08-04T08:00:00.000Z',
+        readiness: 50, mastery: 50, coverage: 100, coverageAdjustment: 100,
+        topics: [{ topicId: 'A', weight: 100, itemCount: 1, coveredItems: 1, coverage: 100, mastery: 50 }],
+        weakestTopicId: 'A',
+      }],
+      review: {},
+      catalogs: [{
+        catalogId: 'catalog', title: 'Catalog', version: '1.0.0', createdAt: '2026-08-01T00:00:00.000Z', updatedAt: '2026-08-04T00:00:00.000Z',
+        cards: [],
+      }],
+      activeCatalogId: 'catalog',
+      sessions: {},
+      examAttempts: [],
+      migrationLog: [],
+      lastBackupAt: '2026-08-04T07:00:00.000Z',
+    };
+
+    const migrated = migrate(state);
+    expect(migrated.catalogs?.[0].catalogId).toBe('catalog');
+    expect(migrated.activeCatalogId).toBe('catalog');
+    expect(migrated.readinessSnapshots?.[0].readiness).toBe(50);
+    expect(migrated.lastBackupAt).toBe('2026-08-04T07:00:00.000Z');
+  });
 });
