@@ -56,12 +56,15 @@ function lockBulkStatus():void{const bulkStatus=document.querySelector<HTMLSelec
 async function injectCatalogValidation():Promise<void>{
   lockBulkStatus();
   const initialHost=document.querySelector<HTMLElement>('.card-list')?.parentElement;
-  if(!initialHost||initialHost.querySelector('[data-catalog-validation]')||catalogValidationInjecting)return;
+  // The validation panel is inserted before the host, so a host.querySelector() marker
+  // check can never observe it. Use a document-level marker to keep observer-driven
+  // injection idempotent after the async catalog read completes.
+  if(!initialHost||document.querySelector('[data-catalog-validation]')||catalogValidationInjecting)return;
   catalogValidationInjecting=true;
   try{
     const {catalog}=await context();
     const host=document.querySelector<HTMLElement>('.card-list')?.parentElement;
-    if(!host||host!==initialHost||host.querySelector('[data-catalog-validation]'))return;
+    if(!host||host!==initialHost||document.querySelector('[data-catalog-validation]'))return;
     const issues=validateCatalog(catalog);const errors=issues.filter(i=>i.severity==='error'),warnings=issues.filter(i=>i.severity==='warning');const panel=document.createElement('section');panel.dataset.catalogValidation='';panel.className='panel validation-panel';panel.innerHTML=`<div class="section-head"><div><span class="eyebrow">Validierung</span><h2>Katalogbericht</h2></div><strong class="${errors.length?'validation-error':warnings.length?'validation-warning':'validation-ok'}">${errors.length} Fehler · ${warnings.length} Warnungen</strong></div>${issues.length?`<div class="table-scroll"><table><thead><tr><th>Schweregrad</th><th>Karte</th><th>Meldung</th></tr></thead><tbody>${issues.map(issue=>`<tr><td>${issue.severity==='error'?'Fehler':'Warnung'}</td><td>${esc(issue.cardId??'–')}</td><td>${esc(issue.message)}</td></tr>`).join('')}</tbody></table></div>`:'<p>Keine Validierungsprobleme gefunden.</p>'}`;host.insertAdjacentElement('beforebegin',panel);
   }finally{catalogValidationInjecting=false;}
 }
