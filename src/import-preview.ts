@@ -2,6 +2,7 @@ import type {
   ImportCandidate,
   ImportMapping,
   ImportPreview,
+  ImportWarning,
   NormalizedImportBundle,
   NormalizedImportNote,
 } from './import-model';
@@ -39,6 +40,33 @@ export function importedContentToPlainText(value: string): string {
 function fieldValue(note: NormalizedImportNote, fieldName?: string): string {
   if (!fieldName) return '';
   return note.fields.find(field => field.name === fieldName)?.value ?? '';
+}
+
+function mappedFieldValue(
+  note: NormalizedImportNote,
+  bundle: NormalizedImportBundle,
+  fieldName: string | undefined,
+  role: string,
+  warnings: ImportWarning[],
+): string {
+  if (!fieldName) return '';
+  const exact = note.fields.find(field => field.name === fieldName);
+  if (exact) return exact.value;
+  if (bundle.sourceKind !== 'apkg') return '';
+
+  const reference = bundle.notes
+    .flatMap(candidate => candidate.fields)
+    .find(field => field.name === fieldName);
+  if (!reference) return '';
+  const fallback = note.fields.find(field => field.ordinal === reference.ordinal);
+  if (!fallback) return '';
+
+  warnings.push({
+    code: 'FIELD_ORDINAL_FALLBACK',
+    message: `${role} „${fieldName}“ fehlt im Notetype ${note.noteTypeName ?? note.noteTypeId ?? 'unbekannt'}; Feldposition ${reference.ordinal + 1} („${fallback.name}“) wird verwendet.`,
+    sourceId: note.sourceNoteId,
+  });
+  return fallback.value;
 }
 
 function firstMatchingField(fieldNames: string[], patterns: RegExp[]): string | undefined {
@@ -103,12 +131,16 @@ export function createImportPreview(bundle: NormalizedImportBundle, mapping: Imp
   const seenIds = new Set<string>();
   const candidates: ImportCandidate[] = [];
   for (const note of bundle.notes) {
-    const questionRaw = fieldValue(note, mapping.questionField);
-    const answerRaw = fieldValue(note, mapping.answerField);
+    const questionRaw = mappedFieldValue(note, bundle, mapping.questionField, 'Fragefeld', warnings);
+    const answerRaw = mappedFieldValue(note, bundle, mapping.answerField, 'Antwortfeld', warnings);
     const question = importedContentToPlainText(questionRaw);
     const answer = importedContentToPlainText(answerRaw);
-    if (!question && !answer) {
-      warnings.push({ code: 'EMPTY_NOTE', message: 'Wissenseinheit ohne Frage und Antwort wurde übersprungen.', sourceId: note.sourceNoteId });
+    if (!question || !answer) {
+      warnings.push({
+        code: 'MISSING_MAPPED_CONTENT',
+        message: 'Wissenseinheit ohne vollständig gemappte Frage und Musterantwort wurde übersprungen.',
+        sourceId: note.sourceNoteId,
+      });
       continue;
     }
     let id = stableCandidateId(note.sourceNoteId);
@@ -120,8 +152,8 @@ export function createImportPreview(bundle: NormalizedImportBundle, mapping: Imp
     }
     seenIds.add(id);
 
-    const source = importedContentToPlainText(fieldValue(note, mapping.sourceField)) || mapping.defaultSource?.trim() || 'Import';
-    const explanation = importedContentToPlainText(fieldValue(note, mapping.explanationField)) || undefined;
+    const source = importedContentToPlainText(mappedFieldValue(note, bundle, mapping.sourceField, 'Quellenfeld', warnings)) || mapping.defaultSource?.trim() || 'Import';
+    const explanation = importedContentToPlainText(mappedFieldValue(note, bundle, mapping.explanationField, 'Erklärungsfeld', warnings)) || undefined;
     const isCloze = note.clozeDetected && /\{\{c\d+::/i.test(questionRaw);
     candidates.push({
       sourceNoteId: note.sourceNoteId,
