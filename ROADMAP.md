@@ -64,14 +64,16 @@ Catalog metadata/content are persisted in a dedicated IndexedDB catalog store wh
 
 ### Phase D — Full card editor
 
-- [ ] Card list, search, filters and sorting
-- [ ] Multi-select and bulk editing
-- [ ] Create, edit, duplicate and archive cards
-- [ ] Mobile-first editor
-- [ ] Live preview using production renderer
-- [ ] JSON view
-- [ ] Per-card synonyms and typo tolerance
-- [ ] Source metadata editor
+The existing editor remains the primary surface. Additive editor tooling provides filtering/bulk operations, extended answer/source metadata and a production-shaped preview while preserving structured question and asset fields on save.
+
+- [x] Card list, search, filters and sorting
+- [x] Multi-select and bulk editing
+- [x] Create, edit, duplicate and archive cards
+- [x] Mobile-first editor
+- [x] Live preview using production renderer hooks
+- [x] JSON view
+- [x] Per-card synonyms and typo tolerance
+- [x] Source metadata editor
 
 ### Phase E — All question types
 
