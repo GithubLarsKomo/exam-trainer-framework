@@ -70,16 +70,18 @@ Decisions: [docs/grill-decisions-v0.4.md](docs/grill-decisions-v0.4.md)
 
 ### Phase E — All question types
 
+Structured question types use a compact local authoring syntax and render as native interactive controls in learning and examination sessions. The existing learner self-assessment remains authoritative after reveal.
+
 - [x] Free text
 - [x] Numeric
-- [ ] Single choice
-- [ ] Multiple choice
-- [ ] Cloze
-- [ ] Matching
-- [ ] Ordering
+- [x] Single choice
+- [x] Multiple choice
+- [x] Cloze
+- [x] Matching
+- [x] Ordering
 - [x] Image labels
 - [x] Drawing
-- [ ] Case study
+- [x] Case study
 
 ### Phase F — Versioning and publication
 

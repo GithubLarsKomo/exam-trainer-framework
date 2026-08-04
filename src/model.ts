@@ -33,6 +33,17 @@ export interface ImageLabelHotspot {
 }
 
 export interface Choice { id: string; text: string; correct?: boolean }
+export interface ClozeBlank { id: string; answer: string; aliases?: string[] }
+export interface MatchingPair { id: string; left: string; right: string }
+export interface OrderingItem { id: string; text: string }
+export interface CaseStudyPart {
+  id: string;
+  prompt: string;
+  modelAnswer: string;
+  requiredTerms?: string[];
+  points?: number;
+}
+
 export interface CardAnswer {
   modelAnswer: string;
   requiredTerms?: string[];
@@ -42,6 +53,10 @@ export interface CardAnswer {
   criteria?: string[];
   choices?: Choice[];
   imageLabels?: ImageLabelHotspot[];
+  clozeBlanks?: ClozeBlank[];
+  matchingPairs?: MatchingPair[];
+  orderingItems?: OrderingItem[];
+  caseStudyParts?: CaseStudyPart[];
 }
 export interface CardVersion {
   id: string;
