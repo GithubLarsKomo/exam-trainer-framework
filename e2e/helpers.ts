@@ -113,10 +113,6 @@ export async function seedCatalog(page: Page, cards: SeedCard[], assets: SeedAss
 
   await page.goto('/');
   await page.evaluate(async ({ catalog, state, assets }) => {
-    const request = <T>(req: IDBRequest<T>) => new Promise<T>((resolve, reject) => {
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
     await new Promise<void>((resolve, reject) => {
       const req = indexedDB.deleteDatabase('exam-trainer-framework');
       req.onsuccess = () => resolve();
@@ -147,10 +143,27 @@ export async function seedCatalog(page: Page, cards: SeedCard[], assets: SeedAss
       tx.onabort = () => reject(tx.error);
     });
     db.close();
-    void request;
   }, { catalog, state, assets });
   await page.reload();
   await expect(page.getByRole('heading', { name: 'E2E Katalog' })).toBeVisible();
+}
+
+export async function readCatalogs(page: Page): Promise<Array<Record<string, unknown>>> {
+  return page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('exam-trainer-framework', 3);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction('catalogs', 'readonly');
+    const catalogs = await new Promise<Array<Record<string, unknown>>>((resolve, reject) => {
+      const req = tx.objectStore('catalogs').getAll();
+      req.onsuccess = () => resolve(req.result as Array<Record<string, unknown>>);
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return catalogs;
+  });
 }
 
 export async function startLearning(page: Page): Promise<void> {
