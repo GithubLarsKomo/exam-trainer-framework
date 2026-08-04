@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildAdaptiveQueue } from '../src/adaptive-queue';
-import type { CardVersion, ExamBlueprint, FsrsShadowState, Progress, ReviewEvent } from '../src/model';
+import type { CardVersion, ExamBlueprint, FsrsShadowState, Outcome, Progress, ReviewEvent } from '../src/model';
 
 function card(id: string, topicId: string): CardVersion {
   return {
@@ -33,15 +33,28 @@ function progress(stage: number, dueAt = '2026-08-10T00:00:00.000Z'): Progress {
   };
 }
 
-function failure(cardId: string): ReviewEvent {
+function review(cardId: string, outcome: Outcome, answeredAt: string, suffix = answeredAt): ReviewEvent {
   return {
-    id: `failure:${cardId}`,
+    id: `${cardId}:${outcome}:${suffix}`,
     knowledgeItemId: cardId,
     questionVariantId: `${cardId}:q1`,
     source: 'learning',
-    outcome: 'incorrect',
-    answeredAt: '2026-08-03T00:00:00.000Z',
+    outcome,
+    answeredAt,
   };
+}
+
+function failure(cardId: string): ReviewEvent {
+  return review(cardId, 'incorrect', '2026-08-03T00:00:00.000Z');
+}
+
+function leechHistory(cardId: string): ReviewEvent[] {
+  return [
+    review(cardId, 'incorrect', '2026-07-30T00:00:00.000Z', '1'),
+    review(cardId, 'incorrect', '2026-07-31T00:00:00.000Z', '2'),
+    review(cardId, 'incorrect', '2026-08-01T00:00:00.000Z', '3'),
+    review(cardId, 'correct', '2026-08-03T00:00:00.000Z', '4'),
+  ];
 }
 
 function shadow(dueAt: string): FsrsShadowState {
@@ -91,6 +104,49 @@ describe('adaptive study queue', () => {
     expect(queue[0].reasons).toContain('RECENT_FAILURE');
     expect(queue[0].reasons).toContain('EXAM_SOON');
     expect(queue[1].reasons).toContain('CLASSIC_DUE');
+  });
+
+  it('adds a bounded leech diagnostic boost even after the latest answer was correct', () => {
+    const cards = [card('leech', 'A'), card('control', 'A')];
+    const queue = buildAdaptiveQueue({
+      catalogId: 'catalog',
+      cards,
+      progress: { leech: progress(4), control: progress(4) },
+      reviewEvents: [
+        ...leechHistory('leech'),
+        review('control', 'correct', '2026-07-30T00:00:00.000Z', '1'),
+        review('control', 'correct', '2026-07-31T00:00:00.000Z', '2'),
+        review('control', 'correct', '2026-08-01T00:00:00.000Z', '3'),
+        review('control', 'correct', '2026-08-03T00:00:00.000Z', '4'),
+      ],
+      fsrsShadow: {},
+      now: new Date('2026-08-04T00:00:00.000Z'),
+    });
+    const leech = queue.find(item => item.cardId === 'leech')!;
+    const control = queue.find(item => item.cardId === 'control')!;
+    expect(leech.signals.recentFailure).toBe(false);
+    expect(leech.signals.leech).toBe(true);
+    expect(leech.diagnosticReasons).toEqual(['LEECH']);
+    expect(leech.category).toBe('weakness');
+    expect(control.signals.leech).toBe(false);
+    expect(control.diagnosticReasons).toEqual([]);
+    expect(leech.score - control.score).toBe(8);
+  });
+
+  it('keeps the leech boost subordinate to a materially higher exam weight', () => {
+    const cards = [card('leech-low-weight', 'A'), card('exam-heavy', 'B')];
+    const queue = buildAdaptiveQueue({
+      catalogId: 'catalog',
+      cards,
+      blueprint,
+      progress: { 'leech-low-weight': progress(4), 'exam-heavy': progress(4) },
+      reviewEvents: leechHistory('leech-low-weight'),
+      fsrsShadow: {},
+      now: new Date('2026-08-04T00:00:00.000Z'),
+    });
+    expect(queue.find(item => item.cardId === 'leech-low-weight')?.diagnosticReasons).toContain('LEECH');
+    expect(queue[0].cardId).toBe('exam-heavy');
+    expect(queue[0].reasons).toContain('HIGH_EXAM_WEIGHT');
   });
 
   it('surfaces FSRS shadow due without letting it change priority by default', () => {
