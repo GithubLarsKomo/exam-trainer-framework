@@ -1,4 +1,4 @@
-import { createEmptyCard, fsrs, Rating, type Card, type CardInput } from 'ts-fsrs';
+import { createEmptyCard, fsrs, Rating, State as FsrsState, type Card, type CardInput } from 'ts-fsrs';
 import { applyOutcome, STAGE_INTERVAL_MS, type Outcome, type Stage } from './core';
 import type { FsrsShadowState, ReviewSource } from './model';
 
@@ -66,8 +66,8 @@ function toFsrsCard(state: FsrsShadowState | undefined, at: Date): Card | CardIn
     learning_steps: state.learningSteps,
     reps: state.reps,
     lapses: state.lapses,
-    state: state.state,
-    last_review: state.lastReviewAt ?? null,
+    state: state.state as FsrsState,
+    last_review: state.lastReviewAt,
   };
 }
 
