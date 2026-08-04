@@ -6,6 +6,7 @@ import type { Catalog } from './model';
 let observer: MutationObserver | undefined;
 let scheduled = false;
 let updateBannerVisible = false;
+let updateActivationRequested = false;
 let reloadingForUpdate = false;
 const revealedAnswers = new Map<string,string>();
 
@@ -37,9 +38,6 @@ async function refreshStatus(): Promise<void> {
   if(pill){
     const text=navigator.onLine?'● lokal · online':'● lokal · offline';
     const title=navigator.onLine?'Lernstand liegt lokal; Netzwerk ist verfügbar.':'Lernstand liegt lokal; die App arbeitet ohne Netzwerk.';
-    // MutationObserver watches childList changes. Replacing identical text on every
-    // observer pass would therefore trigger this feature again indefinitely and
-    // keep interactive controls permanently "unstable" for browsers/assistive tools.
     if(pill.textContent!==text) pill.textContent=text;
     if(pill.title!==title) pill.title=title;
   }
@@ -142,7 +140,10 @@ function showUpdateBanner(registration: ServiceWorkerRegistration): void {
   banner.className='update-banner';
   banner.innerHTML='<span>Eine neue App-Version ist verfügbar.</span><button type="button" data-apply-update>Jetzt aktualisieren</button>';
   document.body.append(banner);
-  banner.querySelector<HTMLElement>('[data-apply-update]')?.addEventListener('click',()=>registration.waiting?.postMessage({type:'SKIP_WAITING'}));
+  banner.querySelector<HTMLElement>('[data-apply-update]')?.addEventListener('click',()=>{
+    updateActivationRequested=true;
+    registration.waiting?.postMessage({type:'SKIP_WAITING'});
+  });
 }
 
 async function installUpdateLifecycle(): Promise<void> {
@@ -156,7 +157,9 @@ async function installUpdateLifecycle(): Promise<void> {
     });
   });
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(reloadingForUpdate) return;
+    // A browser may emit controllerchange when the service worker first takes control.
+    // Reload only after the user explicitly accepted the visible update banner.
+    if(!updateActivationRequested||reloadingForUpdate) return;
     reloadingForUpdate=true;
     location.reload();
   });
