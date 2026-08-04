@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
-import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
-import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
+import initSqlJs from 'sql.js/dist/sql-asm.js';
+import type { Database, SqlJsStatic } from 'sql.js';
 import { parseApkgImport } from '../src/import-anki';
 import { createImportPreview } from '../src/import-preview';
 
 let sqlPromise: Promise<SqlJsStatic> | undefined;
-function loadSql(){return sqlPromise ??= initSqlJs({locateFile:()=>sqlWasmUrl});}
+function loadSql(){return sqlPromise ??= initSqlJs() as Promise<SqlJsStatic>;}
 
 function legacyDb(SQL: SqlJsStatic): Uint8Array {
   const db: Database = new SQL.Database();
