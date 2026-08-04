@@ -8,6 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:chromium": "playwright test --project=chromium",
     "check": "npm run test && npm run build"
   },
   "dependencies": {
@@ -17,6 +19,7 @@
     "ts-fsrs": "^5.4.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@types/sql.js": "^1.4.9",
     "fake-indexeddb": "^6.2.5",
     "typescript": "^5.9.2",

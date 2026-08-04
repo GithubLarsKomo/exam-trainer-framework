@@ -31,6 +31,7 @@ let observer: MutationObserver | undefined;
 let scheduled = false;
 let restoring = false;
 let busy = false;
+let resumeBannerInjecting = false;
 
 const reasonLabels: Record<QueueReasonCode,string> = {
   CLASSIC_DUE:'klassisch fällig', FSRS_SHADOW_DUE:'FSRS-Shadow fällig (ohne Einfluss)', LOW_MASTERY:'niedrige Lernstufe',
@@ -316,14 +317,21 @@ async function discardSession(): Promise<void> {
 }
 
 async function injectResumeBanner(): Promise<void> {
-  if(document.querySelector('[data-recoverable-session]')||document.querySelector('[data-recoverable-resume-banner]'))return;
-  const {state,catalog}=await context();const session=activeSession(state);if(!session)return;
-  const main=document.querySelector<HTMLElement>('.app-shell main');if(!main)return;
-  const valid=session.catalogId===catalog.catalogId;
-  const graded=Object.keys(session.outcomes).length;
-  const panel=document.createElement('section');panel.className='panel recoverable-resume-banner';panel.dataset.recoverableResumeBanner='';
-  panel.innerHTML=`<div><span class="eyebrow">Unterbrochene ${session.kind==='exam'?'Prüfung':'Lernsitzung'}</span><h2>${valid?'Exakt fortsetzen':'Ursprünglicher Katalog ist nicht aktiv'}</h2><p>${session.kind==='exam'?`${graded} von ${session.itemIds.length} Fragen bewertet`:`${session.completedCount} von ${session.itemIds.length} Aufgaben abgeschlossen`} · zuletzt gespeichert ${esc(new Date(session.updatedAt).toLocaleString('de-DE'))}</p></div><div class="question-actions">${valid?'<button class="primary" data-recoverable-resume>Fortsetzen</button>':''}<button data-recoverable-discard>Verwerfen</button></div>`;
-  main.insertAdjacentElement('afterbegin',panel);
+  if(document.querySelector('[data-recoverable-session]')||document.querySelector('[data-recoverable-resume-banner]')||resumeBannerInjecting)return;
+  resumeBannerInjecting=true;
+  try {
+    const {state,catalog}=await context();
+    const session=activeSession(state);if(!session)return;
+    if(document.querySelector('[data-recoverable-session]')||document.querySelector('[data-recoverable-resume-banner]'))return;
+    const main=document.querySelector<HTMLElement>('.app-shell main');if(!main)return;
+    const valid=session.catalogId===catalog.catalogId;
+    const graded=Object.keys(session.outcomes).length;
+    const panel=document.createElement('section');panel.className='panel recoverable-resume-banner';panel.dataset.recoverableResumeBanner='';
+    panel.innerHTML=`<div><span class="eyebrow">Unterbrochene ${session.kind==='exam'?'Prüfung':'Lernsitzung'}</span><h2>${valid?'Exakt fortsetzen':'Ursprünglicher Katalog ist nicht aktiv'}</h2><p>${session.kind==='exam'?`${graded} von ${session.itemIds.length} Fragen bewertet`:`${session.completedCount} von ${session.itemIds.length} Aufgaben abgeschlossen`} · zuletzt gespeichert ${esc(new Date(session.updatedAt).toLocaleString('de-DE'))}</p></div><div class="question-actions">${valid?'<button class="primary" data-recoverable-resume>Fortsetzen</button>':''}<button data-recoverable-discard>Verwerfen</button></div>`;
+    main.insertAdjacentElement('afterbegin',panel);
+  } finally {
+    resumeBannerInjecting=false;
+  }
 }
 
 function scheduleRestore(): void {

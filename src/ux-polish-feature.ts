@@ -6,6 +6,7 @@ import type { Catalog } from './model';
 let observer: MutationObserver | undefined;
 let scheduled = false;
 let updateBannerVisible = false;
+let updateActivationRequested = false;
 let reloadingForUpdate = false;
 const revealedAnswers = new Map<string,string>();
 
@@ -35,8 +36,10 @@ function visibleCardId(catalog: Catalog): string | undefined {
 async function refreshStatus(): Promise<void> {
   const pill=document.querySelector<HTMLElement>('.status-pill');
   if(pill){
-    pill.textContent=navigator.onLine?'● lokal · online':'● lokal · offline';
-    pill.title=navigator.onLine?'Lernstand liegt lokal; Netzwerk ist verfügbar.':'Lernstand liegt lokal; die App arbeitet ohne Netzwerk.';
+    const text=navigator.onLine?'● lokal · online':'● lokal · offline';
+    const title=navigator.onLine?'Lernstand liegt lokal; Netzwerk ist verfügbar.':'Lernstand liegt lokal; die App arbeitet ohne Netzwerk.';
+    if(pill.textContent!==text) pill.textContent=text;
+    if(pill.title!==title) pill.title=title;
   }
   const settings=document.querySelector<HTMLElement>('.settings-list');
   if(!settings) return;
@@ -50,7 +53,8 @@ async function refreshStatus(): Promise<void> {
     estimate=await navigator.storage?.estimate?.();
   }catch{/* Status is advisory only. */}
   const backup=state.lastBackupAt?new Date(state.lastBackupAt).toLocaleString('de-DE'):'noch keines';
-  panel.innerHTML=`<strong>Lokale Datensicherheit</strong><br>${navigator.onLine?'Netzwerk verfügbar':'Offline-Modus'} · ${persisted?'persistenter Browserspeicher':'Browser-verwalteter Speicher'} · ${esc(storageUsageLabel(estimate?.usage,estimate?.quota))}<br>Letztes Backup: ${esc(backup)}`;
+  const html=`<strong>Lokale Datensicherheit</strong><br>${navigator.onLine?'Netzwerk verfügbar':'Offline-Modus'} · ${persisted?'persistenter Browserspeicher':'Browser-verwalteter Speicher'} · ${esc(storageUsageLabel(estimate?.usage,estimate?.quota))}<br>Letztes Backup: ${esc(backup)}`;
+  if(panel.innerHTML!==html) panel.innerHTML=html;
 }
 
 function parseSessionPosition(): {current:number;total:number}|undefined {
@@ -136,7 +140,10 @@ function showUpdateBanner(registration: ServiceWorkerRegistration): void {
   banner.className='update-banner';
   banner.innerHTML='<span>Eine neue App-Version ist verfügbar.</span><button type="button" data-apply-update>Jetzt aktualisieren</button>';
   document.body.append(banner);
-  banner.querySelector<HTMLElement>('[data-apply-update]')?.addEventListener('click',()=>registration.waiting?.postMessage({type:'SKIP_WAITING'}));
+  banner.querySelector<HTMLElement>('[data-apply-update]')?.addEventListener('click',()=>{
+    updateActivationRequested=true;
+    registration.waiting?.postMessage({type:'SKIP_WAITING'});
+  });
 }
 
 async function installUpdateLifecycle(): Promise<void> {
@@ -150,7 +157,9 @@ async function installUpdateLifecycle(): Promise<void> {
     });
   });
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(reloadingForUpdate) return;
+    // A browser may emit controllerchange when the service worker first takes control.
+    // Reload only after the user explicitly accepted the visible update banner.
+    if(!updateActivationRequested||reloadingForUpdate) return;
     reloadingForUpdate=true;
     location.reload();
   });
