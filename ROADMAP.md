@@ -142,6 +142,23 @@ The existing five-stage scheduler remains authoritative while the new FSRS sched
 - [ ] Collect sufficient shadow data for classic-vs-FSRS comparison
 - [ ] Define activation thresholds for retention and review workload
 
+## 0.8 — Exam intelligence and adaptive queue
+
+Blueprint weights are authoritative for exam relevance; question counts never substitute for a known exam distribution. Readiness v1 is deterministic and transparent. FSRS remains non-authoritative and may only influence the queue when explicitly feature-enabled.
+
+- [x] Add validated `ExamBlueprint` with optional exam date, points, item count and pass threshold
+- [x] Add equal-topic fallback blueprint when no real blueprint is available
+- [x] Add deterministic mastery and coverage calculation by blueprint section
+- [x] Add transparent Readiness v1 with coverage adjustment and weakest-topic detection
+- [x] Add Adaptive Queue scoring from classic due state, mastery, exam weight, exam proximity, coverage and recent failures
+- [x] Persist explainable queue reason codes in queue results
+- [x] Surface FSRS-due as a shadow reason without affecting default priority
+- [x] Add tests proving blueprint weights beat unequal question counts
+- [x] Add tests for queue ordering and FSRS shadow isolation
+- [ ] Persist readiness snapshots in learner state
+- [ ] Connect catalog blueprint editing to the authoring UI
+- [ ] Add `Heute lernen` dashboard using the Adaptive Queue
+
 ## 1.0 — Full release
 
 - [ ] Full Fügetechnik catalog
