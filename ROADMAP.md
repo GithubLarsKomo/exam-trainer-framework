@@ -155,9 +155,23 @@ Blueprint weights are authoritative for exam relevance; question counts never su
 - [x] Surface FSRS-due as a shadow reason without affecting default priority
 - [x] Add tests proving blueprint weights beat unequal question counts
 - [x] Add tests for queue ordering and FSRS shadow isolation
-- [ ] Persist readiness snapshots in learner state
-- [ ] Connect catalog blueprint editing to the authoring UI
-- [ ] Add `Heute lernen` dashboard using the Adaptive Queue
+- [x] Persist readiness snapshots in learner state with bounded history
+- [x] Connect catalog blueprint editing and exam date to the production UI
+- [x] Add `Heute lernen` dashboard using the Adaptive Queue
+
+## 0.9 — Learning diagnostics
+
+Diagnostics are evidence-based observations over review history. They must not claim semantic causes that cannot be established from learner data alone.
+
+- [x] Detect repeated failures and repeated uncertainty
+- [x] Detect slow recall from response-time history
+- [x] Detect recent exam failures and low mastery after repeated reviews
+- [x] Detect regression after earlier correct responses
+- [x] Classify persistent problem items as leeches
+- [x] Show diagnostic observations and Readiness trend in the progress UI
+- [ ] Add targeted intervention suggestions per observable diagnostic pattern
+- [ ] Feed confirmed leech state into the Adaptive Queue as a controlled reason code
+- [ ] Add optional AI-assisted cause hypotheses behind explicit learner/content-review approval
 
 ## 1.0 — Full release
 
