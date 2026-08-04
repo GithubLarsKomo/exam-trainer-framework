@@ -85,7 +85,7 @@ function choiceBlock(card: CardVersion, revealed: boolean): string {
   }
   const selected = new Set(card.questionType === 'single_choice' ? (state.single ? [state.single] : []) : (state.multiple ?? []));
   const correct = new Set(choices.filter(choice => choice.correct).map(choice => choice.id));
-  const ok = selected.size === correct.size && [...selected].every(value => correct.has(value));
+  const ok = selected.size === correct.size && Array.from(selected).every(value => correct.has(value));
   return `<div class="notice"><strong>${ok?'Auswahl entspricht der Musterlösung.':'Auswahl weicht von der Musterlösung ab.'}</strong></div><div class="table-scroll"><table><thead><tr><th>Option</th><th>Deine Wahl</th><th>Richtig</th></tr></thead><tbody>${choices.map(choice=>`<tr><td>${esc(choice.text)}</td><td>${selected.has(choice.id)?'✓':'–'}</td><td>${choice.correct?'✓':'–'}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
@@ -122,7 +122,7 @@ function orderingBlock(card: CardVersion, revealed: boolean): string {
   const state = currentAnswer(card.id);
   state.ordering ??= shuffledIds(items.map(item=>item.id), `${card.id}:ordering`);
   const byId = new Map(items.map(item=>[item.id,item]));
-  if (!revealed) return `<ol style="padding-left:1.5rem">${state.ordering.map((id,index)=>`<li style="margin:.55rem 0"><span>${esc(byId.get(id)?.text??'')}</span> <button type="button" data-order-up="${index}" ${index===0?'disabled':''}>↑</button> <button type="button" data-order-down="${index}" ${index===state.ordering!.length-1?'disabled':''}>↓</button></li>`).join('')}</ol>`;
+  if (!revealed) return `<ol style="padding-left:1.5rem">${state.ordering.map((itemId,index)=>`<li style="margin:.55rem 0"><span>${esc(byId.get(itemId)?.text??'')}</span> <button type="button" data-order-up="${index}" ${index===0?'disabled':''}>↑</button> <button type="button" data-order-down="${index}" ${index===state.ordering!.length-1?'disabled':''}>↓</button></li>`).join('')}</ol>`;
   const correct = items.map(item=>item.id);
   const ok = state.ordering.length===correct.length && state.ordering.every((value,index)=>value===correct[index]);
   return `<div class="notice"><strong>${ok?'Reihenfolge entspricht der Musterlösung.':'Reihenfolge weicht von der Musterlösung ab.'}</strong></div><div class="table-scroll"><table><thead><tr><th>#</th><th>Deine Reihenfolge</th><th>Muster</th></tr></thead><tbody>${items.map((item,index)=>`<tr><td>${index+1}</td><td>${esc(byId.get(state.ordering?.[index]??'')?.text??'–')}</td><td>${esc(item.text)}</td></tr>`).join('')}</tbody></table></div>`;
@@ -190,7 +190,7 @@ function bindSessionControls(card: CardVersion, block: HTMLElement): void {
   const state = currentAnswer(card.id);
   block.querySelectorAll<HTMLInputElement>('input[name="structured-choice"]').forEach(input=>input.addEventListener('change',()=>{
     if (card.questionType === 'single_choice') state.single = input.checked ? input.value : undefined;
-    else state.multiple = [...block.querySelectorAll<HTMLInputElement>('input[name="structured-choice"]:checked')].map(entry=>entry.value);
+    else state.multiple = Array.from(block.querySelectorAll<HTMLInputElement>('input[name="structured-choice"]:checked')).map(entry=>entry.value);
   }));
   block.querySelectorAll<HTMLInputElement>('[data-cloze-answer]').forEach(input=>input.addEventListener('input',()=>{(state.cloze??={})[input.dataset.clozeAnswer??'']=input.value;}));
   block.querySelectorAll<HTMLSelectElement>('[data-match-answer]').forEach(select=>select.addEventListener('change',()=>{(state.matching??={})[select.dataset.matchAnswer??'']=select.value;}));
