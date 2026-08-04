@@ -25,13 +25,13 @@ const cases: RendererCase[] = [
   {
     name: 'single choice',
     card: card('single_choice', { answer: { modelAnswer: 'A', choices: [{ id:'a', text:'Antwort A', correct:true }, { id:'b', text:'Antwort B' }] } }),
-    visible: page => page.locator('input[type="radio"][name="structured-choice"]'),
+    visible: page => page.locator('input[type="radio"][name="structured-choice"]').first(),
     prepare: async page => { await page.locator('input[type="radio"][value="a"]').check(); },
   },
   {
     name: 'multiple choice',
     card: card('multiple_choice', { answer: { modelAnswer: 'A und C', choices: [{ id:'a', text:'Antwort A', correct:true }, { id:'b', text:'Antwort B' }, { id:'c', text:'Antwort C', correct:true }] } }),
-    visible: page => page.locator('input[type="checkbox"][name="structured-choice"]'),
+    visible: page => page.locator('input[type="checkbox"][name="structured-choice"]').first(),
     prepare: async page => { await page.locator('input[type="checkbox"][value="a"]').check(); await page.locator('input[type="checkbox"][value="c"]').check(); },
   },
   {
@@ -43,13 +43,13 @@ const cases: RendererCase[] = [
   {
     name: 'matching',
     card: card('matching', { answer:{ modelAnswer:'Zuordnung', matchingPairs:[{id:'p1',left:'A',right:'1'},{id:'p2',left:'B',right:'2'}] } }),
-    visible: page => page.locator('[data-match-answer]'),
+    visible: page => page.locator('[data-match-answer]').first(),
     prepare: async page => { await page.locator('[data-match-answer="p1"]').selectOption('p1'); },
   },
   {
     name: 'ordering',
     card: card('ordering', { answer:{ modelAnswer:'1, 2, 3', orderingItems:[{id:'o1',text:'Erster Schritt'},{id:'o2',text:'Zweiter Schritt'},{id:'o3',text:'Dritter Schritt'}] } }),
-    visible: page => page.locator('[data-order-up],[data-order-down]'),
+    visible: page => page.locator('[data-order-up],[data-order-down]').first(),
     prepare: async page => { const move=page.locator('[data-order-down]:not([disabled])').first(); if(await move.count()) await move.click(); },
   },
   {
