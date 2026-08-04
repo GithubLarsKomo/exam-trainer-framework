@@ -92,7 +92,7 @@ describe('modern APKG media', () => {
 
   it('does not decompress modern media when the protobuf map is malformed', async () => {
     const SQL = await loadSql();
-    let payloadDecodeAttempted = false;
+    let decodeCalls = 0;
     const collection = modernDb(SQL);
     const malformedMap = new Uint8Array([10, 9, 1]);
     const payload = new Uint8Array([4,5,6]);
@@ -100,12 +100,12 @@ describe('modern APKG media', () => {
     const bundle = await parseApkgImport(archive, 'bad-map.apkg', {
       sql:SQL,
       decompressZstd:bytes => {
-        if (bytes === payload) payloadDecodeAttempted = true;
+        decodeCalls++;
         return bytes;
       },
     });
     expect(bundle.media).toHaveLength(0);
-    expect(payloadDecodeAttempted).toBe(false);
+    expect(decodeCalls).toBe(2); // collection + media map; payload is never decoded
     expect(bundle.warnings).toContainEqual(expect.objectContaining({ code:'MODERN_MEDIA_MAP_UNRESOLVED' }));
   });
 });
