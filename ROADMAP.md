@@ -105,7 +105,7 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 - [ ] Rights and alt-text metadata authoring
 - [ ] Asset usage and orphan validation across catalogs
 - [ ] Image-label hotspot editor
-- [ ] Backup/export including binary assets
+- [x] Backup/export including binary assets with atomic restore
 
 ### Phase H — Acceptance
 
