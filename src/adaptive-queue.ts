@@ -1,3 +1,4 @@
+import { analyzeLearningDiagnostics } from './diagnostics';
 import { createEqualWeightBlueprint, hasLearningEvidence, masteryScore, normalizedBlueprintSections, validateExamBlueprint } from './exam-intelligence';
 import type {
   AdaptiveQueueCategory,
@@ -9,6 +10,8 @@ import type {
   ReviewEvent,
 } from './model';
 
+export type AdaptiveQueueDiagnosticReasonCode = 'LEECH';
+
 export interface AdaptiveQueueSignals {
   classicDue: boolean;
   fsrsShadowDue: boolean;
@@ -17,6 +20,7 @@ export interface AdaptiveQueueSignals {
   coverageGap: boolean;
   examProximity: number;
   recentFailure: boolean;
+  leech: boolean;
 }
 
 export interface AdaptiveQueueItem {
@@ -25,6 +29,7 @@ export interface AdaptiveQueueItem {
   category: AdaptiveQueueCategory;
   score: number;
   reasons: QueueReasonCode[];
+  diagnosticReasons: AdaptiveQueueDiagnosticReasonCode[];
   signals: AdaptiveQueueSignals;
 }
 
@@ -66,9 +71,9 @@ function recentFailureFor(cardId: string, events: ReviewEvent[], now: Date): boo
   return ageDays >= 0 && ageDays <= 14;
 }
 
-function categoryFor(progress: Progress | undefined, mastery: number, recentFailure: boolean): AdaptiveQueueCategory {
+function categoryFor(progress: Progress | undefined, mastery: number, recentFailure: boolean, leech: boolean): AdaptiveQueueCategory {
   if (!hasLearningEvidence(progress)) return 'new';
-  if (recentFailure || mastery <= 0.25) return 'weakness';
+  if (leech || recentFailure || mastery <= 0.25) return 'weakness';
   return 'review';
 }
 
@@ -84,6 +89,11 @@ export function buildAdaptiveQueue(input: AdaptiveQueueInput): AdaptiveQueueItem
   const averageWeight = 1 / sections.length;
   const proximity = examProximity(blueprint, now);
   const fsrsInfluenceEnabled = input.options?.fsrsInfluenceEnabled ?? false;
+  const leeches = new Set(
+    analyzeLearningDiagnostics(input.reviewEvents, input.progress, now)
+      .filter(diagnostic => diagnostic.leech)
+      .map(diagnostic => diagnostic.knowledgeItemId),
+  );
 
   const items = released.map(card => {
     const progress = input.progress[card.id];
@@ -95,7 +105,9 @@ export function buildAdaptiveQueue(input: AdaptiveQueueInput): AdaptiveQueueItem
     const fsrsShadowDue = Boolean(fsrs && Date.parse(fsrs.dueAt) <= now.getTime());
     const coverageGap = !hasLearningEvidence(progress);
     const recentFailure = recentFailureFor(card.id, input.reviewEvents, now);
+    const leech = leeches.has(card.id);
     const reasons: QueueReasonCode[] = [];
+    const diagnosticReasons: AdaptiveQueueDiagnosticReasonCode[] = [];
 
     if (classicDue) reasons.push('CLASSIC_DUE');
     if (fsrsShadowDue) reasons.push('FSRS_SHADOW_DUE');
@@ -105,6 +117,7 @@ export function buildAdaptiveQueue(input: AdaptiveQueueInput): AdaptiveQueueItem
     if (proximity >= 0.75) reasons.push('EXAM_SOON');
     if (recentFailure) reasons.push('RECENT_FAILURE');
     if (coverageGap) reasons.push('NEW_CONTENT');
+    if (leech) diagnosticReasons.push('LEECH');
 
     let score = 0;
     if (classicDue) score += 35;
@@ -113,15 +126,17 @@ export function buildAdaptiveQueue(input: AdaptiveQueueInput): AdaptiveQueueItem
     if (coverageGap) score += 12;
     score += proximity * 8;
     if (recentFailure) score += 15;
+    if (leech) score += 8;
     if (coverageGap) score += 5;
     if (fsrsInfluenceEnabled && fsrsShadowDue) score += 20;
 
     return {
       cardId: card.id,
       topicId: card.topicId,
-      category: categoryFor(progress, mastery, recentFailure),
+      category: categoryFor(progress, mastery, recentFailure, leech),
       score: Math.round(score * 100) / 100,
       reasons,
+      diagnosticReasons,
       signals: {
         classicDue,
         fsrsShadowDue,
@@ -130,6 +145,7 @@ export function buildAdaptiveQueue(input: AdaptiveQueueInput): AdaptiveQueueItem
         coverageGap,
         examProximity: proximity,
         recentFailure,
+        leech,
       },
     } satisfies AdaptiveQueueItem;
   });

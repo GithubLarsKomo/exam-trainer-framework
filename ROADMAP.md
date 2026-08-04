@@ -121,7 +121,7 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 ### Phase H — Acceptance
 
 - [x] Unit tests for catalog validation and versioning
-- [ ] Browser-level tests for all question renderers
+- [x] Browser-level tests for all question renderers
 - [x] Migration tests preserving learner progress
 - [x] Production build and CI pass for the consolidated v0.5 acceptance head
 - [ ] iPhone Safari acceptance
@@ -179,7 +179,7 @@ Blueprint weights are authoritative for exam relevance; question counts never su
 
 ## 0.9 — Learning diagnostics
 
-Diagnostics are evidence-based observations over review history. They must not claim semantic causes that cannot be established from learner data alone.
+Diagnostics are evidence-based observations over review history. They must not claim semantic causes that cannot be established from learner data alone. Confirmed leeches are recomputed deterministically from the same review evidence and enter the Adaptive Queue through the diagnostic reason code `LEECH` with a bounded +8 priority boost; they do not create a second persisted learner-state truth.
 
 - [x] Detect repeated failures and repeated uncertainty
 - [x] Detect slow recall from response-time history
@@ -188,7 +188,7 @@ Diagnostics are evidence-based observations over review history. They must not c
 - [x] Classify persistent problem items as leeches
 - [x] Show diagnostic observations and Readiness trend in the progress UI
 - [x] Add targeted intervention suggestions per observable diagnostic pattern
-- [ ] Feed confirmed leech state into the Adaptive Queue as a controlled reason code
+- [x] Feed confirmed leech state into the Adaptive Queue as a controlled reason code
 - [ ] Add optional AI-assisted cause hypotheses behind explicit learner/content-review approval
 
 ## 0.10 — Anki import
