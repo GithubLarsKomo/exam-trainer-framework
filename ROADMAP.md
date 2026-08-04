@@ -198,7 +198,7 @@ Anki is an inbound content source, not a second runtime model. Imported decks ar
 - [x] Commit approved Preview candidates into a new Exam Trainer catalog
 - [x] Persist APKG media in the asset library and link resolved image/audio references
 - [x] Render linked imported media offline in learning and examination flows
-- [ ] Decode modern binary media maps to original filenames
+- [x] Decode modern zstd/protobuf media maps and compressed payloads with size/hash integrity checks
 
 ## 1.0 — Full release
 
