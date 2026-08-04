@@ -11,6 +11,8 @@ export type ImportWarningCode =
   | 'UNSAFE_TEMPLATE_IGNORED'
   | 'ARCHIVE_LIMIT'
   | 'MISSING_FIELD_MAPPING'
+  | 'MISSING_MAPPED_CONTENT'
+  | 'FIELD_ORDINAL_FALLBACK'
   | 'DUPLICATE_SOURCE_ID';
 
 export interface ImportWarning {
