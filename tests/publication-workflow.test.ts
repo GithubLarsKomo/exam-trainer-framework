@@ -25,5 +25,30 @@ describe('publication workflow',()=>{
 
   it('restores an old release as a higher-version draft',()=>{let next=createDraftFromReleased(catalog(),'card-1','edit',new Date(),'card-1:draft:test');next=transitionCard(next,'card-1:draft:test','in_review');next=transitionCard(next,'card-1:draft:test','approved');next=releaseApprovedDraft(next,'card-1:draft:test','v2');const restored=restoreVersionAsDraft(next,'card-1',1,'restore v1',new Date('2026-08-04T11:00:00Z'),'card-1:draft:restore');expect(restored.cards.find(c=>c.id==='card-1:draft:restore')).toMatchObject({status:'draft',version:3,parentId:'card-1',prompt:'Original question'});});
 
-  it('diffs content and validates blocking errors plus confirmable warnings',()=>{const a=released();const b=released({version:2,prompt:'Changed',tags:[],sourcePage:undefined});expect(diffCardVersions(a,b).map(d=>d.field)).toEqual(expect.arrayContaining(['prompt','tags','sourcePage']));const broken:CardVersion={...b,status:'approved',source:'',questionType:'single_choice',answer:{modelAnswer:'Answer',choices:[{id:'a',text:'A',correct:true}]}};const issues=validateCatalog(catalog(broken));expect(issues.some(issue=>issue.severity==='warning'&&issue.code==='NO_TAGS')).toBe(true);const releaseIssues=releaseValidation(catalog(broken),'card-1');expect(releaseIssues.some(issue=>issue.severity==='error'&&issue.code==='MISSING_RELEASE_SOURCE')).toBe(true);expect(releaseIssues.some(issue=>issue.severity==='error'&&issue.code==='INVALID_SINGLE_CHOICE')).toBe(true);expect(()=>releaseApprovedDraft(catalog(broken),'card-1')).toThrow(/Freigabe blockiert/);});
+  it('diffs content and validates blocking errors plus confirmable warnings',()=>{const a=released();const b=released({version:2,prompt:'Changed',tags:[],sourcePage:undefined,examGroupId:'case-1',examGroupOrder:1});expect(diffCardVersions(a,b).map(d=>d.field)).toEqual(expect.arrayContaining(['prompt','tags','sourcePage','examGroupId','examGroupOrder']));const broken:CardVersion={...b,status:'approved',source:'',questionType:'single_choice',answer:{modelAnswer:'Answer',choices:[{id:'a',text:'A',correct:true}]}};const issues=validateCatalog(catalog(broken));expect(issues.some(issue=>issue.severity==='warning'&&issue.code==='NO_TAGS')).toBe(true);const releaseIssues=releaseValidation(catalog(broken),'card-1');expect(releaseIssues.some(issue=>issue.severity==='error'&&issue.code==='MISSING_RELEASE_SOURCE')).toBe(true);expect(releaseIssues.some(issue=>issue.severity==='error'&&issue.code==='INVALID_SINGLE_CHOICE')).toBe(true);expect(()=>releaseApprovedDraft(catalog(broken),'card-1')).toThrow(/Freigabe blockiert/);});
+
+  it('blocks malformed dependent examination groups and warns on singleton groups',()=>{
+    const cards:CardVersion[]=[
+      released({id:'a',examGroupId:'case-7',examGroupOrder:1,topicId:'A'}),
+      released({id:'b',examGroupId:'case-7',examGroupOrder:1,topicId:'B',prompt:'B'}),
+      released({id:'c',examGroupId:'case-8',examGroupOrder:undefined,prompt:'C'}),
+      released({id:'d',examGroupId:undefined,examGroupOrder:2,prompt:'D'}),
+      released({id:'e',examGroupId:'case-single',examGroupOrder:1,prompt:'E'}),
+    ];
+    const issues=validateCatalog({...catalog(),cards});
+    expect(issues.filter(issue=>issue.code==='EXAM_GROUP_DUPLICATE_ORDER')).toHaveLength(2);
+    expect(issues.filter(issue=>issue.code==='EXAM_GROUP_TOPIC_MISMATCH')).toHaveLength(2);
+    expect(issues.some(issue=>issue.cardId==='c'&&issue.code==='EXAM_GROUP_ORDER_REQUIRED')).toBe(true);
+    expect(issues.some(issue=>issue.cardId==='d'&&issue.code==='EXAM_GROUP_ID_REQUIRED')).toBe(true);
+    expect(issues.some(issue=>issue.cardId==='e'&&issue.code==='EXAM_GROUP_SINGLE_MEMBER'&&issue.severity==='warning')).toBe(true);
+  });
+
+  it('does not treat released and draft versions of the same logical card as duplicate group members',()=>{
+    const base=released({id:'a',examGroupId:'case-7',examGroupOrder:1,topicId:'A'});
+    const draft={...base,id:'a:draft:test',parentId:'a',version:2,status:'draft' as const,prompt:'A draft'};
+    const sibling=released({id:'b',examGroupId:'case-7',examGroupOrder:2,topicId:'A',prompt:'B'});
+    const issues=validateCatalog({...catalog(),cards:[base,draft,sibling]});
+    expect(issues.some(issue=>issue.code==='EXAM_GROUP_DUPLICATE_ORDER')).toBe(false);
+    expect(issues.some(issue=>issue.code==='EXAM_GROUP_SINGLE_MEMBER')).toBe(false);
+  });
 });
