@@ -2,7 +2,27 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { card, seedCatalog, startLearning } from './helpers';
 
 async function expectNoHorizontalPageOverflow(page:Page):Promise<void>{
-  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+  const overflow=await page.evaluate(()=>{
+    const viewport=window.innerWidth;
+    const elements=Array.from(document.querySelectorAll<HTMLElement>('body *'));
+    return elements.flatMap(element=>{
+      const style=getComputedStyle(element);
+      const rect=element.getBoundingClientRect();
+      if(style.display==='none'||style.visibility==='hidden'||rect.width===0||rect.height===0)return[];
+      if(rect.left>=-1&&rect.right<=viewport+1)return[];
+      return [{
+        tag:element.tagName.toLowerCase(),
+        className:element.className,
+        text:(element.textContent??'').trim().replace(/\s+/g,' ').slice(0,120),
+        left:Math.round(rect.left*10)/10,
+        right:Math.round(rect.right*10)/10,
+        width:Math.round(rect.width*10)/10,
+        viewport,
+        documentWidth:document.documentElement.scrollWidth,
+      }];
+    }).slice(0,20);
+  });
+  expect(overflow).toEqual([]);
 }
 
 async function expectTouchTargets(targets:Locator):Promise<void>{
