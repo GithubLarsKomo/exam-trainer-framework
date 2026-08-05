@@ -2,7 +2,7 @@
 
 Date: 2026-08-05 (consolidated automated evidence)
 
-This document separates automated evidence from device-specific manual acceptance. A checkbox is only considered complete when the corresponding evidence exists. The 1.0 automated-suite completion rule is defined in [automated-test-matrix.md](automated-test-matrix.md).
+This document separates automated evidence from device-specific manual acceptance. A checkbox is only considered complete when the corresponding evidence exists. The 1.0 automated-suite completion rule is defined in [automated-test-matrix.md](automated-test-matrix.md). The executable real-device, accessibility and deployment protocol is defined in [manual-acceptance-1.0.md](manual-acceptance-1.0.md).
 
 ## Automated acceptance
 
@@ -80,7 +80,7 @@ A full real-browser two-version service-worker update remains part of manual dep
 
 ## Manual device acceptance — still required
 
-These items require real-device/browser interaction and must not be inferred from CI:
+Execute and record these checks with [manual-acceptance-1.0.md](manual-acceptance-1.0.md). These items require real-device/browser interaction and must not be inferred from CI:
 
 - [ ] iPhone Safari: install PWA, launch offline, complete a learning session, reveal/grade, terminate/reopen during a mixed structured session and verify exact resume, export/import `.etfb`, upload a photo, edit an image-label hotspot, exercise optional gestures.
 - [ ] iPad Safari: repeat core learning, exact-resume, examination navigation, authoring, import, backup and hotspot flows in portrait and landscape.
