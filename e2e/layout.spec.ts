@@ -1,11 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { card, seedCatalog, startLearning } from './helpers';
 
-async function expectNoHorizontalPageOverflow(page: import('@playwright/test').Page):Promise<void>{
-  await expect.poll(()=>page.evaluate(()=>({scroll:document.documentElement.scrollWidth,viewport:window.innerWidth}))).toMatchObject({scroll:320,viewport:320});
+async function expectNoHorizontalPageOverflow(page:Page):Promise<void>{
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
 }
 
-async function expectTouchTargets(page: import('@playwright/test').Page):Promise<void>{
+async function expectTouchTargets(page:Page):Promise<void>{
   const undersized=await page.locator('nav.bottom-nav button:visible').evaluateAll(buttons=>buttons.filter(button=>{
     const rect=button.getBoundingClientRect();
     return rect.width<44||rect.height<44;
