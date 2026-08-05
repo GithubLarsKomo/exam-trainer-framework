@@ -17,6 +17,26 @@
     min-height: 46px;
     margin-top: .6rem;
   }
+
+  .table-scroll table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .table-scroll th,
+  .table-scroll td {
+    min-width: 0;
+    padding: .55rem .35rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .table-scroll input,
+  .table-scroll select {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 @media (min-width: 720px) {
