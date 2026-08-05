@@ -40,6 +40,8 @@
         "topicId": {"type": "string"},
         "subtopicId": {"type": "string"},
         "examPriority": {"type": "integer", "minimum": 0, "maximum": 100},
+        "examGroupId": {"type": "string", "minLength": 1},
+        "examGroupOrder": {"type": "integer", "minimum": 1},
         "questionType": {"enum": ["free_text", "numeric", "image_labels", "drawing"]},
         "prompt": {"type": "string", "minLength": 1},
         "points": {"type": "number", "minimum": 0},
