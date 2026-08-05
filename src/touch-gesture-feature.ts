@@ -32,7 +32,7 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
 }
 
 function touchCapable(): boolean {
-  return navigator.maxTouchPoints > 0 || matchMedia('(pointer: coarse)').matches;
+  return navigator.maxTouchPoints > 0 || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
 }
 
 function injectSettings(): void {
