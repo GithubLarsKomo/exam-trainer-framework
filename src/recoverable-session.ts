@@ -1,4 +1,5 @@
 import type { CardVersion, ExamBlueprint, Outcome, QueueReasonCode } from './model';
+import { selectExamCardIdsWithDependencies } from './exam-dependencies';
 
 export const ACTIVE_SESSION_KEY = 'activeSession:v1';
 
@@ -196,39 +197,5 @@ export function shuffleIds(ids: string[], random: () => number = Math.random): s
 }
 
 export function selectExamCardIds(cards: CardVersion[], blueprint: ExamBlueprint | undefined, mode: 'dynamic'|'fixed', random: () => number = Math.random): string[] {
-  if (!cards.length) return [];
-  const target = Math.min(Math.max(1, Math.round(blueprint?.totalItems ?? 57)), cards.length);
-  if (mode === 'fixed' || !blueprint?.sections.length) return shuffleIds(cards.map(card=>card.id),random).slice(0,target);
-
-  const sections = blueprint.sections.filter(section=>section.weight>0);
-  const totalWeight = sections.reduce((sum,section)=>sum+section.weight,0);
-  if (!totalWeight) return shuffleIds(cards.map(card=>card.id),random).slice(0,target);
-
-  const pools = new Map<string,string[]>();
-  for (const card of cards) {
-    const pool = pools.get(card.topicId) ?? [];
-    pool.push(card.id);
-    pools.set(card.topicId,pool);
-  }
-  for (const [topic,ids] of pools) pools.set(topic,shuffleIds(ids,random));
-
-  const allocation = sections.map(section=>{
-    const exact = target * section.weight / totalWeight;
-    const available = pools.get(section.topicId)?.length ?? 0;
-    return {topicId:section.topicId,count:Math.min(available,Math.floor(exact)),fraction:exact-Math.floor(exact)};
-  });
-  let assigned = allocation.reduce((sum,item)=>sum+item.count,0);
-  for (const item of [...allocation].sort((a,b)=>b.fraction-a.fraction)) {
-    if (assigned>=target) break;
-    const available=pools.get(item.topicId)?.length??0;
-    if (item.count<available) {item.count++;assigned++;}
-  }
-
-  const selected:string[]=[];
-  for (const item of allocation) selected.push(...(pools.get(item.topicId)??[]).slice(0,item.count));
-  if (selected.length<target) {
-    const used=new Set(selected);
-    selected.push(...shuffleIds(cards.map(card=>card.id).filter(id=>!used.has(id)),random).slice(0,target-selected.length));
-  }
-  return shuffleIds(selected,random).slice(0,target);
+  return selectExamCardIdsWithDependencies(cards,blueprint,mode,random);
 }

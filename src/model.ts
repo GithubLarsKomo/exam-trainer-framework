@@ -64,6 +64,8 @@ export interface CardVersion {
   status: CardStatus;
   topicId: string;
   examQuestion: string;
+  examGroupId?: string;
+  examGroupOrder?: number;
   title?: string;
   prompt: string;
   points: number;
@@ -87,6 +89,8 @@ export interface QuestionVariant {
   status: CardStatus;
   topicId: string;
   examQuestion: string;
+  examGroupId?: string;
+  examGroupOrder?: number;
   title?: string;
   prompt: string;
   points: number;
@@ -130,6 +134,8 @@ export function cardVersionToKnowledgeItem(card: CardVersion): KnowledgeItem {
     status: card.status,
     topicId: card.topicId,
     examQuestion: card.examQuestion,
+    examGroupId: card.examGroupId,
+    examGroupOrder: card.examGroupOrder,
     title: card.title,
     prompt: card.prompt,
     points: card.points,

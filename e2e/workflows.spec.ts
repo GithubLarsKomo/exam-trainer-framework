@@ -39,11 +39,37 @@ test('provides non-linear examination navigation without committing reviews earl
   })).toBe(0);
 });
 
+test('keeps dependent examination subtasks together and unlocks them in order', async ({ page }) => {
+  await seedCatalog(page,[
+    card('free_text',{id:'dep-a1',prompt:'Teilaufgabe 1',examGroupId:'case-7',examGroupOrder:1}),
+    card('free_text',{id:'dep-a2',prompt:'Teilaufgabe 2',examGroupId:'case-7',examGroupOrder:2}),
+    card('free_text',{id:'dep-b',prompt:'Unabhängige Aufgabe'}),
+  ]);
+  await page.locator('[data-view="exam"]').first().click();
+  await page.locator('#exam-mode').selectOption('fixed');
+  await page.locator('[data-exam]').click();
+  await expect(page.locator('[data-recoverable-exam-nav]')).toHaveCount(3);
+  const lockedNav=page.locator('[data-recoverable-exam-nav][data-dependent-exam-locked]');
+  await expect(lockedNav).toHaveCount(1);
+
+  const lockedIndex=Number(await lockedNav.first().getAttribute('data-recoverable-exam-nav'));
+  expect(lockedIndex).toBeGreaterThan(0);
+  await page.locator(`[data-recoverable-exam-nav="${lockedIndex-1}"]`).click();
+  await expect(page.locator('[data-dependent-exam-context]')).toContainText('Teilaufgabe 1 von 2');
+  await page.locator('[data-recoverable-reveal]').click();
+  await page.locator('[data-recoverable-grade="correct"]').click();
+  await expect(page.locator('[data-recoverable-exam-nav][data-dependent-exam-locked]')).toHaveCount(0);
+  await expect(page.locator('[data-dependent-exam-context]')).toContainText('Teilaufgabe 2 von 2');
+});
+
 test('editing a released card creates a draft successor and keeps the release immutable', async ({ page }) => {
   const released=card('free_text',{id:'e2e-publish',prompt:'Unveränderter Release'});
   await seedCatalog(page,[released]);
   await openCardEditor(page,released.id);
   await page.locator('textarea[name="prompt"]').fill('Bearbeiteter Entwurf');
+  await expect(page.locator('input[name="editorExamGroupId"]')).toBeVisible();
+  await page.locator('input[name="editorExamGroupId"]').fill('case-9');
+  await page.locator('input[name="editorExamGroupOrder"]').fill('1');
   page.once('dialog',dialog=>dialog.accept());
   const reloaded=page.waitForEvent('framenavigated',frame=>frame===page.mainFrame());
   await page.locator('[data-save-card]').click();
@@ -60,7 +86,7 @@ test('editing a released card creates a draft successor and keeps the release im
   const original=catalog.cards.find(entry=>entry.id==='e2e-publish');
   const draft=catalog.cards.find(entry=>entry.parentId==='e2e-publish'&&entry.status==='draft');
   expect(original).toMatchObject({id:'e2e-publish',status:'released',prompt:'Unveränderter Release'});
-  expect(draft).toMatchObject({status:'draft',prompt:'Bearbeiteter Entwurf',parentId:'e2e-publish'});
+  expect(draft).toMatchObject({status:'draft',prompt:'Bearbeiteter Entwurf',parentId:'e2e-publish',examGroupId:'case-9',examGroupOrder:1});
 });
 
 test('imports a real legacy APKG through mapping, preview and explicit commit', async ({ page }) => {

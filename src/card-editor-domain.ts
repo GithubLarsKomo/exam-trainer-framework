@@ -1,8 +1,9 @@
 import type { CardStatus, CardVersion, Catalog, QuestionType } from './model';
+import type { ExamDependencyMetadata } from './exam-dependencies';
 
 export interface CardSourceMetadata { kind?:'script'|'book'|'standard'|'web'|'exam-memory'|'other'; title?:string; url?:string; section?:string; accessedAt?:string }
 export interface TypoTolerance { enabled:boolean; maxDistance:number }
-export type EditorCard = CardVersion & { sourceMeta?:CardSourceMetadata; answer:CardVersion['answer'] & { typoTolerance?:TypoTolerance } };
+export type EditorCard = CardVersion & ExamDependencyMetadata & { sourceMeta?:CardSourceMetadata; answer:CardVersion['answer'] & { typoTolerance?:TypoTolerance } };
 
 export type CardListFilters={query?:string;status?:CardStatus|'all';questionType?:QuestionType|'all';topic?:string|'all';sort?:'id'|'topic'|'status'|'updated-desc'|'updated-asc'};
 
@@ -27,6 +28,10 @@ export function updateCardFromForm(existing:EditorCard|undefined,form:FormData,n
   const typoEnabled=String(form.get('editorTypoEnabled')??'')==='on';
   const typoDistance=Math.max(0,Math.min(5,Number(form.get('editorTypoDistance')??1)||1));
   const sourceMeta:CardSourceMetadata={kind:(String(form.get('editorSourceKind')??'')||undefined) as CardSourceMetadata['kind'],title:String(form.get('editorSourceTitle')??'').trim()||undefined,url:String(form.get('editorSourceUrl')??'').trim()||undefined,section:String(form.get('editorSourceSection')??'').trim()||undefined,accessedAt:String(form.get('editorSourceAccessedAt')??'').trim()||undefined};
+  const examGroupId=String(form.get('editorExamGroupId')??existing?.examGroupId??'').trim()||undefined;
+  const rawExamGroupOrder=String(form.get('editorExamGroupOrder')??existing?.examGroupOrder??'').trim();
+  const examGroupOrder=rawExamGroupOrder===''?undefined:Number(rawExamGroupOrder);
+  if(examGroupId&&(!Number.isInteger(examGroupOrder)||Number(examGroupOrder)<1))throw new Error('Abhängige Prüfungsaufgaben benötigen eine Reihenfolge ab 1.');
   return {
     ...(existing?structuredClone(existing):{} as EditorCard),
     id:String(form.get('id')??existing?.id??'').trim(),
@@ -34,6 +39,8 @@ export function updateCardFromForm(existing:EditorCard|undefined,form:FormData,n
     status,
     topicId:String(form.get('topicId')??existing?.topicId??'').trim(),
     examQuestion:String(form.get('examQuestion')??existing?.examQuestion??'').trim(),
+    examGroupId,
+    examGroupOrder:examGroupId?examGroupOrder:undefined,
     prompt:String(form.get('prompt')??existing?.prompt??'').trim(),
     points:Number(form.get('points')??existing?.points??0),
     difficulty:Number(form.get('difficulty')??existing?.difficulty??2) as EditorCard['difficulty'],
