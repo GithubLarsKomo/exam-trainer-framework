@@ -1,5 +1,6 @@
 import { builtinCatalog } from './builtin-v04';
 import { loadState, type PersistedState } from './db';
+import { shouldOfferWaitingUpdate, shouldReloadAfterControllerChange } from './pwa-update-policy';
 import { estimateRemainingMinutes, sessionDraftKey, storageUsageLabel } from './ux-status';
 import type { Catalog } from './model';
 
@@ -149,17 +150,17 @@ function showUpdateBanner(registration: ServiceWorkerRegistration): void {
 async function installUpdateLifecycle(): Promise<void> {
   if(!('serviceWorker' in navigator)) return;
   const registration=await navigator.serviceWorker.ready;
-  if(registration.waiting && navigator.serviceWorker.controller) showUpdateBanner(registration);
+  if(shouldOfferWaitingUpdate(Boolean(registration.waiting),Boolean(navigator.serviceWorker.controller))) showUpdateBanner(registration);
   registration.addEventListener('updatefound',()=>{
     const worker=registration.installing;
     worker?.addEventListener('statechange',()=>{
-      if(worker.state==='installed'&&navigator.serviceWorker.controller) showUpdateBanner(registration);
+      if(worker.state==='installed'&&shouldOfferWaitingUpdate(true,Boolean(navigator.serviceWorker.controller))) showUpdateBanner(registration);
     });
   });
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
     // A browser may emit controllerchange when the service worker first takes control.
     // Reload only after the user explicitly accepted the visible update banner.
-    if(!updateActivationRequested||reloadingForUpdate) return;
+    if(!shouldReloadAfterControllerChange({updateActivationRequested,reloadingForUpdate})) return;
     reloadingForUpdate=true;
     location.reload();
   });
