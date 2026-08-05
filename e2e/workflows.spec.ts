@@ -49,15 +49,16 @@ test('keeps dependent examination subtasks together and unlocks them in order', 
   await page.locator('#exam-mode').selectOption('fixed');
   await page.locator('[data-exam]').click();
   await expect(page.locator('[data-recoverable-exam-nav]')).toHaveCount(3);
-  await expect(page.locator('[data-dependent-exam-locked]')).toHaveCount(1);
+  const lockedNav=page.locator('[data-recoverable-exam-nav][data-dependent-exam-locked]');
+  await expect(lockedNav).toHaveCount(1);
 
-  const lockedIndex=Number(await page.locator('[data-dependent-exam-locked]').first().getAttribute('data-recoverable-exam-nav'));
+  const lockedIndex=Number(await lockedNav.first().getAttribute('data-recoverable-exam-nav'));
   expect(lockedIndex).toBeGreaterThan(0);
   await page.locator(`[data-recoverable-exam-nav="${lockedIndex-1}"]`).click();
   await expect(page.locator('[data-dependent-exam-context]')).toContainText('Teilaufgabe 1 von 2');
   await page.locator('[data-recoverable-reveal]').click();
   await page.locator('[data-recoverable-grade="correct"]').click();
-  await expect(page.locator('[data-dependent-exam-locked]')).toHaveCount(0);
+  await expect(page.locator('[data-recoverable-exam-nav][data-dependent-exam-locked]')).toHaveCount(0);
   await expect(page.locator('[data-dependent-exam-context]')).toContainText('Teilaufgabe 2 von 2');
 });
 
