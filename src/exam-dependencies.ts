@@ -58,17 +58,20 @@ export function buildExamSelectionUnits(cards: CardVersion[]): ExamSelectionUnit
   return [...groups,...singles];
 }
 
-function chooseTowardTarget(units: ExamSelectionUnit[], target: number, random: () => number): ExamSelectionUnit[] {
+function chooseWithinLimit(units: ExamSelectionUnit[], limit: number, random: () => number): ExamSelectionUnit[] {
+  if (limit <= 0) return [];
   const selected: ExamSelectionUnit[] = [];
   let count = 0;
-  for (const unit of shuffle(units,random)) {
-    if (count >= target) break;
-    const before = Math.abs(target - count);
-    const after = Math.abs(target - (count + unit.ids.length));
-    if (count === 0 || count + unit.ids.length <= target || after < before) {
-      selected.push(unit);
-      count += unit.ids.length;
-    }
+  const shuffled = shuffle(units,random);
+  for (const unit of shuffled) {
+    if (count >= limit) break;
+    if (count + unit.ids.length > limit) continue;
+    selected.push(unit);
+    count += unit.ids.length;
+  }
+  if (!selected.length && shuffled.length && shuffled.every(unit=>unit.ids.length>limit)) {
+    const smallest = [...shuffled].sort((a,b)=>a.ids.length-b.ids.length)[0];
+    if (smallest) selected.push(smallest);
   }
   return selected;
 }
@@ -84,12 +87,12 @@ export function selectExamCardIdsWithDependencies(
   const units = buildExamSelectionUnits(cards);
 
   if (mode === 'fixed' || !blueprint?.sections.length) {
-    return shuffle(chooseTowardTarget(units,target,random),random).flatMap(unit=>unit.ids);
+    return shuffle(chooseWithinLimit(units,target,random),random).flatMap(unit=>unit.ids);
   }
 
   const sections = blueprint.sections.filter(section=>section.weight>0);
   const totalWeight = sections.reduce((sum,section)=>sum+section.weight,0);
-  if (!totalWeight) return shuffle(chooseTowardTarget(units,target,random),random).flatMap(unit=>unit.ids);
+  if (!totalWeight) return shuffle(chooseWithinLimit(units,target,random),random).flatMap(unit=>unit.ids);
 
   const pools = new Map<string,ExamSelectionUnit[]>();
   for (const unit of units) {
@@ -102,14 +105,17 @@ export function selectExamCardIdsWithDependencies(
   const used = new Set<string>();
   let selectedCount = 0;
   for (const section of sections) {
+    if (selectedCount >= target) break;
     const desired = target * section.weight / totalWeight;
     let topicCount = 0;
     for (const unit of shuffle(pools.get(section.topicId) ?? [],random)) {
-      if (topicCount >= desired) break;
+      if (selectedCount >= target || topicCount >= desired) break;
+      if (selectedCount + unit.ids.length > target) continue;
       const before = Math.abs(desired-topicCount);
       const after = Math.abs(desired-(topicCount+unit.ids.length));
-      if (topicCount === 0 || topicCount + unit.ids.length <= desired || after < before) {
-        selected.push(unit); used.add(unit.key);
+      if (topicCount + unit.ids.length <= desired || after < before) {
+        selected.push(unit);
+        used.add(unit.key);
         topicCount += unit.ids.length;
         selectedCount += unit.ids.length;
       }
@@ -118,10 +124,18 @@ export function selectExamCardIdsWithDependencies(
 
   if (selectedCount < target) {
     const remaining = units.filter(unit=>!used.has(unit.key));
-    for (const unit of chooseTowardTarget(remaining,target-selectedCount,random)) {
-      selected.push(unit); used.add(unit.key); selectedCount += unit.ids.length;
+    for (const unit of chooseWithinLimit(remaining,target-selectedCount,random)) {
+      if (selectedCount > 0 && selectedCount + unit.ids.length > target) continue;
+      selected.push(unit);
+      used.add(unit.key);
+      selectedCount += unit.ids.length;
       if (selectedCount >= target) break;
     }
+  }
+
+  if (!selected.length && units.length) {
+    const fallback = [...units].sort((a,b)=>a.ids.length-b.ids.length)[0];
+    if (fallback) selected.push(fallback);
   }
 
   return shuffle(selected,random).flatMap(unit=>unit.ids);
