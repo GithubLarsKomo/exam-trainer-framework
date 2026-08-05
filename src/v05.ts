@@ -46,6 +46,8 @@ const { installExamDependencyRuntimeFeature } = await import('./exam-dependency-
 installExamDependencyRuntimeFeature();
 const { installTouchGestureFeature } = await import('./touch-gesture-feature');
 installTouchGestureFeature();
+const { installFsrsShadowEvaluationFeature } = await import('./fsrs-shadow-evaluation-feature');
+installFsrsShadowEvaluationFeature();
 const { installCatalogLifecycleFeature } = await import('./catalog-lifecycle-feature');
 installCatalogLifecycleFeature();
 const { installPublicationFeature } = await import('./publication-feature');
