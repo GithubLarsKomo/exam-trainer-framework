@@ -19,6 +19,36 @@ describe('Fügetechnik runtime catalog', () => {
     expect(issues.filter(issue => issue.severity === 'error')).toEqual([]);
   });
 
+  it('applies verified source metadata to grounded cards', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+
+    expect(catalog.cards.find(card => card.id === 'ft0401')?.sourcePage).toContain('S. 19');
+    expect(catalog.cards.find(card => card.id === 'ft1401')?.sourcePage).toContain('S. 79–80');
+    expect(catalog.cards.find(card => card.id === 'ft3101')?.sourcePage).toContain('S. 102–103');
+  });
+
+  it('keeps all five MSG arc types from source table 10', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft1501');
+
+    expect(card?.sourcePage).toContain('S. 97');
+    expect(card?.answer.requiredTerms).toEqual([
+      'Sprühlichtbogen',
+      'Langlichtbogen',
+      'Übergangslichtbogen',
+      'Kurzlichtbogen',
+      'Impulslichtbogen',
+    ]);
+  });
+
+  it('uses the script-specific carbon-equivalent notation K', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft2601');
+
+    expect(card?.sourcePage).toContain('S. 77');
+    expect(card?.answer.requiredTerms).toEqual(['Kohlenstoffäquivalent', 'K']);
+    expect(card?.answer.modelAnswer).toContain('K = C + Mn/6');
+    expect(card?.answer.modelAnswer).not.toContain('CEV');
+  });
+
   it('keeps missing source-page evidence visible as a remaining catalog-completion warning', () => {
     const issues = validateCatalog(createFuegetechnikRuntimeCatalog());
 
