@@ -1,3 +1,4 @@
+import './navigation-accessibility.css';
 import { builtinCatalog } from './builtin-v04';
 import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { loadState, saveState, type PersistedState } from './db';
