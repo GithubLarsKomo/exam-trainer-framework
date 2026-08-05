@@ -1,3 +1,4 @@
+import './navigation-accessibility.css';
 import { builtinCatalog } from './builtin-v04';
 import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { loadState, saveState, type PersistedState } from './db';
@@ -48,6 +49,8 @@ const { installTouchGestureFeature } = await import('./touch-gesture-feature');
 installTouchGestureFeature();
 const { installFsrsShadowEvaluationFeature } = await import('./fsrs-shadow-evaluation-feature');
 installFsrsShadowEvaluationFeature();
+const { installMobileSecondaryNavigationFeature } = await import('./mobile-secondary-navigation-feature');
+installMobileSecondaryNavigationFeature();
 const { installCatalogLifecycleFeature } = await import('./catalog-lifecycle-feature');
 installCatalogLifecycleFeature();
 const { installPublicationFeature } = await import('./publication-feature');

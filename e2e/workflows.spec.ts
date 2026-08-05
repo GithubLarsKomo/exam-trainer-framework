@@ -1,5 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test';
 import { card, makeLegacyApkg, openCardEditor, readCatalogs, seedCatalog, startLearning } from './helpers';
+import { openSettings } from './navigation-helpers';
 
 async function swipe(target:Locator,direction:'left'|'right'):Promise<void>{
   await target.evaluate(async(element,direction)=>{
@@ -35,12 +36,12 @@ test('keeps touch gestures opt-in, ignores answer controls and retains button fa
     card('free_text',{id:'gesture-a',prompt:'Gesture A'}),
     card('free_text',{id:'gesture-b',prompt:'Gesture B'}),
   ]);
-  await page.locator('[data-view="settings"]').first().click();
+  await openSettings(page);
   const toggle=page.locator('[data-touch-gestures-toggle]');
   await expect(toggle).toBeVisible();
   await expect(toggle).not.toBeChecked();
   await toggle.check();
-  await page.locator('[data-view="learn"]').first().click();
+  await page.locator('[data-view="learn"]:visible').first().click();
   await page.locator('#mode').selectOption('all');
   await page.locator('[data-start-custom]').click();
   await expect(page.locator('[data-recoverable-session][data-touch-gestures-active]')).toBeVisible();
@@ -66,7 +67,7 @@ test('uses touch swipes only as exam navigation aliases', async ({ page }) => {
     card('free_text',{id:'swipe-exam-c',prompt:'Swipe exam C'}),
   ]);
   await page.evaluate(()=>localStorage.setItem('etf:touch-gestures:v1','1'));
-  await page.locator('[data-view="exam"]').first().click();
+  await page.locator('[data-view="exam"]:visible').first().click();
   await page.locator('#exam-mode').selectOption('fixed');
   await page.locator('[data-exam]').click();
   await expect(page.locator('[data-recoverable-exam-nav="0"]')).toHaveClass(/current/);
@@ -84,7 +85,7 @@ test('provides non-linear examination navigation without committing reviews earl
     card('free_text',{id:'exam-b',prompt:'Prüfungsfrage B'}),
     card('free_text',{id:'exam-c',prompt:'Prüfungsfrage C'}),
   ]);
-  await page.locator('[data-view="exam"]').first().click();
+  await page.locator('[data-view="exam"]:visible').first().click();
   await expect(page.locator('#exam-mode')).toBeVisible();
   await page.locator('#exam-mode').selectOption('fixed');
   await page.locator('[data-exam]').click();
@@ -104,7 +105,7 @@ test('keeps dependent examination subtasks together and unlocks them in order', 
     card('free_text',{id:'dep-b',prompt:'Unabhängige Aufgabe'}),
   ]);
   await page.evaluate(()=>localStorage.setItem('etf:touch-gestures:v1','1'));
-  await page.locator('[data-view="exam"]').first().click();
+  await page.locator('[data-view="exam"]:visible').first().click();
   await page.locator('#exam-mode').selectOption('fixed');
   await page.locator('[data-exam]').click();
   await expect(page.locator('[data-recoverable-exam-nav]')).toHaveCount(3);
@@ -152,7 +153,7 @@ test('editing a released card creates a draft successor and keeps the release im
 
 test('imports a real legacy APKG through mapping, preview and explicit commit', async ({ page }) => {
   await seedCatalog(page,[card('free_text',{id:'base-card',prompt:'Basisfrage'})]);
-  await page.locator('[data-view="settings"]').first().click();
+  await openSettings(page);
   await page.locator('[data-open-content-import]').click();
   const apkg=await makeLegacyApkg();
   await page.locator('#content-import-file').setInputFiles({name:'e2e-anki.apkg',mimeType:'application/octet-stream',buffer:apkg});
