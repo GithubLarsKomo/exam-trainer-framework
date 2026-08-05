@@ -42,9 +42,13 @@ const { installRecoverableSessionFeature } = await import('./recoverable-session
 installRecoverableSessionFeature();
 const { installRecoverableOrderingBridge } = await import('./recoverable-ordering-bridge');
 installRecoverableOrderingBridge();
+const { installExamDependencyRuntimeFeature } = await import('./exam-dependency-runtime-feature');
+installExamDependencyRuntimeFeature();
 const { installCatalogLifecycleFeature } = await import('./catalog-lifecycle-feature');
 installCatalogLifecycleFeature();
 const { installPublicationFeature } = await import('./publication-feature');
 installPublicationFeature();
 const { installFullCardEditorFeature } = await import('./full-card-editor-feature');
 installFullCardEditorFeature();
+const { installExamDependencyEditorFeature } = await import('./exam-dependency-editor-feature');
+installExamDependencyEditorFeature();
