@@ -44,6 +44,8 @@ const { installRecoverableOrderingBridge } = await import('./recoverable-orderin
 installRecoverableOrderingBridge();
 const { installExamDependencyRuntimeFeature } = await import('./exam-dependency-runtime-feature');
 installExamDependencyRuntimeFeature();
+const { installTouchGestureFeature } = await import('./touch-gesture-feature');
+installTouchGestureFeature();
 const { installCatalogLifecycleFeature } = await import('./catalog-lifecycle-feature');
 installCatalogLifecycleFeature();
 const { installPublicationFeature } = await import('./publication-feature');

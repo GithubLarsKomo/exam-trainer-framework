@@ -1,0 +1,21 @@
+[data-touch-gestures-active] .question-card {
+  touch-action: pan-y;
+}
+
+.touch-gesture-settings .check-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 44px;
+}
+
+.touch-gesture-settings input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.touch-gesture-hint {
+  margin: .75rem 0 0;
+  font-size: .9rem;
+  opacity: .75;
+}
