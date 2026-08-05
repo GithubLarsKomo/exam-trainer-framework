@@ -30,6 +30,7 @@ describe('dependent examination tasks',()=>{
     const hasFirst=ids.includes('a1');
     expect(ids.includes('a2')).toBe(hasFirst);
     if(hasFirst) expect(Math.abs(ids.indexOf('a1')-ids.indexOf('a2'))).toBe(1);
+    expect(ids.length).toBeLessThanOrEqual(3);
   });
 
   it('keeps group order intact in dynamic blueprint selection',()=>{
@@ -43,6 +44,29 @@ describe('dependent examination tasks',()=>{
       expect(ids).toContain('a2');
       expect(ids.indexOf('a2')).toBe(ids.indexOf('a1')+1);
     }
+    expect(ids.length).toBeLessThanOrEqual(blueprint.totalItems!);
+  });
+
+  it('does not exceed the global target when multiple weighted groups would overshoot independently',()=>{
+    const cards=[
+      card('a1','A',{examGroupId:'group-a',examGroupOrder:1}),
+      card('a2','A',{examGroupId:'group-a',examGroupOrder:2}),
+      card('b1','B',{examGroupId:'group-b',examGroupOrder:1}),
+      card('b2','B',{examGroupId:'group-b',examGroupOrder:2}),
+    ];
+    const ids=selectExamCardIdsWithDependencies(cards,{...blueprint,totalItems:3},'dynamic',()=>0.25);
+    expect(ids.length).toBeLessThanOrEqual(3);
+    expect(ids.includes('a1')).toBe(ids.includes('a2'));
+    expect(ids.includes('b1')).toBe(ids.includes('b2'));
+  });
+
+  it('allows an unavoidable atomic overflow only when every selectable unit exceeds the target',()=>{
+    const cards=[
+      card('a1','A',{examGroupId:'group-a',examGroupOrder:1}),
+      card('a2','A',{examGroupId:'group-a',examGroupOrder:2}),
+    ];
+    const ids=selectExamCardIdsWithDependencies(cards,{...blueprint,totalItems:1},'fixed',()=>0.25);
+    expect(ids).toEqual(['a1','a2']);
   });
 
   it('locks later subtasks until all predecessors are graded',()=>{
