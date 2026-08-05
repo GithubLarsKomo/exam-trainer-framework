@@ -1,0 +1,9 @@
+@media (max-width: 719px) {
+  .bottom-nav {
+    grid-template-columns: repeat(6, minmax(44px, 1fr));
+  }
+
+  .bottom-nav button {
+    min-width: 44px;
+  }
+}
