@@ -216,7 +216,7 @@ Anki is an inbound content source, not a second runtime model. Imported decks ar
 - [ ] Full Fügetechnik catalog
 - [ ] Cross-device acceptance
 - [ ] Complete automated test suite
-- [ ] User and author documentation
+- [x] User and author documentation
 - [ ] Tagged release
 
 ## Explicitly deferred
