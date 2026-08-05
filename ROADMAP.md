@@ -147,7 +147,7 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 
 ## 0.7 — Adaptive learning foundation
 
-The existing five-stage scheduler remains authoritative while the new FSRS scheduler runs in shadow mode. Activation of FSRS is explicitly deferred until shadow data demonstrates equal or better retention with lower review effort.
+The existing five-stage scheduler remains authoritative while the new FSRS scheduler runs in shadow mode. Shadow evaluation now has explicit evidence, retention and projected-workload gates. Passing them means only `pilot-candidate`; actual activation still requires a controlled Classic-vs-FSRS comparison that meets the separate policy in [docs/fsrs-activation-policy.md](docs/fsrs-activation-policy.md).
 
 - [x] Introduce `KnowledgeItem` and `QuestionVariant` projection for legacy cards
 - [x] Add immutable `ReviewEvent` history with source and response-time context
@@ -158,7 +158,7 @@ The existing five-stage scheduler remains authoritative while the new FSRS sched
 - [x] Keep examination clone IDs from creating separate learner-progress records
 - [x] Add deterministic trajectory and 500-item population simulation harness
 - [ ] Collect sufficient shadow data for classic-vs-FSRS comparison
-- [ ] Define activation thresholds for retention and review workload
+- [x] Define activation thresholds for retention and review workload
 
 ## 0.8 — Exam intelligence and adaptive queue
 
