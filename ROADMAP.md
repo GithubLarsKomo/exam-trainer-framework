@@ -130,11 +130,13 @@ Asset binaries live in a dedicated IndexedDB object store. Catalog JSON carries 
 
 ## 0.5 — Fügetechnik catalog completion
 
+Runtime source of truth: `src/fuegetechnik-catalog.ts` composes the versioned seed and additions. The early files under `catalogs/fuegetechnik/` remain format/reference scaffolding and are not used to determine runtime card count.
+
 - [x] Author at least 40 pilot cards
 - [x] Cover available exam-memory questions 1–11
 - [ ] Add approved local examination assets
 - [ ] Complete source-page metadata
-- [ ] Resolve remaining `needs_review` cards
+- [ ] Resolve remaining catalog review findings and publication warnings
 - [ ] Validate historical task and point distribution
 
 ## 0.6 — PWA and deployment
