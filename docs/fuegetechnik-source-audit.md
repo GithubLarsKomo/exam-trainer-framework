@@ -58,6 +58,8 @@ The memory protocol asks which microstructure zone is preferred for a mechanical
 
 The memory protocol explicitly relies on an image or supplied diagram for several tasks, including questions 6, 8, 17, 20, 29, 36, 40 and 45. Some other questions ask the learner to draw a diagram themselves and do not necessarily require an imported exam asset.
 
+Q16 is such a learner-drawn task: the expected construction is source-grounded from script figure 92, but the source figure itself does not need to be redistributed as an exam asset.
+
 The repository must not synthesize or copy an unapproved substitute image merely to close the 1.0 catalog gate. These tasks remain dependent on approved local assets or an explicitly approved source-safe reconstruction.
 
 ## Historical point distribution
