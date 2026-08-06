@@ -30,6 +30,10 @@ describe('Fügetechnik runtime catalog', () => {
     expect(catalog.cards.find(card => card.id === 'ft3101')?.sourcePage).toContain('S. 102–103');
     expect(catalog.cards.find(card => card.id === 'ft3201')?.sourcePage).toContain('S. 101–102');
     expect(catalog.cards.find(card => card.id === 'ft3301')?.sourcePage).toContain('S. 100');
+    expect(catalog.cards.find(card => card.id === 'ft3501')?.sourcePage).toContain('S. 154');
+    expect(catalog.cards.find(card => card.id === 'ft3701')?.sourcePage).toContain('S. 155–156');
+    expect(catalog.cards.find(card => card.id === 'ft3801')?.sourcePage).toContain('S. 160–163');
+    expect(catalog.cards.find(card => card.id === 'ft3901')?.sourcePage).toContain('S. 157–158');
   });
 
   it('keeps all five MSG arc types from source table 10', () => {
@@ -98,6 +102,47 @@ describe('Fügetechnik runtime catalog', () => {
     expect(card?.questionType).toBe('numeric');
     expect(card?.answer.modelAnswer).toContain('10,6');
     expect(card?.answer.requiredTerms).toEqual(['10,6']);
+  });
+
+  it('grounds the script-defined Klebstoff concept without claiming Q35 Kleber evidence', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const adhesive = catalog.cards.find(candidate => candidate.id === 'ft3501');
+    const curedTerm = catalog.cards.find(candidate => candidate.id === 'ft3502');
+
+    expect(adhesive?.sourcePage).toContain('S. 154');
+    expect(adhesive?.answer.requiredTerms).toEqual(expect.arrayContaining(['nichtmetallisch', 'Adhäsion', 'Kohäsion']));
+    expect(curedTerm?.sourcePage).toBeUndefined();
+  });
+
+  it('grounds Young equation and the three adhesive reaction classes', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const young = catalog.cards.find(candidate => candidate.id === 'ft3701');
+    const classes = catalog.cards.find(candidate => candidate.id === 'ft3801');
+
+    expect(young?.sourcePage).toContain('S. 155–156');
+    expect(young?.answer.requiredTerms).toEqual(expect.arrayContaining(['γ_SV', 'γ_SL', 'γ_LV', 'cos']));
+    expect(classes?.sourcePage).toContain('S. 160–163');
+    expect(classes?.answer.requiredTerms).toEqual(['Polymerisation', 'Polyaddition', 'Polykondensation']);
+  });
+
+  it('uses only script-listed examples for adhesive reaction classes', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft3802');
+
+    expect(card?.sourcePage).toContain('S. 160–163');
+    expect(card?.answer.requiredTerms).toEqual(['Cyanacrylat', 'Epoxidharz', 'Silikon']);
+    expect(card?.answer.modelAnswer).toContain('Cyanacrylatklebstoff');
+    expect(card?.answer.modelAnswer).toContain('Epoxidharzklebstoff');
+    expect(card?.answer.modelAnswer).toContain('Silikon');
+    expect(card?.answer.modelAnswer).not.toContain('Phenolharz');
+  });
+
+  it('keeps Q39 adhesive disadvantages within the verified script scope', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft3902');
+
+    expect(card?.sourcePage).toContain('S. 158–159');
+    expect(card?.answer.requiredTerms).toEqual(['Oberflächenvorbereitung', 'Temperatur', 'Schälbelastung']);
+    expect(card?.answer.modelAnswer).not.toContain('Biege');
+    expect(card?.answer.modelAnswer).not.toContain('Schlag');
   });
 
   it('keeps missing source-page evidence visible as a remaining catalog-completion warning', () => {
