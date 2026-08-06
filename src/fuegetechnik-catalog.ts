@@ -2,15 +2,30 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.7';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:25:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.8';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:36:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
-  ft0201: 'S. 17 · 3.3.1 Festigkeitsklassen',
-  ft0202: 'S. 17 · 3.3.1 Festigkeitsklassen',
-  ft0203: 'S. 17 · 3.3.1 Festigkeitsklassen',
+  ft0201: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft0202: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft0203: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft0301: 'S. 16 · 3.3.1 Festigkeitsklassen; Aufgabenwerte aus Gedächtnisprotokoll Q3',
+  ft0302: 'S. 16 · 3.3.1 Festigkeitsklassen; Aufgabenwerte aus Gedächtnisprotokoll Q3',
+  ft0303: 'S. 16 · 3.3.1 Festigkeitsklassen; Aufgabenwerte aus Gedächtnisprotokoll Q3',
   ft0401: 'S. 19–20 · 3.4.1 Vorspannkraft',
-  ft0501: 'S. 19 · 3.4.1 Vorspannkraft / Verspannungsdreieck',
+  ft0402: 'S. 19–20 · 3.4.1 Vorspannkraft',
+  ft0403: 'S. 19 · 3.4.1 Vorspannkraft',
+  ft0404: 'S. 19 · 3.4.1 Vorspannkraft',
+  ft0405: 'S. 19 · 3.4.1 Vorspannkraft',
+  ft0501: 'S. 18–20 · 3.4.1 Kraft-Verformungsschaubild / Verspannungsdreieck',
+  ft0502: 'S. 18–19 · 3.4.1 Zug-/Druckfederkombination',
+  ft0503: 'S. 19 · 3.4.1 Kraft-Verformungsschaubild',
+  ft0701: 'S. 58 · Vorteile von Blechverbindungen durch Umformen',
+  ft0702: 'S. 58 · Vorteile von Blechverbindungen durch Umformen',
+  ft0703: 'S. 58 · Vorteile von Blechverbindungen durch Umformen',
+  ft0704: 'S. 58 · Vorteile von Blechverbindungen durch Umformen',
+  ft0705: 'S. 58 · Vorteile von Blechverbindungen durch Umformen',
+  ft0706: 'S. 58 · Vorteile von Blechverbindungen durch Umformen',
   ft1101: 'S. 61 · 4.5.1 Fügegeometrien und Festigkeit',
   ft1102: 'S. 61 · 4.5.1 Fügegeometrien und Festigkeit',
   ft1103: 'S. 61 · 4.5.1 Fügegeometrien und Festigkeit',
