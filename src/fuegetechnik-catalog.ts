@@ -2,8 +2,8 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.5';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:10:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.6';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:18:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
   ft0201: 'S. 17 · 3.3.1 Festigkeitsklassen',
@@ -42,6 +42,9 @@ const verifiedSourcePages: Record<string, string> = {
   ft3802: 'S. 160–163 · 7.4.1–7.4.3 Klebstoffe nach Abbindemechanismus',
   ft3901: 'S. 157–158 · 7.3.1 Vorteile von Verklebungen',
   ft3902: 'S. 158–159 · 7.3.2 Nachteile von Verklebungen',
+  ft4201: 'S. 69–70 · 5.2 Schweißen als Fertigungsverfahren / Definition Löten',
+  ft4401: 'S. 133, 149–150 · Flussmittel / 6.5.3 Vor- und Nachbereitung der Lötverbindung',
+  ft4402: 'S. 150 · 6.5.3 Vor- und Nachbereitung der Lötverbindung',
 };
 
 function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
@@ -92,6 +95,18 @@ function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
     grounded.answer.modelAnswer = 'Hoher Aufwand für Reinigung und Oberflächenvorbereitung, eingeschränkte Temperaturbeständigkeit und begrenzte mechanische Belastbarkeit insbesondere bei Schäl- beziehungsweise linienförmiger Belastung.';
     grounded.answer.requiredTerms = ['Oberflächenvorbereitung', 'Temperatur', 'Schälbelastung'];
     grounded.changeReason = 'Quellenabgleich: S. 158–159 belegen Oberflächenvorbereitung, eingeschränkten Temperaturbereich und die ungünstige Schäl- beziehungsweise Linienbelastung.';
+  }
+
+  if (grounded.id === 'ft4201') {
+    grounded.answer.modelAnswer = 'Beim Löten schmilzt ein Zusatzmetall, das Lot; die Grundwerkstoffe werden benetzt, aber nicht geschmolzen. Schweißen vereinigt Werkstoffe in der Schweißzone unter Anwendung von Wärme und/oder Kraft, mit oder ohne Schweißzusatz.';
+    grounded.answer.requiredTerms = ['Lot', 'Grundwerkstoff nicht geschmolzen', 'Wärme und/oder Kraft'];
+    grounded.changeReason = 'Quellenabgleich: S. 69–70 definieren Schweißen allgemein über Wärme und/oder Kraft und Löten über ein geschmolzenes Lot bei nicht geschmolzenem Grundwerkstoff.';
+  }
+
+  if (grounded.id === 'ft4401') {
+    grounded.answer.modelAnswer = 'Oxid- und andere Oberflächenschichten werden vor dem Löten mechanisch beziehungsweise chemisch entfernt; ein geeignetes Flussmittel löst beziehungsweise reduziert verbleibende Oxide und unterstützt die Benetzung.';
+    grounded.answer.requiredTerms = ['Reinigung', 'Flussmittel', 'Oxide', 'Benetzung'];
+    grounded.changeReason = 'Quellenabgleich: Die Lötvorbereitung fordert mechanische/chemische Reinigung und vollständige Oxidentfernung; Flussmittel reduzieren verbleibende Oxide und unterstützen die Benetzung. Schutzgas/Vakuum werden nicht als Oxidentfernung gewertet.';
   }
 
   return grounded;
