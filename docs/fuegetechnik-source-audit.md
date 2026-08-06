@@ -34,6 +34,7 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 | `ft2101` | 21 | S. 113, 5.7.1 Mechanisch-technologische Verfahren | The page supports the test context and differing properties across weld metal, HAZ and base material, but does not establish the remembered wording as a unique “preferred zone”; Q21 remains open |
 | `ft2501` | 25 | S. 76–77, 5.4.1.1 | Source page assigned |
 | `ft2601` | 26 | S. 77, 5.4.1.1 | Corrected from generic CE/CEV notation to the script-specific Kohlenstoffäquivalent `K` |
+| `ft2701` | 27 | S. 73–76, ZTU/Abkühlverhalten and 5.4.1.1 | Corrected to the directly supported chain: increasing carbon content raises hardenability/hard-cracking risk; rapid cooling promotes martensitic hardening. Unsupported hydrogen/stress prerequisites were removed from the expected answer |
 | `ft3101`–`ft3102` | 31 | S. 102–103, Elektronenstrahlschweißen | Source page assigned |
 
 ## Confirmed exam-memory mismatch: question 11
@@ -53,6 +54,12 @@ Those statements are useful and source-supported, but they are **not sufficient 
 The memory protocol asks which microstructure zone is preferred for a mechanical-technological joining/test procedure. Script page 113 explains that strength and toughness differ between weld metal, heat-affected zone and base material and lists mechanical-technological test methods. It does not designate one of those zones as the uniquely preferred answer to the remembered wording.
 
 `ft2101` therefore remains useful source-supported learning content about the heat-affected zone, but it must not be treated as proof that the remembered Q21 has been conclusively reconstructed. Q21 stays on the editorial review list until stronger approved evidence is available.
+
+## Question 24 remains only partially grounded
+
+The remembered Q24 asks how increasing carbon content affects strength, hardness and elongation. The script directly supports increasing carbon content as a driver of hardenability/hard-cracking risk and links carbon content to steel strength in the weldability discussion, but the current audit has not found a single approved passage that establishes the full three-part expected direction (`strength ↑`, `hardness ↑`, `elongation ↓`) as used by `ft2401`.
+
+Q24 therefore remains open rather than inheriting evidence from Q27 or generic materials knowledge.
 
 ## Image/diagram-dependent exam evidence
 
@@ -82,5 +89,5 @@ Prioritize questions whose current runtime answers can materially affect exam pr
 
 1. Q11 — source-supported reason for the high-dynamic limitation and the explicitly intended substitute process.
 2. Q21 — resolve the ambiguous remembered wording without inferring a uniquely preferred microstructure zone from insufficient evidence.
-3. Q24/Q27 — verify the exact source scope of carbon-content effects and cold-cracking statements.
+3. Q24 — find direct approved evidence for the complete strength/hardness/elongation relationship or narrow the runtime answer accordingly.
 4. Q30–Q45 — finish exact page/section mapping, then leave only genuinely asset-dependent warnings open.
