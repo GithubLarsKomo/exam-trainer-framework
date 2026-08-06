@@ -26,7 +26,10 @@ describe('Fügetechnik runtime catalog', () => {
     expect(catalog.cards.find(card => card.id === 'ft1401')?.sourcePage).toContain('S. 79–80');
     expect(catalog.cards.find(card => card.id === 'ft1901')?.sourcePage).toContain('S. 72–73');
     expect(catalog.cards.find(card => card.id === 'ft1902')?.sourcePage).toContain('S. 72–73');
+    expect(catalog.cards.find(card => card.id === 'ft2201')?.sourcePage).toContain('S. 74');
+    expect(catalog.cards.find(card => card.id === 'ft2301')?.sourcePage).toContain('S. 73–74');
     expect(catalog.cards.find(card => card.id === 'ft2701')?.sourcePage).toContain('S. 73–76');
+    expect(catalog.cards.find(card => card.id === 'ft2801')?.sourcePage).toContain('S. 104');
     expect(catalog.cards.find(card => card.id === 'ft3101')?.sourcePage).toContain('S. 102–103');
     expect(catalog.cards.find(card => card.id === 'ft3201')?.sourcePage).toContain('S. 101–102');
     expect(catalog.cards.find(card => card.id === 'ft3301')?.sourcePage).toContain('S. 100');
@@ -69,6 +72,34 @@ describe('Fügetechnik runtime catalog', () => {
     ]));
   });
 
+  it('grounds Q22 in the source t8/5 definition and ZTU cooling behavior', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const definition = catalog.cards.find(candidate => candidate.id === 'ft2201');
+    const shortCooling = catalog.cards.find(candidate => candidate.id === 'ft2202');
+    const longCooling = catalog.cards.find(candidate => candidate.id === 'ft2203');
+
+    expect(definition?.sourcePage).toContain('S. 74');
+    expect(definition?.answer.requiredTerms).toEqual(expect.arrayContaining(['800', '500', 'Abkühlzeit']));
+    expect(shortCooling?.answer.requiredTerms).toEqual(['kurze t8/5', 'schnelle Abkühlung', 'Martensit', 'Härte']);
+    expect(shortCooling?.answer.modelAnswer).toContain('Härterissgefahr');
+    expect(longCooling?.answer.requiredTerms).toEqual(['lange t8/5', 'langsame Abkühlung', 'Ferrit', 'Perlit']);
+    expect(longCooling?.answer.modelAnswer).toContain('Zwischenstufengefüge');
+    expect(longCooling?.answer.modelAnswer).not.toContain('Kornwachstum');
+  });
+
+  it('grounds Q23 in the F/P/Zw/M regions of source figure 81', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const sequence = catalog.cards.find(candidate => candidate.id === 'ft2301');
+    const hardness = catalog.cards.find(candidate => candidate.id === 'ft2302');
+    const cracking = catalog.cards.find(candidate => candidate.id === 'ft2303');
+
+    expect(sequence?.sourcePage).toContain('S. 73–74');
+    expect(sequence?.answer.requiredTerms).toEqual(['Ferrit', 'Perlit', 'Zwischenstufengefüge', 'Martensit']);
+    expect(sequence?.answer.modelAnswer).toContain('Zwischenstufengefüge');
+    expect(hardness?.answer.requiredTerms).toEqual(['Härte', 'Abkühlungsdauer', 'Martensit']);
+    expect(cracking?.answer.requiredTerms).toEqual(['hohe Abkühlgeschwindigkeit', 'Martensit', 'Härteriss']);
+  });
+
   it('uses the script-specific carbon-equivalent notation K', () => {
     const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft2601');
 
@@ -86,6 +117,14 @@ describe('Fügetechnik runtime catalog', () => {
     expect(card?.answer.modelAnswer).toContain('schneller Abkühlung');
     expect(card?.answer.modelAnswer).not.toContain('Wasserstoff');
     expect(card?.answer.modelAnswer).not.toContain('Zugspannungen');
+  });
+
+  it('grounds Q28 in the press-welding definition below the melting limit', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft2801');
+
+    expect(card?.sourcePage).toContain('S. 104');
+    expect(card?.answer.requiredTerms).toEqual(['unterhalb der Schmelzgrenze', 'teilweise Erwärmung', 'Fügekräfte']);
+    expect(card?.answer.modelAnswer).toContain('nicht bis zur Schmelzgrenze');
   });
 
   it('grounds Q32 in automated laser use and electron-beam vacuum overhead', () => {
