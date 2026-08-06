@@ -2,8 +2,8 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.1';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-05T20:30:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.2';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T17:30:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
   ft0201: 'S. 17 · 3.3.1 Festigkeitsklassen',
@@ -21,9 +21,13 @@ const verifiedSourcePages: Record<string, string> = {
   ft1401: 'S. 79–80 · 5.4.1.4 Schweißeignung hochlegierter Stähle',
   ft1402: 'S. 79–80 · 5.4.1.4 Schweißeignung hochlegierter Stähle',
   ft1501: 'S. 97 · 5.6.1.3 Schutzgasschweißen / Tabelle 10',
+  ft1601: 'S. 91 · 5.6.1.2 Lichtbogenhandschweißen / Abbildung 92',
+  ft1602: 'S. 91 · 5.6.1.2 Lichtbogenhandschweißen / Abbildung 92',
   ft1801: 'S. 97 · 5.6.1.3 Schutzgasschweißen',
   ft1802: 'S. 97 · 5.6.1.3 Schutzgasschweißen',
   ft1803: 'S. 97–98 · 5.6.1.3 Schutzgasschweißen',
+  ft1901: 'S. 72–73 · 5.3 Grundlagen – Werkstoffkunde / Wärmeeinflusszone',
+  ft1902: 'S. 72–73 · 5.3 Grundlagen – Werkstoffkunde / Wärmeeinflusszone',
   ft2101: 'S. 113 · 5.7.1 Mechanisch-technologische Verfahren',
   ft2501: 'S. 76–77 · 5.4.1.1 Schweißeignung unlegierter und niedriglegierter Stähle',
   ft2601: 'S. 77 · 5.4.1.1 Schweißeignung unlegierter und niedriglegierter Stähle',
@@ -39,6 +43,16 @@ function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
     grounded.answer.modelAnswer = 'Sprühlichtbogen, Langlichtbogen, Übergangslichtbogen, Kurzlichtbogen und Impulslichtbogen.';
     grounded.answer.requiredTerms = ['Sprühlichtbogen', 'Langlichtbogen', 'Übergangslichtbogen', 'Kurzlichtbogen', 'Impulslichtbogen'];
     grounded.changeReason = 'Quellenabgleich: Tabelle 10 auf S. 97 führt fünf MSG-Lichtbogenarten einschließlich Langlichtbogen auf.';
+  }
+
+  if (grounded.id === 'ft1601') {
+    grounded.prompt = 'Zeichne die Stromquellenkennlinie des Lichtbogenhandschweißens und trage die Kennlinien für kurzen und langen Lichtbogen ein.';
+    grounded.questionType = 'drawing';
+    grounded.answer = {
+      modelAnswer: 'U-I-Diagramm mit steil fallender statischer Maschinenkennlinie sowie Lichtbogenkennlinien für kurzen und langen Lichtbogen.',
+      criteria: ['Spannungsachse U', 'Stromachse I', 'steil fallende Maschinenkennlinie', 'Kurzlichtbogen', 'Langlichtbogen'],
+    };
+    grounded.changeReason = 'Quellenabgleich: Abbildung 92 auf S. 91 zeigt die fallende Konstantstromkennlinie sowie kurzen und langen Lichtbogen und entspricht damit der erinnerten Prüfungsaufgabe 16.';
   }
 
   if (grounded.id === 'ft2601') {
