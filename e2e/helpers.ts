@@ -150,7 +150,7 @@ export async function seedCatalog(page: Page, cards: SeedCard[], assets: SeedAss
     });
     db.close();
   }, { catalog, state, assets });
-  await page.reload();
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.app-header h1')).toHaveText('E2E Katalog', { timeout: 10_000 });
   await expect(page.locator('nav.bottom-nav')).toBeVisible();
 }
