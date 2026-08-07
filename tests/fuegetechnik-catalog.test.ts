@@ -22,6 +22,9 @@ describe('Fügetechnik runtime catalog', () => {
   it('applies verified source metadata to grounded cards', () => {
     const catalog = createFuegetechnikRuntimeCatalog();
 
+    expect(catalog.cards.find(card => card.id === 'ft01a1')?.sourcePage).toContain('S. 3');
+    expect(catalog.cards.find(card => card.id === 'ft01c1')?.sourcePage).toContain('S. 39');
+    expect(catalog.cards.find(card => card.id === 'ft01d2')?.sourcePage).toContain('S. 19');
     expect(catalog.cards.find(card => card.id === 'ft0201')?.sourcePage).toContain('S. 16');
     expect(catalog.cards.find(card => card.id === 'ft0301')?.sourcePage).toContain('S. 16');
     expect(catalog.cards.find(card => card.id === 'ft0405')?.sourcePage).toContain('S. 19');
@@ -44,6 +47,36 @@ describe('Fügetechnik runtime catalog', () => {
     expect(catalog.cards.find(card => card.id === 'ft4201')?.sourcePage).toContain('S. 69–70');
     expect(catalog.cards.find(card => card.id === 'ft4401')?.sourcePage).toContain('S. 133');
     expect(catalog.cards.find(card => card.id === 'ft4402')?.sourcePage).toContain('S. 150');
+  });
+
+  it('grounds Q1 only where the approved joining classification is direct', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const weldingRemoval = catalog.cards.find(card => card.id === 'ft01a3');
+    const solderRemoval = catalog.cards.find(card => card.id === 'ft01b3');
+    const axialScrew = catalog.cards.find(card => card.id === 'ft01d1');
+    const transverseScrew = catalog.cards.find(card => card.id === 'ft01d2');
+    const removableScrew = catalog.cards.find(card => card.id === 'ft01d3');
+
+    expect(weldingRemoval?.sourcePage).toContain('S. 3');
+    expect(weldingRemoval?.answer.requiredTerms).toEqual(['Schädigung', 'Zerstörung']);
+    expect(weldingRemoval?.answer.modelAnswer).toContain('nicht zerstörungsfrei');
+
+    expect(solderRemoval?.sourcePage).toContain('S. 3');
+    expect(solderRemoval?.answer.modelAnswer).toContain('teilweise');
+    expect(solderRemoval?.answer.modelAnswer).not.toBe('Unlösbar.');
+
+    expect(axialScrew?.sourcePage).toBeUndefined();
+    expect(transverseScrew?.sourcePage).toContain('S. 19');
+    expect(transverseScrew?.answer.requiredTerms).toEqual(['Kraftschluss', 'Reibschluss']);
+    expect(removableScrew?.sourcePage).toContain('S. 12');
+  });
+
+  it('keeps Q9 and Q10 source-open instead of promoting generic evidence', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+
+    for (const id of ['ft0901', 'ft0902', 'ft0903', 'ft1001', 'ft1002']) {
+      expect(catalog.cards.find(card => card.id === id)?.sourcePage).toBeUndefined();
+    }
   });
 
   it('grounds early screw sizing, preload and forming questions in their approved sources', () => {

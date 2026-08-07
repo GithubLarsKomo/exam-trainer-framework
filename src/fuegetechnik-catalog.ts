@@ -2,10 +2,21 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.8';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:36:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.9';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-07T10:20:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
+  ft01a1: 'S. 3 · Abbildung 3 / Tabelle 1 Schlussarten; S. 102–103 · Elektronenstrahlschweißen',
+  ft01a2: 'S. 3 · Tabelle 1 Charakterisierung der Fügeverfahren; S. 102–103 · Elektronenstrahlschweißen',
+  ft01a3: 'S. 3 · Tabelle 1 Charakterisierung der Fügeverfahren',
+  ft01b1: 'S. 3 · Abbildung 3 / Tabelle 1 Schlussarten',
+  ft01b2: 'S. 3 · Tabelle 1 Charakterisierung der Fügeverfahren',
+  ft01b3: 'S. 3 · Tabelle 1 Charakterisierung der Fügeverfahren',
+  ft01c1: 'S. 39, 58–60 · Fügen durch Umformen / Durchsetzfügen',
+  ft01c2: 'S. 39, 58–60 · Fügen durch Umformen / Durchsetzfügen',
+  ft01c3: 'S. 39 · Fügen durch Umformen',
+  ft01d2: 'S. 19 · Schrauben / Mindestklemmkraft und Reibschluss',
+  ft01d3: 'S. 12 · 3.1 Schrauben / lösbare Verbindung',
   ft0201: 'S. 16 · 3.3.1 Festigkeitsklassen',
   ft0202: 'S. 16 · 3.3.1 Festigkeitsklassen',
   ft0203: 'S. 16 · 3.3.1 Festigkeitsklassen',
@@ -72,6 +83,18 @@ const verifiedSourcePages: Record<string, string> = {
 function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
   const grounded = structuredClone(card);
   grounded.sourcePage = verifiedSourcePages[grounded.id] ?? grounded.sourcePage;
+
+  if (grounded.id === 'ft01a3') {
+    grounded.answer.modelAnswer = 'Die Schweißverbindung ist nicht zerstörungsfrei lösbar; eine Trennung ist nur durch Schädigung oder Zerstörung der Fügeteile möglich.';
+    grounded.answer.requiredTerms = ['Schädigung', 'Zerstörung'];
+    grounded.changeReason = 'Quellenabgleich: Tabelle 1 auf S. 3 beschreibt Fügen durch Schweißen als nur durch Schädigung oder Zerstörung der Fügeteile lösbar.';
+  }
+
+  if (grounded.id === 'ft01b3') {
+    grounded.answer.modelAnswer = 'Eine Lötverbindung ist im Allgemeinen nur mit Schädigung der Fügeteile lösbar; teilweise ist jedoch auch ein Lösen ohne Schädigung möglich.';
+    grounded.answer.requiredTerms = ['Schädigung'];
+    grounded.changeReason = 'Quellenabgleich: Tabelle 1 auf S. 3 beschreibt Fügen durch Löten differenzierter als die bisherige pauschale Antwort „unlösbar“.';
+  }
 
   if (grounded.id === 'ft1501') {
     grounded.answer.modelAnswer = 'Sprühlichtbogen, Langlichtbogen, Übergangslichtbogen, Kurzlichtbogen und Impulslichtbogen.';
