@@ -38,6 +38,10 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 | `ft3101`–`ft3102` | 31 | S. 102–103, Elektronenstrahlschweißen | Source page assigned |
 | `ft3201` | 32 | S. 101–102, Laser- und Elektronenstrahlschweißen | Narrowed to the directly supported comparison: laser welding is used throughout automated systems, whereas electron-beam generation and high-vacuum systems add vacuum-chamber and evacuation overhead |
 | `ft3301` | 33 | S. 100, Tabelle 11 | Source page assigned; CO₂ laser wavelength verified as 10.6 µm |
+| `ft3501` | 35 (partial) | S. 154, 7.1 / DIN 16920 | `Klebstoff` definition source-grounded; the separate remembered `Kleber` distinction remains open |
+| `ft3701` | 37 | S. 155–156, 7.2.1 / Youngsche Gleichung | Source page assigned |
+| `ft3801`–`ft3802` | 38 | S. 160–163, 7.4.1–7.4.3 | Three reaction classes source-grounded; examples narrowed to Cyanacrylat, Epoxidharz and Silikon as explicitly listed examples |
+| `ft3901`–`ft3902` | 39 | S. 157–159, 7.3.1–7.3.2 | Advantages source-grounded; disadvantages narrowed to surface preparation, temperature range and peel/line-loading limitations |
 
 ## Confirmed exam-memory mismatch: question 11
 
@@ -69,6 +73,12 @@ The current Q34 card asks specifically why copper is problematic with a CO₂ la
 
 Q34 therefore remains open. Generic CO₂/metal absorption evidence must not be promoted into a copper-specific expected answer without a direct approved source.
 
+## Question 35 remains partially grounded
+
+Script S. 154 defines `Klebstoff` as a nonmetallic substance capable of connecting parts through adhesion and cohesion. The audit has not found an approved script passage that separately defines `Kleber` as the cured or hardened adhesive in the way `ft3502` currently does.
+
+`ft3501` is therefore source-grounded, while `ft3502` deliberately keeps its missing-source warning and Q35 remains editorially open as a whole.
+
 ## Image/diagram-dependent exam evidence
 
 The memory protocol explicitly relies on an image or supplied diagram for several tasks, including questions 6, 8, 17, 20, 29, 36, 40 and 45. Some other questions ask the learner to draw a diagram themselves and do not necessarily require an imported exam asset.
@@ -99,4 +109,5 @@ Prioritize questions whose current runtime answers can materially affect exam pr
 2. Q21 — resolve the ambiguous remembered wording without inferring a uniquely preferred microstructure zone from insufficient evidence.
 3. Q24 — find direct approved evidence for the complete strength/hardness/elongation relationship or narrow the runtime answer accordingly.
 4. Q30/Q34 — verify the aluminium resistance-spot-welding specifics and obtain a copper-specific CO₂-laser source rather than relying on generic material statements.
-5. Q35–Q45 — finish exact page/section mapping, then leave only genuinely asset-dependent warnings open.
+5. Q35 — find an approved source for the distinct `Kleber` term or remove/narrow `ft3502`.
+6. Q41–Q45 — finish exact page/section mapping, then leave genuinely asset-dependent Q40/Q45 warnings open.
