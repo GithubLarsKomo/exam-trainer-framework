@@ -34,6 +34,9 @@ describe('Fügetechnik runtime catalog', () => {
     expect(catalog.cards.find(card => card.id === 'ft3701')?.sourcePage).toContain('S. 155–156');
     expect(catalog.cards.find(card => card.id === 'ft3801')?.sourcePage).toContain('S. 160–163');
     expect(catalog.cards.find(card => card.id === 'ft3901')?.sourcePage).toContain('S. 157–158');
+    expect(catalog.cards.find(card => card.id === 'ft4201')?.sourcePage).toContain('S. 69–70');
+    expect(catalog.cards.find(card => card.id === 'ft4401')?.sourcePage).toContain('S. 133');
+    expect(catalog.cards.find(card => card.id === 'ft4402')?.sourcePage).toContain('S. 150');
   });
 
   it('keeps all five MSG arc types from source table 10', () => {
@@ -143,6 +146,36 @@ describe('Fügetechnik runtime catalog', () => {
     expect(card?.answer.requiredTerms).toEqual(['Oberflächenvorbereitung', 'Temperatur', 'Schälbelastung']);
     expect(card?.answer.modelAnswer).not.toContain('Biege');
     expect(card?.answer.modelAnswer).not.toContain('Schlag');
+  });
+
+  it('keeps Q41 and Q43 open where the approved source is only partial', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+
+    expect(catalog.cards.find(card => card.id === 'ft4101')?.sourcePage).toBeUndefined();
+    expect(catalog.cards.find(card => card.id === 'ft4301')?.sourcePage).toBeUndefined();
+    expect(catalog.cards.find(card => card.id === 'ft4302')?.sourcePage).toBeUndefined();
+  });
+
+  it('grounds Q42 in the source definitions of welding and soldering', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft4201');
+
+    expect(card?.sourcePage).toContain('S. 69–70');
+    expect(card?.answer.requiredTerms).toEqual(['Lot', 'Grundwerkstoff nicht geschmolzen', 'Wärme und/oder Kraft']);
+    expect(card?.answer.modelAnswer).toContain('benetzt, aber nicht geschmolzen');
+    expect(card?.answer.modelAnswer).not.toContain('plastifiziert');
+  });
+
+  it('grounds Q44 in oxide removal, flux action and flux-residue cleanup', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const oxideRemoval = catalog.cards.find(candidate => candidate.id === 'ft4401');
+    const residue = catalog.cards.find(candidate => candidate.id === 'ft4402');
+
+    expect(oxideRemoval?.sourcePage).toContain('S. 149–150');
+    expect(oxideRemoval?.answer.requiredTerms).toEqual(['Reinigung', 'Flussmittel', 'Oxide', 'Benetzung']);
+    expect(oxideRemoval?.answer.modelAnswer).not.toContain('Schutzgas');
+    expect(oxideRemoval?.answer.modelAnswer).not.toContain('Vakuum');
+    expect(residue?.sourcePage).toContain('S. 150');
+    expect(residue?.answer.requiredTerms).toEqual(expect.arrayContaining(['Flussmittelreste', 'Korrosion', 'entfernen']));
   });
 
   it('keeps missing source-page evidence visible as a remaining catalog-completion warning', () => {
