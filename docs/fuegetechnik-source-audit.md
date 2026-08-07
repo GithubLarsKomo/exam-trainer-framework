@@ -1,6 +1,6 @@
 # Fügetechnik source audit
 
-Date: 2026-08-06
+Date: 2026-08-07
 
 This audit compares the built-in runtime catalog with the two project sources:
 
@@ -20,6 +20,7 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 
 | Runtime card(s) | Exam question | Script evidence | Audit result |
 | --- | --- | --- | --- |
+| `ft01a1`–`ft01c3`, `ft01d2`–`ft01d3` | 1 (partial) | S. 3 joining classification; S. 12/19 screw connection; S. 39 and 58–60 forming/clinching | Welding, soldering and clinching classifications plus screw transverse friction and removability are source-grounded. The remembered axial screw-direction classification in `ft01d1` remains open |
 | `ft0201`–`ft0203` | 2 | S. 16, 3.3.1 Festigkeitsklassen | Corrected the earlier off-by-one page mapping from S. 17 to the printed S. 16 |
 | `ft0301`–`ft0303` | 3 | S. 16, 3.3.1 Festigkeitsklassen + remembered Q3 inputs | The script establishes the 8.9 strength-class calculation; the memory protocol supplies 400 kN and 40 mm². Arithmetic and integer rounding then yield 28.8 kN per screw and 14 screws |
 | `ft0401`–`ft0405` | 4 | S. 19–20, 3.4.1 Vorspannkraft | FMmin components, formula and meanings source-grounded |
@@ -50,11 +51,25 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 | `ft4201` | 42 | S. 69–70, 5.2 / definitions of welding and soldering | Corrected to the source-level distinction: solder melts while the base material is wetted but not melted; welding is defined more generally through heat and/or force |
 | `ft4401`–`ft4402` | 44 | S. 133 and 149–150, flux and solder-joint preparation | Oxide removal narrowed to mechanical/chemical cleaning plus flux action; unsupported “shielding gas/vacuum removes the oxide” was removed. Flux-residue corrosion and required cleanup are source-grounded |
 
+## Question 1 remains partially grounded
+
+The memory protocol asks for type of cohesion, joining group and removability for electron-beam welding, soldering, clinching and a screw connection in horizontal and vertical directions.
+
+The source directly supports the welding, soldering and forming classifications and their removability rules. It also defines a screw connection as a removable force-fit connection and explicitly uses clamping-force friction to transmit transverse forces. Those cards now carry source metadata. The previous blanket `unlösbar` answer for soldering was narrowed to the script's more precise statement that soldered joints are generally removable only with damage, but in some cases can be released without damage.
+
+The current `ft01d1` answer, however, identifies the axial screw effect as `Formschluss des Gewindes`. The audited script explains the axial operating-force behavior and the screw thread, but it does not directly classify this remembered directional subtask as form fit strongly enough to close the evidence gap. `ft01d1` therefore deliberately remains without `sourcePage` metadata.
+
 ## Question 3 uses split provenance
 
 The script does not contain the remembered pressure-vessel exercise itself. It establishes how the screw property class determines tensile strength and yield strength on printed S. 16. The memory protocol independently establishes the Q3 task inputs: 400 kN total force, property class 8.9 and 40 mm² cross-section per screw.
 
 The runtime answer therefore intentionally combines these two approved sources: class 8.9 gives 720 N/mm² yield strength, which gives 28.8 kN for 40 mm²; 400/28.8 = 13.89, so a discrete screw count must be rounded upward to 14. This arithmetic is derived, not presented as a quotation from either source.
+
+## Questions 9 and 10 remain source-open
+
+The memory protocol asks in Q9 for two challenges when joining two CFK sheets with semi-tubular self-piercing rivets and for an alternative joining process. The script confirms use of semi-tubular self-piercing rivets with metal and composite components and explains the undercut/form-fit mechanism, but the audited source does not directly establish the current CFK-specific expected terms `spröde`, `Delamination`, `Faserschädigung` or the proposed adhesive alternative. `ft0901`–`ft0903` therefore remain without source-page metadata.
+
+Q10 asks the learner to draw a clinch force-displacement curve with a tolerance band and a qualitatively poor curve. The audited clinching section describes process geometry, strength and mixed-material behavior, but no directly matching force-displacement/tolerance-band evidence was found. `ft1001` and `ft1002` remain source-open rather than borrowing unrelated process-monitoring evidence.
 
 ## Confirmed exam-memory mismatch: question 11
 
@@ -130,10 +145,11 @@ Therefore the roadmap/issue item `Validate historical task and point distributio
 
 Prioritize questions whose current runtime answers can materially affect exam preparation:
 
-1. Q11 — source-supported reason for the high-dynamic limitation and the explicitly intended substitute process.
-2. Q21 — resolve the ambiguous remembered wording without inferring a uniquely preferred microstructure zone from insufficient evidence.
-3. Q24 — find direct approved evidence for the complete strength/hardness/elongation relationship or narrow the runtime answer accordingly.
-4. Q30/Q34 — verify the aluminium resistance-spot-welding specifics and obtain a copper-specific CO₂-laser source rather than relying on generic material statements.
-5. Q35/Q41/Q43 — find direct approved evidence for the remaining terminology and stress/oxide claims or narrow/remove those runtime cards.
-6. Early seed Q1/Q9/Q10 — audit remaining historical v0.4 cards after the now-grounded Q2–Q5/Q7 group.
-7. Q45 — keep asset-dependent until the approved diagram is available.
+1. Q1d1 — find direct approved evidence for the axial screw-direction classification or narrow/remove the current form-fit answer.
+2. Q9/Q10 — obtain direct approved CFK/self-piercing-rivet and clinch force-displacement/tolerance-band evidence; do not infer from generic composite or process-monitoring knowledge.
+3. Q11 — source-supported reason for the high-dynamic limitation and the explicitly intended substitute process.
+4. Q21 — resolve the ambiguous remembered wording without inferring a uniquely preferred microstructure zone from insufficient evidence.
+5. Q24 — find direct approved evidence for the complete strength/hardness/elongation relationship or narrow the runtime answer accordingly.
+6. Q30/Q34 — verify the aluminium resistance-spot-welding specifics and obtain a copper-specific CO₂-laser source rather than relying on generic material statements.
+7. Q35/Q41/Q43 — find direct approved evidence for the remaining terminology and stress/oxide claims or narrow/remove those runtime cards.
+8. Q45 — keep asset-dependent until the approved diagram is available.
