@@ -2,8 +2,8 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.4';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:03:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.5';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:10:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
   ft0201: 'S. 17 · 3.3.1 Festigkeitsklassen',
@@ -36,6 +36,12 @@ const verifiedSourcePages: Record<string, string> = {
   ft3102: 'S. 102–103 · Elektronenstrahlschweißen',
   ft3201: 'S. 101–102 · Laser- und Elektronenstrahlschweißen',
   ft3301: 'S. 100 · Tabelle 11 Lasertypen und technischer Anwendungsbereich',
+  ft3501: 'S. 154 · 7.1 Einordnung / DIN-16920-Klebstoffdefinition',
+  ft3701: 'S. 155–156 · 7.2.1 Benetzung / Youngsche Gleichung',
+  ft3801: 'S. 160–163 · 7.4.1–7.4.3 Klebstoffe nach Abbindemechanismus',
+  ft3802: 'S. 160–163 · 7.4.1–7.4.3 Klebstoffe nach Abbindemechanismus',
+  ft3901: 'S. 157–158 · 7.3.1 Vorteile von Verklebungen',
+  ft3902: 'S. 158–159 · 7.3.2 Nachteile von Verklebungen',
 };
 
 function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
@@ -74,6 +80,18 @@ function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
     grounded.answer.modelAnswer = 'Laserschweißen wird durchgehend in automatisierten Anlagen eingesetzt. Elektronenstrahlschweißen erfordert für die Strahlerzeugung Hochvakuum; Hochvakuumanlagen benötigen aufwändige Vakuumkammern sowie Schleus- oder Evakuierzyklen. Dadurch ist Laserschweißen in vielen Fertigungsanlagen einfacher zu integrieren.';
     grounded.answer.requiredTerms = ['Automatisierung', 'Hochvakuum', 'Vakuumkammer'];
     grounded.changeReason = 'Quellenabgleich: S. 101 beschreibt den durchgehend automatisierten Lasereinsatz; S. 102 dokumentiert den Hochvakuumbedarf und den Aufwand großer Vakuumkammern beim Elektronenstrahlschweißen.';
+  }
+
+  if (grounded.id === 'ft3802') {
+    grounded.answer.modelAnswer = 'Polymerisation: Cyanacrylatklebstoff; Polyaddition: Epoxidharzklebstoff; Polykondensation: Silikon.';
+    grounded.answer.requiredTerms = ['Cyanacrylat', 'Epoxidharz', 'Silikon'];
+    grounded.changeReason = 'Quellenabgleich: Die Beispiele stammen direkt aus den Abschnitten 7.4.1 bis 7.4.3 auf S. 161–163.';
+  }
+
+  if (grounded.id === 'ft3902') {
+    grounded.answer.modelAnswer = 'Hoher Aufwand für Reinigung und Oberflächenvorbereitung, eingeschränkte Temperaturbeständigkeit und begrenzte mechanische Belastbarkeit insbesondere bei Schäl- beziehungsweise linienförmiger Belastung.';
+    grounded.answer.requiredTerms = ['Oberflächenvorbereitung', 'Temperatur', 'Schälbelastung'];
+    grounded.changeReason = 'Quellenabgleich: S. 158–159 belegen Oberflächenvorbereitung, eingeschränkten Temperaturbereich und die ungünstige Schäl- beziehungsweise Linienbelastung.';
   }
 
   return grounded;
