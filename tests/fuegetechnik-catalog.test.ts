@@ -26,6 +26,7 @@ describe('Fügetechnik runtime catalog', () => {
     expect(catalog.cards.find(card => card.id === 'ft1401')?.sourcePage).toContain('S. 79–80');
     expect(catalog.cards.find(card => card.id === 'ft1901')?.sourcePage).toContain('S. 72–73');
     expect(catalog.cards.find(card => card.id === 'ft1902')?.sourcePage).toContain('S. 72–73');
+    expect(catalog.cards.find(card => card.id === 'ft2701')?.sourcePage).toContain('S. 73–76');
     expect(catalog.cards.find(card => card.id === 'ft3101')?.sourcePage).toContain('S. 102–103');
   });
 
@@ -66,6 +67,16 @@ describe('Fügetechnik runtime catalog', () => {
     expect(card?.answer.requiredTerms).toEqual(['Kohlenstoffäquivalent', 'K']);
     expect(card?.answer.modelAnswer).toContain('K = C + Mn/6');
     expect(card?.answer.modelAnswer).not.toContain('CEV');
+  });
+
+  it('keeps Q27 within the approved carbon-content and cooling evidence', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft2701');
+
+    expect(card?.sourcePage).toContain('S. 73–76');
+    expect(card?.answer.requiredTerms).toEqual(['Kohlenstoffgehalt', 'Härtbarkeit', 'Martensit', 'Kaltrissgefahr']);
+    expect(card?.answer.modelAnswer).toContain('schneller Abkühlung');
+    expect(card?.answer.modelAnswer).not.toContain('Wasserstoff');
+    expect(card?.answer.modelAnswer).not.toContain('Zugspannungen');
   });
 
   it('keeps missing source-page evidence visible as a remaining catalog-completion warning', () => {
