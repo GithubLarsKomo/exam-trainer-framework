@@ -2,8 +2,8 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.6';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:18:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.7';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:25:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
   ft0201: 'S. 17 · 3.3.1 Festigkeitsklassen',
@@ -29,9 +29,16 @@ const verifiedSourcePages: Record<string, string> = {
   ft1901: 'S. 72–73 · 5.3 Grundlagen – Werkstoffkunde / Wärmeeinflusszone',
   ft1902: 'S. 72–73 · 5.3 Grundlagen – Werkstoffkunde / Wärmeeinflusszone',
   ft2101: 'S. 113 · 5.7.1 Mechanisch-technologische Verfahren',
+  ft2201: 'S. 74 · 5.3 Grundlagen – ZTU / Abkühlzeit t8/5',
+  ft2202: 'S. 73–76 · ZTU / t8/5 und 5.4.1.1 Schweißeignung der Stähle',
+  ft2203: 'S. 73–74 · ZTU / Abkühlzeit t8/5',
+  ft2301: 'S. 73–74 · Abbildung 81 ZTU-Diagramm',
+  ft2302: 'S. 73–74 · Abbildung 81 ZTU-Diagramm',
+  ft2303: 'S. 73–76 · ZTU und 5.4.1.1 Schweißeignung der Stähle',
   ft2501: 'S. 76–77 · 5.4.1.1 Schweißeignung unlegierter und niedriglegierter Stähle',
   ft2601: 'S. 77 · 5.4.1.1 Schweißeignung unlegierter und niedriglegierter Stähle',
   ft2701: 'S. 73–76 · ZTU/Abkühlverhalten und 5.4.1.1 Schweißeignung der Stähle',
+  ft2801: 'S. 104 · 5.6.2 Pressschweißverfahren',
   ft3101: 'S. 102–103 · Elektronenstrahlschweißen',
   ft3102: 'S. 102–103 · Elektronenstrahlschweißen',
   ft3201: 'S. 101–102 · Laser- und Elektronenstrahlschweißen',
@@ -67,6 +74,36 @@ function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
     grounded.changeReason = 'Quellenabgleich: Abbildung 92 auf S. 91 zeigt die fallende Konstantstromkennlinie sowie kurzen und langen Lichtbogen und entspricht damit der erinnerten Prüfungsaufgabe 16.';
   }
 
+  if (grounded.id === 'ft2202') {
+    grounded.answer.modelAnswer = 'Eine kurze t8/5-Zeit entspricht schneller Abkühlung. Das ZTU-Diagramm zeigt dabei eine Verschiebung in Richtung martensitischen Gefüges und höherer Härte; hohe Abkühlgeschwindigkeiten begünstigen außerdem die Härterissgefahr.';
+    grounded.answer.requiredTerms = ['kurze t8/5', 'schnelle Abkühlung', 'Martensit', 'Härte'];
+    grounded.changeReason = 'Quellenabgleich: S. 73–74 verknüpfen Abkühlungsdauer, Gefüge und Härte; S. 76 nennt steigende Abkühlgeschwindigkeit als Härterissfaktor.';
+  }
+
+  if (grounded.id === 'ft2203') {
+    grounded.answer.modelAnswer = 'Eine lange t8/5-Zeit entspricht langsamerer Abkühlung. Im ZTU-Diagramm verschiebt sich die Gefügebildung weg vom Martensit in Richtung Zwischenstufengefüge sowie Ferrit/Perlit; die martensitische Aufhärtung nimmt damit ab.';
+    grounded.answer.requiredTerms = ['lange t8/5', 'langsame Abkühlung', 'Ferrit', 'Perlit'];
+    grounded.changeReason = 'Quellenabgleich: Abbildung 81 zeigt bei längeren Abkühlzeiten Zwischenstufen- sowie Ferrit/Perlit-Bereiche; die zuvor ergänzte Kornwachstumsbehauptung ist dafür nicht erforderlich.';
+  }
+
+  if (grounded.id === 'ft2301') {
+    grounded.answer.modelAnswer = 'Mit zunehmender Abkühlgeschwindigkeit verschiebt sich das Gefüge im ZTU-Diagramm von Ferrit/Perlit über das Zwischenstufengefüge zum Martensit.';
+    grounded.answer.requiredTerms = ['Ferrit', 'Perlit', 'Zwischenstufengefüge', 'Martensit'];
+    grounded.changeReason = 'Quellenabgleich: Abbildung 81 zeigt die Bereiche F, P, Zw und M entlang zunehmend schneller Abkühlverläufe.';
+  }
+
+  if (grounded.id === 'ft2302') {
+    grounded.answer.modelAnswer = 'Die resultierende Härte hängt von der Abkühlungsdauer und dem entstehenden Gefüge ab. Schnellere Abkühlung verschiebt die Gefügebildung in Richtung Martensit und damit zu stärkerer Aufhärtung.';
+    grounded.answer.requiredTerms = ['Härte', 'Abkühlungsdauer', 'Martensit'];
+    grounded.changeReason = 'Quellenabgleich: S. 73–74 beschreiben ZTU/STAZ ausdrücklich als Zusammenhang von Abkühlungsdauer, Gefügeanteilen und Härte.';
+  }
+
+  if (grounded.id === 'ft2303') {
+    grounded.answer.modelAnswer = 'Bei hoher Abkühlgeschwindigkeit ist die Härteriss- beziehungsweise Kaltrissgefahr höher, weil schnelle Abkühlung martensitische Aufhärtung begünstigt.';
+    grounded.answer.requiredTerms = ['hohe Abkühlgeschwindigkeit', 'Martensit', 'Härteriss'];
+    grounded.changeReason = 'Quellenabgleich: ZTU beschreibt die Martensitbildung bei schneller Abkühlung; S. 76 nennt zunehmende Abkühlgeschwindigkeit ausdrücklich als Faktor der Härterissgefahr.';
+  }
+
   if (grounded.id === 'ft2601') {
     grounded.answer.modelAnswer = 'Durch das Kohlenstoffäquivalent K. Das Skript verwendet beispielsweise K = C + Mn/6 + Cr/5 + Ni/15 + Mo/4 + Cu/13 + P/2.';
     grounded.answer.requiredTerms = ['Kohlenstoffäquivalent', 'K'];
@@ -77,6 +114,12 @@ function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
     grounded.answer.modelAnswer = 'Ein höherer Kohlenstoffgehalt erhöht die Härtbarkeit beziehungsweise Aufhärtungsneigung. Bei schneller Abkühlung wird dadurch die Bildung harten martensitischen Gefüges und damit die Härteriss- beziehungsweise Kaltrissgefahr begünstigt.';
     grounded.answer.requiredTerms = ['Kohlenstoffgehalt', 'Härtbarkeit', 'Martensit', 'Kaltrissgefahr'];
     grounded.changeReason = 'Quellenabgleich: S. 73–76 verknüpfen schnelle Abkühlung mit Martensitbildung und zunehmenden C-Gehalt mit erhöhter Härterissgefahr; unbelegte Zusatzbedingungen wurden entfernt.';
+  }
+
+  if (grounded.id === 'ft2801') {
+    grounded.answer.modelAnswer = 'Beim Pressschweißen werden die Werkstoffe nicht bis zur Schmelzgrenze erhitzt. Die Verbindung entsteht durch teilweise Erwärmung und die Einleitung von Fügekräften.';
+    grounded.answer.requiredTerms = ['unterhalb der Schmelzgrenze', 'teilweise Erwärmung', 'Fügekräfte'];
+    grounded.changeReason = 'Quellenabgleich: S. 104 grenzt Pressschweißen ausdrücklich vom Schmelzschweißen ab und nennt teilweise Erwärmung plus Fügekräfte.';
   }
 
   if (grounded.id === 'ft3201') {
