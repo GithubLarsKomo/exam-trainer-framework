@@ -9,12 +9,16 @@ test('exposes legal links from the public app shell', async ({ page }) => {
   await expect(footer.getByRole('link', { name: 'Datenschutz' })).toHaveAttribute('href', './datenschutz.html');
 });
 
-test('serves the legal notice with an explicit operator completion warning', async ({ page }) => {
+test('serves the legal notice with completed operator details', async ({ page }) => {
   await page.goto('/impressum.html');
 
   await expect(page.getByRole('heading', { name: 'Impressum' })).toBeVisible();
   await expect(page.getByText('Angaben gemäß § 5 DDG')).toBeVisible();
-  await expect(page.getByText('[BETREIBERNAME / FIRMA EINTRAGEN]')).toBeVisible();
+  await expect(page.getByText('Lars Komorowski')).toBeVisible();
+  await expect(page.getByText('Ribeweg 3')).toBeVisible();
+  await expect(page.getByText('23909 Ratzeburg')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'larskomo@gmx.de' })).toHaveAttribute('href', 'mailto:larskomo@gmx.de');
+  await expect(page.locator('body')).not.toContainText('[BETREIBERNAME');
   await expect(page.getByRole('link', { name: '← Zur App' })).toHaveAttribute('href', './');
 });
 
@@ -22,8 +26,10 @@ test('serves privacy information that matches the current local-first deployment
   await page.goto('/datenschutz.html');
 
   await expect(page.getByRole('heading', { name: 'Datenschutzhinweise' })).toBeVisible();
+  await expect(page.getByText('Lars Komorowski')).toBeVisible();
   await expect(page.getByText('local-first PWA')).toBeVisible();
   await expect(page.getByText(/keine Werbetracker, kein externes Web-Analytics und keine Telemetrie/)).toBeVisible();
   await expect(page.getByText(/Hetzner Online GmbH/)).toBeVisible();
-  await expect(page.getByText('[SERVER-/PROXY-LOG-AUFBEWAHRUNG EINTRAGEN]')).toBeVisible();
+  await expect(page.getByText(/spätestens nach 7 Tagen gelöscht/)).toBeVisible();
+  await expect(page.locator('body')).not.toContainText('[SERVER-/PROXY-LOG-AUFBEWAHRUNG');
 });
