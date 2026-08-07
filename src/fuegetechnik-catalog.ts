@@ -43,7 +43,7 @@ const verifiedSourcePages: Record<string, string> = {
   ft3901: 'S. 157–158 · 7.3.1 Vorteile von Verklebungen',
   ft3902: 'S. 158–159 · 7.3.2 Nachteile von Verklebungen',
   ft4201: 'S. 69–70 · 5.2 Schweißen als Fertigungsverfahren / Definition Löten',
-  ft4401: 'S. 133, 149–150 · Flussmittel / 6.5.3 Vor- und Nachbereitung der Lötverbindung',
+  ft4401: 'S. 133; S. 149–150 · Flussmittel / 6.5.3 Vor- und Nachbereitung der Lötverbindung',
   ft4402: 'S. 150 · 6.5.3 Vor- und Nachbereitung der Lötverbindung',
 };
 
