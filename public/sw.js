@@ -1,5 +1,5 @@
-const CACHE = 'etf-v0.5.1';
-const CORE = ['./manifest.webmanifest'];
+const CACHE = 'etf-v0.5.2-legal';
+const CORE = ['./index.html', './manifest.webmanifest', './legal.css', './impressum.html', './datenschutz.html'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
@@ -25,13 +25,20 @@ self.addEventListener('fetch', event => {
 
   if (isNavigation) {
     event.respondWith((async () => {
+      const pathname = new URL(request.url).pathname;
+      const legalTarget = pathname.endsWith('/impressum.html')
+        ? './impressum.html'
+        : pathname.endsWith('/datenschutz.html')
+          ? './datenschutz.html'
+          : undefined;
+      const cacheTarget = legalTarget ?? './index.html';
       try {
         const fresh = await fetch(request, { cache: 'no-store' });
         const cache = await caches.open(CACHE);
-        await cache.put('./index.html', fresh.clone());
+        await cache.put(cacheTarget, fresh.clone());
         return fresh;
       } catch {
-        return (await caches.match('./index.html')) || Response.error();
+        return (await caches.match(cacheTarget)) || Response.error();
       }
     })());
     return;
