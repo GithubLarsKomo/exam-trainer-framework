@@ -22,7 +22,11 @@ describe('Fügetechnik runtime catalog', () => {
   it('applies verified source metadata to grounded cards', () => {
     const catalog = createFuegetechnikRuntimeCatalog();
 
-    expect(catalog.cards.find(card => card.id === 'ft0401')?.sourcePage).toContain('S. 19');
+    expect(catalog.cards.find(card => card.id === 'ft0201')?.sourcePage).toContain('S. 16');
+    expect(catalog.cards.find(card => card.id === 'ft0301')?.sourcePage).toContain('S. 16');
+    expect(catalog.cards.find(card => card.id === 'ft0405')?.sourcePage).toContain('S. 19');
+    expect(catalog.cards.find(card => card.id === 'ft0503')?.sourcePage).toContain('S. 19');
+    expect(catalog.cards.find(card => card.id === 'ft0706')?.sourcePage).toContain('S. 58');
     expect(catalog.cards.find(card => card.id === 'ft1401')?.sourcePage).toContain('S. 79–80');
     expect(catalog.cards.find(card => card.id === 'ft1901')?.sourcePage).toContain('S. 72–73');
     expect(catalog.cards.find(card => card.id === 'ft1902')?.sourcePage).toContain('S. 72–73');
@@ -40,6 +44,29 @@ describe('Fügetechnik runtime catalog', () => {
     expect(catalog.cards.find(card => card.id === 'ft4201')?.sourcePage).toContain('S. 69–70');
     expect(catalog.cards.find(card => card.id === 'ft4401')?.sourcePage).toContain('S. 133');
     expect(catalog.cards.find(card => card.id === 'ft4402')?.sourcePage).toContain('S. 150');
+  });
+
+  it('grounds early screw sizing, preload and forming questions in their approved sources', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const idsWithSource = (ids: string[]) => ids.map(id => catalog.cards.find(card => card.id === id)?.sourcePage);
+
+    expect(idsWithSource(['ft0201', 'ft0202', 'ft0203'])).toEqual([
+      expect.stringContaining('S. 16'),
+      expect.stringContaining('S. 16'),
+      expect.stringContaining('S. 16'),
+    ]);
+    expect(idsWithSource(['ft0301', 'ft0302', 'ft0303']).every(source => source?.includes('Gedächtnisprotokoll Q3'))).toBe(true);
+    expect(catalog.cards.find(card => card.id === 'ft0301')?.answer.modelAnswer).toContain('28,8');
+    expect(catalog.cards.find(card => card.id === 'ft0302')?.answer.value).toBe(14);
+
+    expect(idsWithSource(['ft0401', 'ft0402', 'ft0403', 'ft0404', 'ft0405']).every(source => source?.includes('S. 19'))).toBe(true);
+    expect(catalog.cards.find(card => card.id === 'ft0402')?.answer.requiredTerms).toEqual(['FMmin', 'FKerf', 'FZ', 'FPA']);
+
+    expect(idsWithSource(['ft0501', 'ft0502', 'ft0503']).every(source => source?.includes('3.4.1'))).toBe(true);
+    expect(catalog.cards.find(card => card.id === 'ft0502')?.answer.requiredTerms).toEqual(['Zugfeder', 'Druckfeder']);
+
+    expect(idsWithSource(['ft0701', 'ft0702', 'ft0703', 'ft0704', 'ft0705', 'ft0706']).every(source => source?.includes('S. 58'))).toBe(true);
+    expect(catalog.cards.find(card => card.id === 'ft0706')?.answer.requiredTerms).toEqual(['Materialeinsatz', 'thermische Beeinflussung', 'Kaltverfestigung']);
   });
 
   it('keeps all five MSG arc types from source table 10', () => {
