@@ -20,9 +20,11 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 
 | Runtime card(s) | Exam question | Script evidence | Audit result |
 | --- | --- | --- | --- |
-| `ft0201`–`ft0203` | 2 | S. 17, 3.3.1 Festigkeitsklassen | Source page assigned |
-| `ft0401` | 4 | S. 19–20, 3.4.1 Vorspannkraft | Source page assigned |
-| `ft0501` | 5 | S. 19, Kraft-Verformung / Verspannungsdreieck | Source page assigned |
+| `ft0201`–`ft0203` | 2 | S. 16, 3.3.1 Festigkeitsklassen | Corrected the earlier off-by-one page mapping from S. 17 to the printed S. 16 |
+| `ft0301`–`ft0303` | 3 | S. 16, 3.3.1 Festigkeitsklassen + remembered Q3 inputs | The script establishes the 8.9 strength-class calculation; the memory protocol supplies 400 kN and 40 mm². Arithmetic and integer rounding then yield 28.8 kN per screw and 14 screws |
+| `ft0401`–`ft0405` | 4 | S. 19–20, 3.4.1 Vorspannkraft | FMmin components, formula and meanings source-grounded |
+| `ft0501`–`ft0503` | 5 | S. 18–20, 3.4.1 Kraft-Verformungsschaubild / Verspannungsdreieck | Drawing basis, spring interpretation and differing deformations source-grounded |
+| `ft0701`–`ft0706` | 7 | S. 58, advantages of sheet-metal joining by forming | All listed economic/technical advantages source-grounded |
 | `ft1101`–`ft1103` | 11 label | S. 61, 4.5.1 Fügegeometrien und Festigkeit | Statements are source-supported, but the remembered Q11 mismatch remains open; see below |
 | `ft1201`–`ft1202` | 12 | S. 75, 5.4 Schweißtechnisches Dreieck | Source page assigned |
 | `ft1301`–`ft1302` | 13 | S. 75–76, 5.4 | Source page assigned |
@@ -47,6 +49,12 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 | `ft3901`–`ft3902` | 39 | S. 157–159, 7.3.1–7.3.2 | Advantages source-grounded; disadvantages narrowed to surface preparation, temperature range and peel/line-loading limitations |
 | `ft4201` | 42 | S. 69–70, 5.2 / definitions of welding and soldering | Corrected to the source-level distinction: solder melts while the base material is wetted but not melted; welding is defined more generally through heat and/or force |
 | `ft4401`–`ft4402` | 44 | S. 133 and 149–150, flux and solder-joint preparation | Oxide removal narrowed to mechanical/chemical cleaning plus flux action; unsupported “shielding gas/vacuum removes the oxide” was removed. Flux-residue corrosion and required cleanup are source-grounded |
+
+## Question 3 uses split provenance
+
+The script does not contain the remembered pressure-vessel exercise itself. It establishes how the screw property class determines tensile strength and yield strength on printed S. 16. The memory protocol independently establishes the Q3 task inputs: 400 kN total force, property class 8.9 and 40 mm² cross-section per screw.
+
+The runtime answer therefore intentionally combines these two approved sources: class 8.9 gives 720 N/mm² yield strength, which gives 28.8 kN for 40 mm²; 400/28.8 = 13.89, so a discrete screw count must be rounded upward to 14. This arithmetic is derived, not presented as a quotation from either source.
 
 ## Confirmed exam-memory mismatch: question 11
 
@@ -127,4 +135,5 @@ Prioritize questions whose current runtime answers can materially affect exam pr
 3. Q24 — find direct approved evidence for the complete strength/hardness/elongation relationship or narrow the runtime answer accordingly.
 4. Q30/Q34 — verify the aluminium resistance-spot-welding specifics and obtain a copper-specific CO₂-laser source rather than relying on generic material statements.
 5. Q35/Q41/Q43 — find direct approved evidence for the remaining terminology and stress/oxide claims or narrow/remove those runtime cards.
-6. Q45 — keep asset-dependent until the approved diagram is available.
+6. Early seed Q1/Q9/Q10 — audit remaining historical v0.4 cards after the now-grounded Q2–Q5/Q7 group.
+7. Q45 — keep asset-dependent until the approved diagram is available.
