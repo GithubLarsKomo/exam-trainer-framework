@@ -2,8 +2,8 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.2';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T17:30:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.3';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T20:55:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
   ft0201: 'S. 17 · 3.3.1 Festigkeitsklassen',
@@ -31,6 +31,7 @@ const verifiedSourcePages: Record<string, string> = {
   ft2101: 'S. 113 · 5.7.1 Mechanisch-technologische Verfahren',
   ft2501: 'S. 76–77 · 5.4.1.1 Schweißeignung unlegierter und niedriglegierter Stähle',
   ft2601: 'S. 77 · 5.4.1.1 Schweißeignung unlegierter und niedriglegierter Stähle',
+  ft2701: 'S. 73–76 · ZTU/Abkühlverhalten und 5.4.1.1 Schweißeignung der Stähle',
   ft3101: 'S. 102–103 · Elektronenstrahlschweißen',
   ft3102: 'S. 102–103 · Elektronenstrahlschweißen',
 };
@@ -59,6 +60,12 @@ function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
     grounded.answer.modelAnswer = 'Durch das Kohlenstoffäquivalent K. Das Skript verwendet beispielsweise K = C + Mn/6 + Cr/5 + Ni/15 + Mo/4 + Cu/13 + P/2.';
     grounded.answer.requiredTerms = ['Kohlenstoffäquivalent', 'K'];
     grounded.changeReason = 'Quellenabgleich: Das Skript bezeichnet den verwendeten Kennwert ausdrücklich als Kohlenstoffäquivalent K.';
+  }
+
+  if (grounded.id === 'ft2701') {
+    grounded.answer.modelAnswer = 'Ein höherer Kohlenstoffgehalt erhöht die Härtbarkeit beziehungsweise Aufhärtungsneigung. Bei schneller Abkühlung wird dadurch die Bildung harten martensitischen Gefüges und damit die Härteriss- beziehungsweise Kaltrissgefahr begünstigt.';
+    grounded.answer.requiredTerms = ['Kohlenstoffgehalt', 'Härtbarkeit', 'Martensit', 'Kaltrissgefahr'];
+    grounded.changeReason = 'Quellenabgleich: S. 73–76 verknüpfen schnelle Abkühlung mit Martensitbildung und zunehmenden C-Gehalt mit erhöhter Härterissgefahr; unbelegte Zusatzbedingungen wurden entfernt.';
   }
 
   return grounded;
