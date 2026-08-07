@@ -43,6 +43,7 @@
       <p>Die öffentlich erreichbare Anwendung wird auf Infrastruktur der <strong>Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Deutschland</strong> bereitgestellt.</p>
       <p>Beim Abruf einer Website werden technisch bedingt Verbindungs- und Anfragedaten an den Webserver übertragen. Abhängig von der produktiven Server- und Proxy-Konfiguration können insbesondere IP-Adresse, Datum und Uhrzeit, angeforderte Ressource, HTTP-Status, Browser-/User-Agent-Informationen und gegebenenfalls Referrer-Daten in Zugriffs- oder Fehlerprotokollen verarbeitet werden.</p>
       <p>Die Verarbeitung dient der Auslieferung des Dienstes, der Stabilität, Fehlerdiagnose und Abwehr missbräuchlicher oder sicherheitsrelevanter Zugriffe. Soweit hierfür personenbezogene Daten verarbeitet werden, stützt sich die Verarbeitung für Betrieb und Sicherheit auf Art. 6 Abs. 1 lit. f DSGVO.</p>
+      <p>Der eingesetzte Traefik-Reverse-Proxy ist nach der am 7. August 2026 geprüften Produktionskonfiguration ohne aktiviertes Traefik-Access-Log betrieben. Container-Standardausgaben und -fehler werden durch Docker mit dem Treiber <code>json-file</code> gespeichert und größenbasiert rotiert.</p>
       <p>Weitere Informationen zum Datenschutz bei Hetzner: <a href="https://www.hetzner.com/de/legal/privacy-policy/" rel="noopener noreferrer">Datenschutzhinweise der Hetzner Online GmbH</a>.</p>
 
       <h2>5. Cookies, Tracking und ähnliche Technologien</h2>
@@ -53,7 +54,7 @@
 
       <h2>7. Speicherdauer</h2>
       <p>Lokale App-Daten verbleiben grundsätzlich auf dem Endgerät, bis der Nutzer sie innerhalb der App löscht, Browser-/Website-Daten entfernt oder das Gerät beziehungsweise Browserprofil zurücksetzt.</p>
-      <p>Server- und Proxy-Zugriffsprotokolle werden auf das für Betrieb, Fehlerdiagnose und Sicherheit erforderliche Minimum beschränkt und grundsätzlich spätestens nach <strong>7 Tagen</strong> gelöscht. Eine längere Aufbewahrung erfolgt nur, wenn dies zur Untersuchung eines konkreten Sicherheits- oder Missbrauchsvorfalls erforderlich ist.</p>
+      <p>Docker-Containerlogs werden in der geprüften Produktionskonfiguration größenbasiert rotiert: pro Container werden höchstens drei Logdateien mit jeweils höchstens 10 MB vorgehalten. Ältere Logdaten werden beim Erreichen dieser Grenze überschrieben. Eine feste zeitliche Aufbewahrungsdauer ergibt sich daraus nicht. Traefik-Access-Logs sind in der geprüften Konfiguration nicht aktiviert.</p>
 
       <h2>8. Rechte betroffener Personen</h2>
       <p>Soweit personenbezogene Daten verarbeitet werden, bestehen nach Maßgabe der DSGVO insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Eine erteilte Einwilligung kann mit Wirkung für die Zukunft widerrufen werden.</p>
