@@ -57,6 +57,19 @@ test('keeps core product views inside a 320px viewport with five usable primary 
   await expectNoHorizontalPageOverflow(page);
   await expectTouchTargets(primary);
 
+  await page.locator('nav.bottom-nav [data-view="home"]:visible').click();
+  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+  const legalClearance=await page.evaluate(()=>{
+    const nav=document.querySelector<HTMLElement>('nav.bottom-nav');
+    const links=Array.from(document.querySelectorAll<HTMLElement>('.legal-footer a'));
+    if(!nav||links.length===0)return null;
+    const navTop=nav.getBoundingClientRect().top;
+    const linkBottom=Math.max(...links.map(link=>link.getBoundingClientRect().bottom));
+    return {navTop,linkBottom};
+  });
+  expect(legalClearance).not.toBeNull();
+  expect(legalClearance!.linkBottom).toBeLessThanOrEqual(legalClearance!.navTop-8);
+
   await page.locator('nav.bottom-nav [data-view="learn"]:visible').click();
   await startLearning(page);
   await expect(page.locator('.question-card')).toBeVisible();
