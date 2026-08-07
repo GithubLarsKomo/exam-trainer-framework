@@ -25,6 +25,26 @@ test('serves the production bundle through an active service worker and survives
     await expect(page.locator('.app-header h1')).toBeVisible();
   }
 
+  await primaryNav.locator('button').filter({ hasText: 'Lernen' }).click();
+  await expect(page.locator('#mode')).toBeVisible();
+  await page.locator('#mode').selectOption('all');
+  await page.locator('[data-start-custom]').click();
+  await expect(page.locator('[data-recoverable-session]')).toBeVisible();
+  await expect(page.locator('[data-recoverable-reveal]')).toBeVisible();
+  await page.locator('[data-recoverable-reveal]').click();
+  await expect(page.locator('[data-recoverable-grade="correct"]')).toBeVisible();
+  await page.locator('[data-recoverable-grade="correct"]').click();
+
+  await page.reload();
+  await expect(page.locator('[data-recoverable-resume-banner]')).toBeVisible();
+  await expect(primaryNav).toBeVisible();
+
+  await primaryNav.locator('button').filter({ hasText: 'Prüfung' }).click();
+  await expect(page.locator('#exam-mode')).toBeVisible();
+  await page.locator('#exam-mode').selectOption('fixed');
+  await page.locator('[data-exam]').click();
+  await expect(page.locator('[data-recoverable-exam-nav]').first()).toBeVisible();
+
   await context.setOffline(true);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.locator('.app-header h1')).toBeVisible();
