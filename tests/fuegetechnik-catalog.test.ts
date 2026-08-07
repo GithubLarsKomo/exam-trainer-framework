@@ -28,6 +28,8 @@ describe('Fügetechnik runtime catalog', () => {
     expect(catalog.cards.find(card => card.id === 'ft1902')?.sourcePage).toContain('S. 72–73');
     expect(catalog.cards.find(card => card.id === 'ft2701')?.sourcePage).toContain('S. 73–76');
     expect(catalog.cards.find(card => card.id === 'ft3101')?.sourcePage).toContain('S. 102–103');
+    expect(catalog.cards.find(card => card.id === 'ft3201')?.sourcePage).toContain('S. 101–102');
+    expect(catalog.cards.find(card => card.id === 'ft3301')?.sourcePage).toContain('S. 100');
   });
 
   it('keeps all five MSG arc types from source table 10', () => {
@@ -77,6 +79,25 @@ describe('Fügetechnik runtime catalog', () => {
     expect(card?.answer.modelAnswer).toContain('schneller Abkühlung');
     expect(card?.answer.modelAnswer).not.toContain('Wasserstoff');
     expect(card?.answer.modelAnswer).not.toContain('Zugspannungen');
+  });
+
+  it('grounds Q32 in automated laser use and electron-beam vacuum overhead', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft3201');
+
+    expect(card?.sourcePage).toContain('S. 101–102');
+    expect(card?.answer.requiredTerms).toEqual(['Automatisierung', 'Hochvakuum', 'Vakuumkammer']);
+    expect(card?.answer.modelAnswer).toContain('automatisierten Anlagen');
+    expect(card?.answer.modelAnswer).toContain('Hochvakuum');
+    expect(card?.answer.modelAnswer).toContain('Vakuumkammern');
+  });
+
+  it('grounds the CO2 laser wavelength from source table 11', () => {
+    const card = createFuegetechnikRuntimeCatalog().cards.find(candidate => candidate.id === 'ft3301');
+
+    expect(card?.sourcePage).toContain('S. 100');
+    expect(card?.questionType).toBe('numeric');
+    expect(card?.answer.modelAnswer).toContain('10,6');
+    expect(card?.answer.requiredTerms).toEqual(['10,6']);
   });
 
   it('keeps missing source-page evidence visible as a remaining catalog-completion warning', () => {

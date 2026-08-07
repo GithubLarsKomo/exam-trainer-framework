@@ -2,8 +2,8 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.3';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T20:55:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.4';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-06T21:03:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
   ft0201: 'S. 17 · 3.3.1 Festigkeitsklassen',
@@ -34,6 +34,8 @@ const verifiedSourcePages: Record<string, string> = {
   ft2701: 'S. 73–76 · ZTU/Abkühlverhalten und 5.4.1.1 Schweißeignung der Stähle',
   ft3101: 'S. 102–103 · Elektronenstrahlschweißen',
   ft3102: 'S. 102–103 · Elektronenstrahlschweißen',
+  ft3201: 'S. 101–102 · Laser- und Elektronenstrahlschweißen',
+  ft3301: 'S. 100 · Tabelle 11 Lasertypen und technischer Anwendungsbereich',
 };
 
 function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
@@ -66,6 +68,12 @@ function applyVerifiedSourceGrounding(card: CardVersion): CardVersion {
     grounded.answer.modelAnswer = 'Ein höherer Kohlenstoffgehalt erhöht die Härtbarkeit beziehungsweise Aufhärtungsneigung. Bei schneller Abkühlung wird dadurch die Bildung harten martensitischen Gefüges und damit die Härteriss- beziehungsweise Kaltrissgefahr begünstigt.';
     grounded.answer.requiredTerms = ['Kohlenstoffgehalt', 'Härtbarkeit', 'Martensit', 'Kaltrissgefahr'];
     grounded.changeReason = 'Quellenabgleich: S. 73–76 verknüpfen schnelle Abkühlung mit Martensitbildung und zunehmenden C-Gehalt mit erhöhter Härterissgefahr; unbelegte Zusatzbedingungen wurden entfernt.';
+  }
+
+  if (grounded.id === 'ft3201') {
+    grounded.answer.modelAnswer = 'Laserschweißen wird durchgehend in automatisierten Anlagen eingesetzt. Elektronenstrahlschweißen erfordert für die Strahlerzeugung Hochvakuum; Hochvakuumanlagen benötigen aufwändige Vakuumkammern sowie Schleus- oder Evakuierzyklen. Dadurch ist Laserschweißen in vielen Fertigungsanlagen einfacher zu integrieren.';
+    grounded.answer.requiredTerms = ['Automatisierung', 'Hochvakuum', 'Vakuumkammer'];
+    grounded.changeReason = 'Quellenabgleich: S. 101 beschreibt den durchgehend automatisierten Lasereinsatz; S. 102 dokumentiert den Hochvakuumbedarf und den Aufwand großer Vakuumkammern beim Elektronenstrahlschweißen.';
   }
 
   return grounded;

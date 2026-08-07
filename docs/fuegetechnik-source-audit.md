@@ -36,6 +36,8 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 | `ft2601` | 26 | S. 77, 5.4.1.1 | Corrected from generic CE/CEV notation to the script-specific Kohlenstoffäquivalent `K` |
 | `ft2701` | 27 | S. 73–76, ZTU/Abkühlverhalten and 5.4.1.1 | Corrected to the directly supported chain: increasing carbon content raises hardenability/hard-cracking risk; rapid cooling promotes martensitic hardening. Unsupported hydrogen/stress prerequisites were removed from the expected answer |
 | `ft3101`–`ft3102` | 31 | S. 102–103, Elektronenstrahlschweißen | Source page assigned |
+| `ft3201` | 32 | S. 101–102, Laser- und Elektronenstrahlschweißen | Narrowed to the directly supported comparison: laser welding is used throughout automated systems, whereas electron-beam generation and high-vacuum systems add vacuum-chamber and evacuation overhead |
+| `ft3301` | 33 | S. 100, Tabelle 11 | Source page assigned; CO₂ laser wavelength verified as 10.6 µm |
 
 ## Confirmed exam-memory mismatch: question 11
 
@@ -60,6 +62,12 @@ The memory protocol asks which microstructure zone is preferred for a mechanical
 The remembered Q24 asks how increasing carbon content affects strength, hardness and elongation. The script directly supports increasing carbon content as a driver of hardenability/hard-cracking risk and links carbon content to steel strength in the weldability discussion, but the current audit has not found a single approved passage that establishes the full three-part expected direction (`strength ↑`, `hardness ↑`, `elongation ↓`) as used by `ft2401`.
 
 Q24 therefore remains open rather than inheriting evidence from Q27 or generic materials knowledge.
+
+## Question 34 remains only generally grounded
+
+The current Q34 card asks specifically why copper is problematic with a CO₂ laser. The script clearly states that metallic materials have sharply decreasing absorption above roughly 1 µm and that the long-wavelength CO₂ laser has a low absorption rate in metal. It does **not**, in the audited passage, establish a copper-specific absorption/reflection statement strong enough to make copper itself the verified discriminator.
+
+Q34 therefore remains open. Generic CO₂/metal absorption evidence must not be promoted into a copper-specific expected answer without a direct approved source.
 
 ## Image/diagram-dependent exam evidence
 
@@ -90,4 +98,5 @@ Prioritize questions whose current runtime answers can materially affect exam pr
 1. Q11 — source-supported reason for the high-dynamic limitation and the explicitly intended substitute process.
 2. Q21 — resolve the ambiguous remembered wording without inferring a uniquely preferred microstructure zone from insufficient evidence.
 3. Q24 — find direct approved evidence for the complete strength/hardness/elongation relationship or narrow the runtime answer accordingly.
-4. Q30–Q45 — finish exact page/section mapping, then leave only genuinely asset-dependent warnings open.
+4. Q30/Q34 — verify the aluminium resistance-spot-welding specifics and obtain a copper-specific CO₂-laser source rather than relying on generic material statements.
+5. Q35–Q45 — finish exact page/section mapping, then leave only genuinely asset-dependent warnings open.
