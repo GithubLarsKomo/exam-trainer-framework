@@ -19,8 +19,9 @@ test('serves the production bundle through an active service worker and survives
   await page.reload();
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
 
+  const primaryNav = page.locator('nav.bottom-nav');
   for (const view of ['Start', 'Lernen', 'Prüfung', 'Fortschritt', 'Kataloge', 'Einstellungen']) {
-    await page.getByRole('button', { name: new RegExp(view, 'i') }).click();
+    await primaryNav.locator('button').filter({ hasText: view }).click();
     await expect(page.locator('.app-header h1')).toBeVisible();
   }
 
