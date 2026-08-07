@@ -24,6 +24,8 @@ describe('Fügetechnik runtime catalog', () => {
 
     expect(catalog.cards.find(card => card.id === 'ft0401')?.sourcePage).toContain('S. 19');
     expect(catalog.cards.find(card => card.id === 'ft1401')?.sourcePage).toContain('S. 79–80');
+    expect(catalog.cards.find(card => card.id === 'ft1901')?.sourcePage).toContain('S. 72–73');
+    expect(catalog.cards.find(card => card.id === 'ft1902')?.sourcePage).toContain('S. 72–73');
     expect(catalog.cards.find(card => card.id === 'ft3101')?.sourcePage).toContain('S. 102–103');
   });
 
@@ -38,6 +40,23 @@ describe('Fügetechnik runtime catalog', () => {
       'Kurzlichtbogen',
       'Impulslichtbogen',
     ]);
+  });
+
+  it('aligns remembered Q16 with the source drawing in figure 92', () => {
+    const catalog = createFuegetechnikRuntimeCatalog();
+    const drawing = catalog.cards.find(candidate => candidate.id === 'ft1601');
+    const characteristic = catalog.cards.find(candidate => candidate.id === 'ft1602');
+
+    expect(drawing?.sourcePage).toContain('S. 91');
+    expect(characteristic?.sourcePage).toContain('S. 91');
+    expect(drawing?.questionType).toBe('drawing');
+    expect(drawing?.answer.criteria).toEqual(expect.arrayContaining([
+      'Spannungsachse U',
+      'Stromachse I',
+      'steil fallende Maschinenkennlinie',
+      'Kurzlichtbogen',
+      'Langlichtbogen',
+    ]));
   });
 
   it('uses the script-specific carbon-equivalent notation K', () => {
