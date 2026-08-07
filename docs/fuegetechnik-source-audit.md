@@ -32,9 +32,12 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 | `ft1801`–`ft1803` | 18 | S. 97–98, 5.6.1.3 | Source page assigned |
 | `ft1901`–`ft1902` | 19 | S. 72–73, 5.3 / Wärmeeinflusszone | Source page assigned to the joint-region and HAZ-subdivision cards |
 | `ft2101` | 21 | S. 113, 5.7.1 Mechanisch-technologische Verfahren | The page supports the test context and differing properties across weld metal, HAZ and base material, but does not establish the remembered wording as a unique “preferred zone”; Q21 remains open |
+| `ft2201`–`ft2203` | 22 | S. 73–74, ZTU and t8/5; S. 76 crack-risk context | t8/5 verified as the 800→500 °C cooling time. Short/long cooling answers narrowed to the directly visible ZTU shifts; unsupported grain-growth extension removed |
+| `ft2301`–`ft2303` | 23 | S. 73–74, Abbildung 81 ZTU; S. 76 crack-risk context | Figure 81 directly supports the F/P → Zw → M progression with increasing cooling rate; hardness and hard-cracking statements narrowed to the documented cooling/structure relationship |
 | `ft2501` | 25 | S. 76–77, 5.4.1.1 | Source page assigned |
 | `ft2601` | 26 | S. 77, 5.4.1.1 | Corrected from generic CE/CEV notation to the script-specific Kohlenstoffäquivalent `K` |
 | `ft2701` | 27 | S. 73–76, ZTU/Abkühlverhalten and 5.4.1.1 | Corrected to the directly supported chain: increasing carbon content raises hardenability/hard-cracking risk; rapid cooling promotes martensitic hardening. Unsupported hydrogen/stress prerequisites were removed from the expected answer |
+| `ft2801` | 28 | S. 104, 5.6.2 Pressschweißverfahren | Corrected to the source definition: below the melting limit, with partial heating and joining forces |
 | `ft3101`–`ft3102` | 31 | S. 102–103, Elektronenstrahlschweißen | Source page assigned |
 | `ft3201` | 32 | S. 101–102, Laser- und Elektronenstrahlschweißen | Narrowed to the directly supported comparison: laser welding is used throughout automated systems, whereas electron-beam generation and high-vacuum systems add vacuum-chamber and evacuation overhead |
 | `ft3301` | 33 | S. 100, Tabelle 11 | Source page assigned; CO₂ laser wavelength verified as 10.6 µm |
