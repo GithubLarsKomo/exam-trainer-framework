@@ -29,7 +29,7 @@ test('serves privacy information that matches the current local-first deployment
   await expect(page.getByText('Lars Komorowski')).toBeVisible();
   await expect(page.getByText('local-first PWA')).toBeVisible();
   await expect(page.getByText(/keine Werbetracker, kein externes Web-Analytics und keine Telemetrie/)).toBeVisible();
-  await expect(page.getByText(/Hetzner Online GmbH/)).toBeVisible();
+  await expect(page.locator('strong').filter({ hasText: 'Hetzner Online GmbH' })).toBeVisible();
   await expect(page.getByText(/spätestens nach 7 Tagen gelöscht/)).toBeVisible();
   await expect(page.locator('body')).not.toContainText('[SERVER-/PROXY-LOG-AUFBEWAHRUNG');
 });
