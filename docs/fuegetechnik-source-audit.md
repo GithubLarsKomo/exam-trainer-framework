@@ -42,6 +42,8 @@ The memory protocol states that the remembered exam contained 57 subtasks and 20
 | `ft3701` | 37 | S. 155–156, 7.2.1 / Youngsche Gleichung | Source page assigned |
 | `ft3801`–`ft3802` | 38 | S. 160–163, 7.4.1–7.4.3 | Three reaction classes source-grounded; examples narrowed to Cyanacrylat, Epoxidharz and Silikon as explicitly listed examples |
 | `ft3901`–`ft3902` | 39 | S. 157–159, 7.3.1–7.3.2 | Advantages source-grounded; disadvantages narrowed to surface preparation, temperature range and peel/line-loading limitations |
+| `ft4201` | 42 | S. 69–70, 5.2 / definitions of welding and soldering | Corrected to the source-level distinction: solder melts while the base material is wetted but not melted; welding is defined more generally through heat and/or force |
+| `ft4401`–`ft4402` | 44 | S. 133 and 149–150, flux and solder-joint preparation | Oxide removal narrowed to mechanical/chemical cleaning plus flux action; unsupported “shielding gas/vacuum removes the oxide” was removed. Flux-residue corrosion and required cleanup are source-grounded |
 
 ## Confirmed exam-memory mismatch: question 11
 
@@ -79,6 +81,18 @@ Script S. 154 defines `Klebstoff` as a nonmetallic substance capable of connecti
 
 `ft3501` is therefore source-grounded, while `ft3502` deliberately keeps its missing-source warning and Q35 remains editorially open as a whole.
 
+## Question 41 remains only partially grounded
+
+Script S. 159 requires adhesive joints to be loaded in shear where possible and warns that line loading creates inadmissibly high stress peaks and progressive peeling. This supports the importance of shear versus peel-type loading, but it does not establish the complete current `ft4101` statement that an overlapped adhesive joint consists of shear plus peel/normal stresses specifically peaking at the overlap ends.
+
+`ft4101` therefore keeps its missing-source warning until an approved source directly supports the full stress-distribution statement.
+
+## Question 43 remains only partially grounded
+
+The script states in the aluminium welding section that aluminium carries an always-present, high-melting oxide skin. The soldering section independently requires oxide-free surfaces and explains that flux removes/reduces oxides so wetting can occur. The audited script passage does not directly state the current aluminium-soldering answer that an aluminium-oxide layer itself prevents solder wetting, nor the more specific `ft4302` claims about rapid reoxidation and melting-temperature contrast.
+
+`ft4301` and `ft4302` therefore keep their missing-source warnings rather than combining two contexts into a stronger claim than the approved source explicitly makes.
+
 ## Image/diagram-dependent exam evidence
 
 The memory protocol explicitly relies on an image or supplied diagram for several tasks, including questions 6, 8, 17, 20, 29, 36, 40 and 45. Some other questions ask the learner to draw a diagram themselves and do not necessarily require an imported exam asset.
@@ -109,5 +123,5 @@ Prioritize questions whose current runtime answers can materially affect exam pr
 2. Q21 — resolve the ambiguous remembered wording without inferring a uniquely preferred microstructure zone from insufficient evidence.
 3. Q24 — find direct approved evidence for the complete strength/hardness/elongation relationship or narrow the runtime answer accordingly.
 4. Q30/Q34 — verify the aluminium resistance-spot-welding specifics and obtain a copper-specific CO₂-laser source rather than relying on generic material statements.
-5. Q35 — find an approved source for the distinct `Kleber` term or remove/narrow `ft3502`.
-6. Q41–Q45 — finish exact page/section mapping, then leave genuinely asset-dependent Q40/Q45 warnings open.
+5. Q35/Q41/Q43 — find direct approved evidence for the remaining terminology and stress/oxide claims or narrow/remove those runtime cards.
+6. Q45 — keep asset-dependent until the approved diagram is available.
