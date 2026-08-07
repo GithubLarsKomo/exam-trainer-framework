@@ -2,8 +2,8 @@ import { additionalFuegetechnikCards } from './builtin-v04-additions';
 import { builtinCatalog as baseCatalog } from './builtin-v04';
 import type { CardVersion, Catalog } from './model';
 
-export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.9';
-export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-07T10:20:00.000Z';
+export const FUEGETECHNIK_RUNTIME_VERSION = '0.5.10';
+export const FUEGETECHNIK_RUNTIME_UPDATED_AT = '2026-08-07T10:30:00.000Z';
 
 const verifiedSourcePages: Record<string, string> = {
   ft01a1: 'S. 3 · Abbildung 3 / Tabelle 1 Schlussarten; S. 102–103 · Elektronenstrahlschweißen',
@@ -20,6 +20,12 @@ const verifiedSourcePages: Record<string, string> = {
   ft0201: 'S. 16 · 3.3.1 Festigkeitsklassen',
   ft0202: 'S. 16 · 3.3.1 Festigkeitsklassen',
   ft0203: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft0259rm: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft0259re: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft0289rm: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft0289re: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft02129rm: 'S. 16 · 3.3.1 Festigkeitsklassen',
+  ft02129re: 'S. 16 · 3.3.1 Festigkeitsklassen',
   ft0301: 'S. 16 · 3.3.1 Festigkeitsklassen; Aufgabenwerte aus Gedächtnisprotokoll Q3',
   ft0302: 'S. 16 · 3.3.1 Festigkeitsklassen; Aufgabenwerte aus Gedächtnisprotokoll Q3',
   ft0303: 'S. 16 · 3.3.1 Festigkeitsklassen; Aufgabenwerte aus Gedächtnisprotokoll Q3',
