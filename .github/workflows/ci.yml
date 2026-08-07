@@ -59,6 +59,9 @@ jobs:
         run: npx playwright install ${{ matrix.browser }}
       - name: Run browser acceptance suite
         run: npm run test:e2e -- --project=${{ matrix.project }}
+      - name: Run production PWA smoke
+        if: matrix.project == 'chromium'
+        run: npm run test:prod-smoke
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,5 +70,6 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            test-results-prod/
           if-no-files-found: ignore
           retention-days: 14
