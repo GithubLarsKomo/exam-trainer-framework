@@ -353,7 +353,7 @@ function handleClick(event: MouseEvent): void {
   const control=intercept(event);if(!control)return;
   const customActive=Boolean(document.querySelector('[data-recoverable-session]'));
   const coreStart=control.matches('[data-start-today],[data-start-custom],[data-exam]');
-  if(!customActive&&!coreStart&&!control.matches('[data-recoverable-resume],[data-recoverable-discard]'))return;
+  if(!customActive&&!coreStart&&!control.matches('[data-recoverable-resume],[data-recoverable-discard],[data-recoverable-home]'))return;
   event.preventDefault();event.stopImmediatePropagation();event.stopPropagation();
   if(control.matches('[data-start-today]'))return run(startToday);
   if(control.matches('[data-start-custom]'))return run(startCustom);
