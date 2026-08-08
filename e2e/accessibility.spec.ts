@@ -78,5 +78,10 @@ test('completes a learning item through keyboard focus and Enter without pointer
   await focusByTab(page, '[data-recoverable-grade="correct"]');
   await page.keyboard.press('Enter');
   await expect(page.locator('[data-recoverable-session]')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Sitzung abgeschlossen' })).toBeVisible();
+
+  await focusByTab(page, '[data-recoverable-home]');
+  await page.keyboard.press('Enter');
   await expect(page.locator('nav.bottom-nav')).toBeVisible();
+  await expect(page.locator('nav.bottom-nav [data-view="home"]')).toHaveClass(/active/);
 });
