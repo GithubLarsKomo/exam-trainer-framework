@@ -22,6 +22,23 @@ async function startLearningByKeyboard(page: Page): Promise<void> {
   await expect(page.locator('[data-recoverable-session]')).toBeVisible();
 }
 
+async function reviewEventCount(page: Page): Promise<number> {
+  return page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('exam-trainer-framework', 3);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const state = await new Promise<{ reviewEvents?: unknown[] }>((resolve, reject) => {
+      const request = db.transaction('kv', 'readonly').objectStore('kv').get('state');
+      request.onsuccess = () => resolve(request.result as { reviewEvents?: unknown[] });
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+    return state.reviewEvents?.length ?? 0;
+  });
+}
+
 test('keeps primary navigation keyboard reachable with a visible focus indicator', async ({ page }) => {
   await seedCatalog(page, [card('free_text', { id: 'a11y-keyboard', prompt: 'Keyboard accessibility' })]);
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -147,4 +164,40 @@ test('toggles multiple-choice answers with keyboard focus and Space', async ({ p
   await focusByTab(page, '[data-recoverable-reveal]');
   await page.keyboard.press('Enter');
   await expect(page.locator('.answer-box')).toBeVisible();
+});
+
+test('navigates and grades an examination question through keyboard controls without early review commits', async ({ page }) => {
+  await seedCatalog(page, [
+    card('free_text', { id: 'a11y-exam-a', prompt: 'Keyboard exam A' }),
+    card('free_text', { id: 'a11y-exam-b', prompt: 'Keyboard exam B' }),
+    card('free_text', { id: 'a11y-exam-c', prompt: 'Keyboard exam C' }),
+  ]);
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  await focusByTab(page, 'nav.bottom-nav [data-view="exam"]');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#exam-mode')).toBeVisible();
+  await page.locator('#exam-mode').selectOption('fixed');
+
+  await focusByTab(page, '[data-exam]');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('[data-recoverable-session]')).toBeVisible();
+  await expect(page.locator('[data-recoverable-exam-nav]')).toHaveCount(3);
+  await expect.poll(() => reviewEventCount(page)).toBe(0);
+
+  await focusByTab(page, '[data-recoverable-exam-nav="1"]');
+  await page.keyboard.press('Enter');
+  const secondQuestion = page.locator('[data-recoverable-exam-nav="1"]');
+  await expect(secondQuestion).toHaveClass(/current/);
+  await expect(secondQuestion).toHaveAttribute('aria-label', 'Frage 2');
+
+  await focusByTab(page, '[data-recoverable-reveal]');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.answer-box')).toBeVisible();
+
+  await focusByTab(page, '[data-recoverable-grade="correct"]');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('[data-recoverable-exam-nav="1"]')).toHaveClass(/graded/);
+  await expect(page.locator('[data-recoverable-exam-nav="1"]')).toHaveAttribute('aria-label', '2: Gewusst');
+  await expect.poll(() => reviewEventCount(page)).toBe(0);
 });
