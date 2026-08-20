@@ -31,6 +31,7 @@ export interface RecoverableSessionState {
   outcomes: Record<string,Outcome>;
   responses: Record<string,PersistedResponseState>;
   queueReasons?: Record<string,QueueReasonCode[]>;
+  questionVariantIds?: Record<string,string>;
   timeSpentMs: Record<string,number>;
   currentStartedAtMs: number;
 }
@@ -54,6 +55,7 @@ export function createRecoverableSession(input: {
   mode: RecoverableSessionMode;
   itemIds: string[];
   queueReasons?: Record<string,QueueReasonCode[]>;
+  questionVariantIds?: Record<string,string>;
   nowMs?: number;
   id?: string;
 }): RecoverableSessionState {
@@ -74,6 +76,7 @@ export function createRecoverableSession(input: {
     outcomes: {},
     responses: {},
     queueReasons: input.queueReasons ? structuredClone(input.queueReasons) : undefined,
+    questionVariantIds: input.questionVariantIds ? structuredClone(input.questionVariantIds) : undefined,
     timeSpentMs: {},
     currentStartedAtMs: nowMs,
   };

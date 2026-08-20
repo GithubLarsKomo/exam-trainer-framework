@@ -5,7 +5,8 @@ import { applyReview } from './review-engine';
 import { buildTodayPlan } from './today-plan';
 import { calculateReadiness } from './exam-intelligence';
 import { recordReadinessSnapshot } from './readiness-history';
-import { legacyQuestionVariantId, type AppState, type CardVersion, type Catalog, type Outcome, type Progress, type QueueReasonCode } from './model';
+import { type AppState, type CardVersion, type Catalog, type Outcome, type Progress, type QueueReasonCode } from './model';
+import { runtimeQuestionForVariant, runtimeQuestionsForCatalog, type RuntimeQuestion } from './knowledge-learning-runtime';
 import {
   ACTIVE_SESSION_KEY,
   accrueCurrentTime,
@@ -72,13 +73,24 @@ function putSession(state: PersistedState & Partial<AppState>, session?: Recover
   else delete state.sessions[ACTIVE_SESSION_KEY];
 }
 
-function releasedCards(catalog: Catalog): CardVersion[] { return catalog.cards.filter(card=>card.status==='released'); }
+function runtimeCards(catalog: Catalog, state: PersistedState & Partial<AppState>): RuntimeQuestion[] {
+  return runtimeQuestionsForCatalog(catalog,state.reviewEvents??[]);
+}
 function cardProgress(state: PersistedState & Partial<AppState>, card: CardVersion): Progress {
   return state.progress?.[card.id] ?? {stage:1,dueAt:new Date(0).toISOString(),correct:0,partial:0,incorrect:0,skipped:0,marked:false,cardVersion:card.version};
 }
 function isDue(progress: Progress): boolean { return new Date(progress.dueAt).getTime() <= Date.now(); }
-function sessionCard(catalog: Catalog, session: RecoverableSessionState): CardVersion | undefined {
-  const id=currentSessionCardId(session); return id ? catalog.cards.find(card=>card.id===id) : undefined;
+function variantSnapshot(cards: RuntimeQuestion[], ids: string[]): Record<string,string> {
+  const byId=new Map(cards.map(card=>[card.id,card]));
+  return Object.fromEntries(ids.flatMap(id=>{const card=byId.get(id);return card?[[id,card.questionVariantId]]:[];}));
+}
+function sessionCardById(catalog: Catalog, session: RecoverableSessionState, state: PersistedState & Partial<AppState>, id: string): RuntimeQuestion | undefined {
+  const variantId=session.questionVariantIds?.[id];
+  if(variantId){const exact=runtimeQuestionForVariant(catalog,id,variantId);if(exact)return exact;}
+  return runtimeCards(catalog,state).find(card=>card.id===id);
+}
+function sessionCard(catalog: Catalog, session: RecoverableSessionState, state: PersistedState & Partial<AppState>): RuntimeQuestion | undefined {
+  const id=currentSessionCardId(session); return id ? sessionCardById(catalog,session,state,id) : undefined;
 }
 
 async function persist(state: PersistedState & Partial<AppState>): Promise<void> { await saveState(state as PersistedState); }
@@ -89,13 +101,14 @@ function queueReasonsObject(items: Array<{cardId:string;reasons:QueueReasonCode[
 
 async function startToday(): Promise<void> {
   const {state,catalog}=await context();
-  const cards=releasedCards(catalog);
+  const cards=runtimeCards(catalog,state);
   if(!cards.length) return;
   const input={catalogId:catalog.catalogId,cards,progress:state.progress??{},reviewEvents:state.reviewEvents??[],fsrsShadow:state.fsrsShadow??{},blueprint:catalog.examBlueprint,now:new Date()};
   let plan;
   try { plan=buildTodayPlan(input); } catch { plan=buildTodayPlan({...input,blueprint:undefined}); }
   if(!plan.items.length) return alert('Für heute sind keine Aufgaben geplant.');
-  const session=createRecoverableSession({catalogId:catalog.catalogId,kind:'learning',mode:'today',itemIds:plan.items.map(item=>item.cardId),queueReasons:queueReasonsObject(plan.items)});
+  const ids=plan.items.map(item=>item.cardId);
+  const session=createRecoverableSession({catalogId:catalog.catalogId,kind:'learning',mode:'today',itemIds:ids,queueReasons:queueReasonsObject(plan.items),questionVariantIds:variantSnapshot(cards,ids)});
   putSession(state,session); await persist(state); renderSession(session,state,catalog);
 }
 
@@ -103,7 +116,7 @@ async function startCustom(): Promise<void> {
   const {state,catalog}=await context();
   const mode=(document.querySelector<HTMLSelectElement>('#mode')?.value ?? 'due') as RecoverableSessionMode;
   const topic=document.querySelector<HTMLSelectElement>('#topic')?.value ?? 'all';
-  const cards=releasedCards(catalog).filter(card=>topic==='all'||card.topicId===topic);
+  const cards=runtimeCards(catalog,state).filter(card=>topic==='all'||card.topicId===topic);
   let selected = mode==='new' ? cards.filter(card=>!state.progress?.[card.id])
     : mode==='errors' ? cards.filter(card=>(cardProgress(state,card).incorrect??0)>0)
     : mode==='all' ? [...cards]
@@ -111,17 +124,17 @@ async function startCustom(): Promise<void> {
   if(!selected.length) selected=cards.slice(0,10);
   const ids=shuffleIds(selected.map(card=>card.id));
   if(!ids.length) return alert('Für diese Auswahl sind keine Karten verfügbar.');
-  const session=createRecoverableSession({catalogId:catalog.catalogId,kind:'learning',mode,itemIds:ids});
+  const session=createRecoverableSession({catalogId:catalog.catalogId,kind:'learning',mode,itemIds:ids,questionVariantIds:variantSnapshot(cards,ids)});
   putSession(state,session); await persist(state); renderSession(session,state,catalog);
 }
 
 async function startExam(): Promise<void> {
   const {state,catalog}=await context();
-  const cards=releasedCards(catalog);
+  const cards=runtimeCards(catalog,state);
   const mode=(document.querySelector<HTMLSelectElement>('#exam-mode')?.value==='fixed'?'fixed':'dynamic') as 'fixed'|'dynamic';
   const ids=selectExamCardIds(cards,catalog.examBlueprint,mode);
   if(!ids.length) return alert('Es sind keine freigegebenen Prüfungsfragen verfügbar.');
-  const session=createRecoverableSession({catalogId:catalog.catalogId,kind:'exam',mode,itemIds:ids});
+  const session=createRecoverableSession({catalogId:catalog.catalogId,kind:'exam',mode,itemIds:ids,questionVariantIds:variantSnapshot(cards,ids)});
   putSession(state,session); await persist(state); renderSession(session,state,catalog);
 }
 
@@ -220,7 +233,7 @@ function sessionShell(content:string,catalog:Catalog,session:RecoverableSessionS
 function renderSession(session:RecoverableSessionState,state:PersistedState & Partial<AppState>,catalog:Catalog): void {
   const root=document.querySelector<HTMLElement>('#app'); if(!root) return;
   if(session.catalogId!==catalog.catalogId){root.innerHTML=sessionShell('<section class="panel"><h2>Katalog nicht aktiv</h2><p>Aktiviere den ursprünglichen Katalog oder verwirf die Sitzung.</p><button data-recoverable-discard>Gespeicherte Sitzung verwerfen</button></section>',catalog,session);return;}
-  const card=sessionCard(catalog,session);
+  const card=sessionCard(catalog,session,state);
   if(!card){
     if(session.kind==='learning' && sessionComplete(session)){void finishLearning(state,session,catalog);return;}
     root.innerHTML=sessionShell('<section class="panel"><h2>Frage nicht mehr vorhanden</h2><p>Die gespeicherte Sitzung verweist auf eine gelöschte Karte.</p><button data-recoverable-discard>Sitzung verwerfen</button></section>',catalog,session);return;
@@ -250,7 +263,7 @@ async function finishLearning(state:PersistedState & Partial<AppState>,session:R
 }
 
 function recordReadiness(state:PersistedState & Partial<AppState>,catalog:Catalog,at:Date): void {
-  const cards=releasedCards(catalog); if(!cards.length)return;
+  const cards=runtimeCards(catalog,state); if(!cards.length)return;
   try { recordReadinessSnapshot(state as AppState,calculateReadiness({catalogId:catalog.catalogId,cards,progress:state.progress??{},blueprint:catalog.examBlueprint,calculatedAt:at})); }
   catch { recordReadinessSnapshot(state as AppState,calculateReadiness({catalogId:catalog.catalogId,cards,progress:state.progress??{},calculatedAt:at})); }
 }
@@ -265,20 +278,20 @@ async function revealCurrent(): Promise<void> {
 async function gradeCurrent(outcome:Outcome): Promise<void> {
   await saveVisibleResponse();
   const {state,catalog}=await context(); const session=activeSession(state); if(!session)return;
-  const card=sessionCard(catalog,session); if(!card)return;
+  const card=sessionCard(catalog,session,state); if(!card)return;
   if(session.kind==='exam') {
     gradeExamCard(session,outcome); putSession(state,session); await persist(state); renderSession(session,state,catalog); return;
   }
   const elapsed=(session.timeSpentMs[card.id]??0)+Math.max(0,Date.now()-session.currentStartedAtMs);
   const at=new Date();
-  applyReview(state as AppState,{knowledgeItemId:card.id,questionVariantId:legacyQuestionVariantId(card.id),cardVersion:card.version},outcome,'learning',at,elapsed,{fsrsShadowEnabled:true});
+  applyReview(state as AppState,{knowledgeItemId:card.knowledgeItemId,questionVariantId:card.questionVariantId,cardVersion:card.version},outcome,'learning',at,elapsed,{fsrsShadowEnabled:true});
   gradeLearningCard(session,outcome,at.getTime()); recordReadiness(state,catalog,at); putSession(state,session); await persist(state);
   if(sessionComplete(session)) await finishLearning(state,session,catalog); else renderSession(session,state,catalog);
 }
 
 async function skipCurrent(): Promise<void> {
   await saveVisibleResponse(); const {state,catalog}=await context(); const session=activeSession(state); if(!session||session.kind!=='learning')return;
-  const card=sessionCard(catalog,session); if(!card)return;
+  const card=sessionCard(catalog,session,state); if(!card)return;
   const p=cardProgress(state,card);p.skipped++;state.progress??={};state.progress[card.id]=p;
   skipLearningCard(session);putSession(state,session);await persist(state);renderSession(session,state,catalog);
 }
@@ -292,9 +305,9 @@ async function submitExam(): Promise<void> {
   await saveVisibleResponse();const {state,catalog}=await context();const session=activeSession(state);if(!session||session.kind!=='exam')return;
   accrueCurrentTime(session);
   if(!sessionComplete(session))return alert(`Noch ${session.itemIds.length-Object.keys(session.outcomes).length} Fragen ohne Bewertung.`);
-  const cards=session.itemIds.map(id=>catalog.cards.find(card=>card.id===id)).filter((card):card is CardVersion=>Boolean(card));
+  const cards=session.itemIds.map(id=>sessionCardById(catalog,session,state,id)).filter((card):card is RuntimeQuestion=>Boolean(card));
   const submittedAt=new Date();
-  for(const card of cards){const outcome=session.outcomes[card.id];if(!outcome)continue;applyReview(state as AppState,{knowledgeItemId:card.id,questionVariantId:legacyQuestionVariantId(card.id),cardVersion:card.version},outcome,'exam',submittedAt,session.timeSpentMs[card.id]??0,{fsrsShadowEnabled:true});}
+  for(const card of cards){const outcome=session.outcomes[card.id];if(!outcome)continue;applyReview(state as AppState,{knowledgeItemId:card.knowledgeItemId,questionVariantId:card.questionVariantId,cardVersion:card.version},outcome,'exam',submittedAt,session.timeSpentMs[card.id]??0,{fsrsShadowEnabled:true});}
   const score=calculateExamScore(cards,session.outcomes);
   state.examAttempts??=[];state.examAttempts.push({id:`exam-${crypto.randomUUID()}`,at:submittedAt.toISOString(),...score});
   recordReadiness(state,catalog,submittedAt);putSession(state,undefined);await persist(state);
