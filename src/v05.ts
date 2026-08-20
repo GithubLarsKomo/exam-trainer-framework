@@ -46,6 +46,8 @@ const { installMobileSecondaryNavigationFeature } = await import('./mobile-secon
 installMobileSecondaryNavigationFeature();
 const { installCatalogLifecycleFeature } = await import('./catalog-lifecycle-feature');
 installCatalogLifecycleFeature();
+const { installHostedCatalogBrowserFeature } = await import('./hosted-catalog-browser-feature');
+installHostedCatalogBrowserFeature();
 const { installPublicationFeature } = await import('./publication-feature');
 installPublicationFeature();
 const { installFullCardEditorFeature } = await import('./full-card-editor-feature');
