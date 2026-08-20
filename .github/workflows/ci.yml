@@ -71,8 +71,10 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:3000/ | grep -q '<div id="app"></div>'
           curl --fail --silent --head http://127.0.0.1:3000/healthz | grep -qi 'cache-control: no-store'
-          curl --fail --silent http://127.0.0.1:3000/catalogs/registry.json | grep -q '"fuegetechnik"'
-          curl --fail --silent http://127.0.0.1:3000/catalogs/fuegetechnik/0.5.10.json | grep -q '"format": "etf-catalog"'
+          curl --fail --silent http://127.0.0.1:3000/catalogs/registry.json --output /tmp/registry.json
+          curl --fail --silent http://127.0.0.1:3000/catalogs/fuegetechnik/0.5.10.json --output /tmp/fuegetechnik-0.5.10.json
+          grep -q '"fuegetechnik"' /tmp/registry.json
+          grep -q '"format": "etf-catalog"' /tmp/fuegetechnik-0.5.10.json
       - name: Show container logs on failure
         if: failure()
         run: docker logs etf-ci || true
