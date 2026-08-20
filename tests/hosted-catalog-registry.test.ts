@@ -130,7 +130,7 @@ describe('Hosted Catalog Registry', () => {
       responseFetch({ [catalogUrl]: new Response(draftBody, { status: 200 }) }),
     )).rejects.toThrow(/nicht freigegebene/);
 
-    const assetCatalog = catalog({ cards: [{ ...catalog().cards[0], assetRefs: [{ id: 'asset-1', role: 'prompt' }] }] });
+    const assetCatalog = catalog({ cards: [{ ...catalog().cards[0], assetRefs: [{ assetId: 'asset-1', role: 'prompt' }] }] });
     const assetBody = JSON.stringify({ format: 'etf-catalog', version: 1, catalog: assetCatalog });
     const assetEntry = await entryFor(assetBody);
     await expect(downloadHostedCatalog(
