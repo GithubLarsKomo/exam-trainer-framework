@@ -158,7 +158,10 @@ test('rotates native QuestionVariants while keeping one KnowledgeItem progress i
   await expect.poll(async () => (await readLearnerState(page)).reviewEvents.length).toBe(2);
   const persisted = await readLearnerState(page);
   expect(Object.keys(persisted.progress)).toEqual(['ki-e2e']);
-  expect(persisted.reviewEvents).toEqual([
+  expect(persisted.reviewEvents.map(event => ({
+    knowledgeItemId: event.knowledgeItemId,
+    questionVariantId: event.questionVariantId,
+  }))).toEqual([
     { knowledgeItemId: 'ki-e2e', questionVariantId: 'ki-e2e:q-recall' },
     { knowledgeItemId: 'ki-e2e', questionVariantId: 'ki-e2e:q-apply' },
   ]);
