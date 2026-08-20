@@ -137,23 +137,26 @@ async function readLearnerState(page: Page): Promise<{
   });
 }
 
+async function completeRecoverableQuestion(page: Page, outcome: 'correct' | 'partial'): Promise<void> {
+  await page.locator('[data-recoverable-reveal]').click();
+  await page.locator(`[data-recoverable-grade="${outcome}"]`).click();
+  await expect(page.getByText('Sitzung abgeschlossen')).toBeVisible();
+}
+
 test('rotates native QuestionVariants while keeping one KnowledgeItem progress identity', async ({ page }) => {
   await seedTeachCatalog(page);
 
   await startLearning(page);
   await expect(page.locator('.question-card h2')).toHaveText('Recall variant prompt');
-  await page.locator('[data-reveal]').click();
-  await page.locator('[data-grade="correct"]').click();
-  await expect(page.getByText('Sitzung abgeschlossen')).toBeVisible();
+  await completeRecoverableQuestion(page, 'correct');
 
   await expect.poll(async () => (await readLearnerState(page)).reviewEvents.length).toBe(1);
-  await page.locator('main [data-view="home"]').click();
+  await page.locator('[data-recoverable-home]').click();
+  await expect(page.locator('.app-header h1')).toHaveText('Teach E2E', { timeout: 10_000 });
 
   await startLearning(page);
   await expect(page.locator('.question-card h2')).toHaveText('Application variant prompt');
-  await page.locator('[data-reveal]').click();
-  await page.locator('[data-grade="partial"]').click();
-  await expect(page.getByText('Sitzung abgeschlossen')).toBeVisible();
+  await completeRecoverableQuestion(page, 'partial');
 
   await expect.poll(async () => (await readLearnerState(page)).reviewEvents.length).toBe(2);
   const persisted = await readLearnerState(page);
