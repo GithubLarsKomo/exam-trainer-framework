@@ -23,7 +23,41 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run test
+      - run: npm run test:server
       - run: npm run build
+
+  production-container:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -t exam-trainer-framework:ci .
+      - name: Start production image
+        run: docker run -d --name etf-ci -p 3000:3000 exam-trainer-framework:ci
+      - name: Verify health and app shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/healthz >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker logs etf-ci
+              exit 1
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3000/ | grep -q '<div id="app"></div>'
+          curl --fail --silent --head http://127.0.0.1:3000/healthz | grep -qi 'cache-control: no-store'
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs etf-ci || true
+      - name: Stop production image
+        if: always()
+        run: docker rm -f etf-ci || true
 
   browser-acceptance:
     needs: verify
