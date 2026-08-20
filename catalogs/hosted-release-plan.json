@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "releases": [
+    {
+      "id": "fuegetechnik",
+      "version": "0.5.10",
+      "title": "Fügetechnik",
+      "description": "Freigegebener ETF-Runtime-Katalog für Fügetechnik.",
+      "tags": ["fuegetechnik", "de"],
+      "source": "fuegetechnik-runtime",
+      "status": "released",
+      "approved": true
+    }
+  ]
+}
