@@ -6,6 +6,7 @@ function replaceExactly(source, before, after, label) {
   return source.replace(before, after);
 }
 
+// One-shot materializer: all anchors are exact and fail closed if the branch moved.
 // 1) Add a backward-compatible variant snapshot to recoverable sessions.
 {
   const path = 'src/recoverable-session.ts';
