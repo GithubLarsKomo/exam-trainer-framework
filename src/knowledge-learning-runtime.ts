@@ -142,6 +142,18 @@ export function runtimeQuestionsForCatalog(catalog: Catalog, reviewEvents: Revie
   return effectiveKnowledgeItems(catalog).map(item => runtimeQuestion(item, selectQuestionVariant(item, reviewEvents)));
 }
 
+/** Reconstruct one exact released QuestionVariant for a semantic KnowledgeItem. */
+export function runtimeQuestionForVariant(
+  catalog: Catalog,
+  knowledgeItemId: string,
+  questionVariantId: string,
+): RuntimeQuestion | undefined {
+  const item = effectiveKnowledgeItems(catalog).find(candidate => candidate.id === knowledgeItemId);
+  if (!item) return undefined;
+  const variant = releasedVariants(item).find(candidate => candidate.id === questionVariantId);
+  return variant ? runtimeQuestion(item, variant) : undefined;
+}
+
 export interface BuildRuntimeLearningPlanInput {
   catalog: Catalog;
   state: Pick<LearningRuntimeState, 'progress' | 'reviewEvents' | 'fsrsShadow'>;
