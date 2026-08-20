@@ -1,0 +1,42 @@
+name: Materialize recoverable Teach runtime
+
+on:
+  push:
+    branches: [feat/teach-runtime-ui]
+    paths:
+      - "scripts/wire-recoverable-knowledge-runtime.mjs"
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/teach-runtime-ui
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wire recoverable session to KnowledgeItem runtime
+        run: node scripts/wire-recoverable-knowledge-runtime.mjs
+      - name: Verify patched runtime
+        run: |
+          npm install
+          npm run test
+          npm run build
+      - name: Commit materialized integration
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Recoverable integration already materialized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/recoverable-session.ts src/knowledge-learning-runtime.ts src/recoverable-session-feature.ts
+          git commit -m "Wire recoverable sessions to KnowledgeItem runtime"
+          git push origin HEAD:feat/teach-runtime-ui
