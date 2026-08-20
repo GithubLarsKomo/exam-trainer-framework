@@ -4,6 +4,22 @@ export type QuestionType = 'free_text' | 'numeric' | 'single_choice' | 'multiple
 export type ReviewSource = 'learning' | 'exam';
 export type AssetKind = 'image' | 'audio' | 'other';
 export type AssetRole = 'prompt' | 'answer' | 'reference' | 'attachment';
+export type LearningCompetencyClass = 'knowledge' | 'application' | 'transfer';
+export type ContentOriginType = 'skillz-teach' | 'anki' | 'manual' | 'other';
+
+export interface ContentOrigin {
+  type: ContentOriginType;
+  missionId?: string;
+  sourceSkill?: string;
+  sourceRefs?: string[];
+  sourceCommit?: string;
+}
+
+export interface LearningContentMetadata {
+  learningObjective?: string;
+  competencyClass?: LearningCompetencyClass;
+  origin?: ContentOrigin;
+}
 
 export interface AssetManifestEntry {
   id: string;
@@ -58,7 +74,7 @@ export interface CardAnswer {
   orderingItems?: OrderingItem[];
   caseStudyParts?: CaseStudyPart[];
 }
-export interface CardVersion {
+export interface CardVersion extends LearningContentMetadata {
   id: string;
   version: number;
   status: CardStatus;
@@ -81,7 +97,7 @@ export interface CardVersion {
   parentId?: string;
 }
 
-export interface QuestionVariant {
+export interface QuestionVariant extends LearningContentMetadata {
   id: string;
   knowledgeItemId: string;
   legacyCardId?: string;
@@ -105,7 +121,7 @@ export interface QuestionVariant {
   changeReason?: string;
 }
 
-export interface KnowledgeItem {
+export interface KnowledgeItem extends LearningContentMetadata {
   id: string;
   version: number;
   status: CardStatus;
@@ -148,6 +164,9 @@ export function cardVersionToKnowledgeItem(card: CardVersion): KnowledgeItem {
     sourcePage: card.sourcePage,
     changedAt: card.changedAt,
     changeReason: card.changeReason,
+    learningObjective: card.learningObjective,
+    competencyClass: card.competencyClass,
+    origin: card.origin ? structuredClone(card.origin) : undefined,
   };
   return {
     id: card.id,
@@ -160,6 +179,9 @@ export function cardVersionToKnowledgeItem(card: CardVersion): KnowledgeItem {
     sourcePage: card.sourcePage,
     changedAt: card.changedAt,
     changeReason: card.changeReason,
+    learningObjective: card.learningObjective,
+    competencyClass: card.competencyClass,
+    origin: card.origin ? structuredClone(card.origin) : undefined,
     questionVariants: [variant],
   };
 }
@@ -230,6 +252,7 @@ export interface Catalog {
   knowledgeItems?: KnowledgeItem[];
   assets?: AssetManifestEntry[];
   examBlueprint?: ExamBlueprint;
+  origin?: ContentOrigin;
 }
 export interface Progress {
   stage: number;
