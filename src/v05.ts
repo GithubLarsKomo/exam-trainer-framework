@@ -54,3 +54,5 @@ const { installFullCardEditorFeature } = await import('./full-card-editor-featur
 installFullCardEditorFeature();
 const { installExamDependencyEditorFeature } = await import('./exam-dependency-editor-feature');
 installExamDependencyEditorFeature();
+
+await import('./app-design.css');
