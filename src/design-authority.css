@@ -34,3 +34,9 @@
   .bottom-nav button span{width:20px;height:20px}
   .bottom-nav button span::before{width:18px;height:18px}
 }
+
+@media(max-width:430px){
+  .app-shell[data-recoverable-session] .app-header{align-items:stretch;flex-wrap:wrap}
+  .app-shell[data-recoverable-session] .app-header>div:first-child{width:100%;max-width:100%}
+  .app-shell[data-recoverable-session] .app-header>[data-recoverable-pause]{width:100%;max-width:100%;white-space:normal}
+}
