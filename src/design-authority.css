@@ -4,11 +4,9 @@
   --rail-active:#172448;
 }
 
-/* Approved ETF mark in the product header. */
 .app-header>div:first-child{position:relative;padding-left:52px;min-height:42px;display:flex;flex-direction:column;justify-content:center}
 .app-header>div:first-child::before{content:"";position:absolute;left:0;top:50%;width:40px;height:40px;transform:translateY(-50%);background:url('/icons/icon.svg') center/contain no-repeat}
 
-/* Replace emoji navigation glyphs with a restrained monochrome icon system. */
 .bottom-nav button span{font-size:0;width:22px;height:22px;display:grid;place-items:center}
 .bottom-nav button span::before{content:"";display:block;width:19px;height:19px;background:currentColor;mask-position:center;mask-repeat:no-repeat;mask-size:contain;-webkit-mask-position:center;-webkit-mask-repeat:no-repeat;-webkit-mask-size:contain}
 .bottom-nav button[data-view="home"] span::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 11.2 12 4l9 7.2V21h-6v-6H9v6H3z' fill='black'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 11.2 12 4l9 7.2V21h-6v-6H9v6H3z' fill='black'/%3E%3C/svg%3E")}
@@ -27,7 +25,7 @@
   .bottom-nav button small{font-size:.74rem;font-weight:720;letter-spacing:.005em}
   .bottom-nav button.active{background:var(--rail-active);color:#d7deff;box-shadow:inset 2px 0 0 var(--brand)}
   .bottom-nav button[data-view="settings"]{margin-top:auto}
-  .legal-footer{max-width:1120px;margin-left:calc(var(--rail-width) + auto);padding-left:calc(var(--rail-width) + 1.45rem)}
+  .legal-footer{max-width:1120px;margin-left:var(--rail-width);margin-right:auto;padding-left:1.45rem;padding-right:1.5rem}
 }
 
 @media(max-width:719px){
