@@ -4,8 +4,8 @@
   --rail-active:#172448;
 }
 
-.app-header>div:first-child{position:relative;padding-left:52px;min-height:42px;display:flex;flex-direction:column;justify-content:center}
-.app-header>div:first-child::before{content:"";position:absolute;left:0;top:50%;width:40px;height:40px;transform:translateY(-50%);background:url('/icons/icon.svg') center/contain no-repeat}
+.app-header>div:first-child{position:relative;padding-left:190px;min-height:74px;display:flex;flex-direction:column;justify-content:center}
+.app-header>div:first-child::before{content:"";position:absolute;left:0;top:50%;width:174px;height:70px;transform:translateY(-50%);background:url('/assets/exam-trainer-framework-logo.png') left center/contain no-repeat}
 
 .bottom-nav button span{font-size:0;width:22px;height:22px;display:grid;place-items:center}
 .bottom-nav button span::before{content:"";display:block;width:19px;height:19px;background:currentColor;mask-position:center;mask-repeat:no-repeat;mask-size:contain;-webkit-mask-position:center;-webkit-mask-repeat:no-repeat;-webkit-mask-size:contain}
@@ -20,7 +20,7 @@
   .app-shell{max-width:none;margin:0;padding:1.05rem 1.5rem 2.2rem calc(var(--rail-width) + 1.45rem)}
   .app-header,main{max-width:1120px;margin-left:auto;margin-right:auto}
   .bottom-nav{position:fixed;left:0;top:0;bottom:0;right:auto;width:var(--rail-width);margin:0;padding:1rem .6rem;display:flex;flex-direction:column;justify-content:flex-start;gap:.3rem;background:var(--rail-bg);border:0;border-right:1px solid var(--line);border-radius:0;z-index:20;box-shadow:none}
-  .bottom-nav::before{content:"ETF";display:block;margin:.2rem .55rem 1rem;padding:44px 0 0;background:url('/icons/icon.svg') top left/36px 36px no-repeat;color:var(--ink-strong);font-weight:800;letter-spacing:.02em;font-size:.88rem}
+  .bottom-nav::before{content:"ETF";display:block;margin:.2rem .55rem 1rem;padding:48px 0 0;background:url('/icons/icon-512.png') top left/40px 40px no-repeat;color:var(--ink-strong);font-weight:800;letter-spacing:.02em;font-size:.88rem}
   .bottom-nav button{width:100%;min-height:48px;padding:.55rem .65rem;display:grid;grid-template-columns:24px 1fr;align-items:center;justify-items:start;gap:.55rem;border-radius:9px;color:#8f9aaf;text-align:left}
   .bottom-nav button small{font-size:.74rem;font-weight:720;letter-spacing:.005em}
   .bottom-nav button.active{background:var(--rail-active);color:#d7deff;box-shadow:inset 2px 0 0 var(--brand)}
@@ -29,8 +29,8 @@
 }
 
 @media(max-width:719px){
-  .app-header>div:first-child{padding-left:44px}
-  .app-header>div:first-child::before{width:34px;height:34px}
+  .app-header>div:first-child{padding-left:44px;min-height:42px}
+  .app-header>div:first-child::before{width:34px;height:34px;background-image:url('/icons/icon-512.png');background-size:contain}
   .bottom-nav button span{width:20px;height:20px}
   .bottom-nav button span::before{width:18px;height:18px}
 }
