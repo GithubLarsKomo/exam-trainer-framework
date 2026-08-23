@@ -56,3 +56,4 @@ const { installExamDependencyEditorFeature } = await import('./exam-dependency-e
 installExamDependencyEditorFeature();
 
 await import('./app-design.css');
+await import('./design-authority.css');
