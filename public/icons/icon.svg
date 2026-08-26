@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ETF"><rect width="512" height="512" rx="96" fill="#17233b"/><path d="M120 112h272v64H184v48h176v64H184v48h208v64H120z" fill="#fff"/><circle cx="392" cy="112" r="36" fill="#5dd39e"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Exam Trainer Framework</title>
+  <desc id="desc">Geometric brain and verification mark for learning and exams</desc>
+  <rect width="512" height="512" rx="104" fill="#0B0E14"/>
+  <path d="M245 116c-20-27-62-31-88-8-19 16-26 43-17 66-25 10-42 34-42 62 0 30 19 56 47 65-9 32 8 67 39 80 24 10 51 4 68-14V142c0-10-2-19-7-26Z" fill="none" stroke="#39465D" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M267 116c20-27 62-31 88-8 19 16 26 43 17 66 25 10 42 34 42 62 0 30-19 56-47 65 9 32-8 67-39 80-24 10-51 4-68-14V142c0-10 2-19 7-26Z" fill="none" stroke="#39465D" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M169 179c27 0 45 18 45 44m-55 86c31 0 53-18 55-47m129-83c-27 0-45 18-45 44m55 86c-31 0-53-18-55-47" fill="none" stroke="#718DFF" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="169" cy="179" r="10" fill="#A7B5FF"/>
+  <circle cx="159" cy="309" r="10" fill="#A7B5FF"/>
+  <circle cx="343" cy="179" r="10" fill="#A7B5FF"/>
+  <circle cx="353" cy="309" r="10" fill="#A7B5FF"/>
+  <path d="m205 266 34 35 74-86" fill="none" stroke="#718DFF" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M196 405h120" stroke="#273142" stroke-width="14" stroke-linecap="round"/>
+  <path d="M218 405h76" stroke="#718DFF" stroke-width="14" stroke-linecap="round"/>
+</svg>
