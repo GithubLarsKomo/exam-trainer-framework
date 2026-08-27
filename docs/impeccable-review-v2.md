@@ -1,6 +1,6 @@
 # Impeccable Review v2 — Exam Trainer Framework
 
-Status: implementation in progress  
+Status: visual completion re-review passed on supplied desktop renders; CI pending on final toolbar polish  
 Authority: `PRODUCT.md`, `DESIGN.md`  
 Evidence: repeated desktop start-screen and editor screenshots from local port 3001, current feature-branch implementation, browser acceptance and CI.
 
@@ -15,58 +15,56 @@ Evidence: repeated desktop start-screen and editor screenshots from local port 3
 
 **Verification:** browser acceptance checks that the desktop rail mark and mobile header mark are visible, use the SVG master, have loaded natural dimensions and occupy a usable rendered size.
 
-### VC-02 — high — Desktop geometry and context hierarchy
-**Evidence:** earlier desktop renders showed duplicated brand emphasis and a content island narrower than the available app workspace.
+### VC-02 — closed — Desktop geometry and context hierarchy
+**Evidence:** the latest start-screen render shows `Fügetechnik`, hero, KPI strip and secondary actions on one consistent left-anchored work grid with a controlled wide desktop measure. Permanent branding is confined to the rail.
 
 **Authority:** `DESIGN.md` sections 4, 6 and 7.
 
-**Change implemented:** desktop header is reduced to active catalog title plus operational status; header and main share the same left edge; the controlled content maximum is increased to 1160 px (1120 px in the narrower desktop breakpoint); command-centre surfaces use the full controlled work width.
+**Resolution:** desktop header is reduced to active catalog title plus operational status; header and main share the same left edge; the controlled content maximum is 1160 px (1120 px in the narrower desktop breakpoint).
 
-**Verify:** next desktop re-render shows `Fügetechnik` aligned to the hero/KPI/action surfaces with no duplicate desktop lockup and without excessive empty space.
-
-### VC-03 — high — Editor contains duplicate preview content
-**Evidence:** the first editor render showed a new `Produktionsvorschau` followed by the legacy question/answer preview with the same content.
+### VC-03 — closed — Duplicate editor preview
+**Evidence:** the latest editor render contains exactly one `Produktionsvorschau` with one question and one model-answer block; the prior duplicate legacy preview is absent.
 
 **Authority:** `DESIGN.md` section 10 plus product principle `Power without clutter`.
 
-**Change implemented:** keep exactly one production preview and remove legacy siblings once the enhanced preview is active.
+**Resolution:** keep exactly one production preview and remove legacy siblings once the enhanced preview is active.
 
-**Verify:** one question preview, one model-answer preview, no repeated question/solution below it.
+### VC-04 — closed — Editor work/preview ratio and toolbar hierarchy
+**Evidence:** the latest editor render gives the form the dominant width while keeping a readable sticky preview. A final CSS polish converts the editor header from three distant islands into a compact three-column toolbar: back action, left-aligned card context, save action.
 
-### VC-04 — medium — Editor work/preview ratio
 **Authority:** `DESIGN.md` section 10: form/editor left, sticky live preview right; dense authoring surface.
 
-**Change implemented:** desktop ratio approximately 65/35 with a minimum usable preview width; stack on mobile.
+**Resolution:** desktop ratio approximately 65/35 with a minimum usable preview width; stack on mobile; editor toolbar uses compact task-oriented geometry.
 
-**Verify:** editor remains the dominant work surface while preview remains readable and sticky.
-
-### VC-05 — medium — Quick access template-card feel
-**Evidence:** the four secondary actions previously appeared as four equal mini-cards inside another bordered panel.
+### VC-05 — closed — Quick access template-card feel
+**Evidence:** the latest start-screen render shows the four secondary actions as a flat two-column utility list separated by hairlines rather than four equal mini-cards inside another card.
 
 **Authority:** `DESIGN.md` sections 7 and 17.
 
-**Change implemented:** on desktop the quick-access container loses card treatment and the actions become a flatter two-column action list separated by hairlines. Mobile remains a single-column touch-friendly list.
+**Resolution:** `Heute lernen` remains visually dominant; quick access is explicitly secondary. Mobile remains a single-column touch-friendly list.
 
-**Verify:** `Heute lernen` remains visually dominant and quick access reads clearly as secondary navigation rather than another dashboard card grid.
-
-### VC-06 — high — Desktop rail must expose Settings
-**Evidence:** the latest desktop screenshot shows Start, Lernen, Prüfung, Fortschritt and Kataloge but no visible `Einstellungen`, although `DESIGN.md` requires the complete desktop rail.
+### VC-06 — closed — Desktop rail exposes Settings
+**Evidence:** the latest editor render visibly shows `Einstellungen` anchored at the bottom of the desktop rail.
 
 **Authority:** `DESIGN.md` section 6.
 
-**Change implemented:** desktop explicitly renders `[data-view="settings"]` and anchors it to the bottom of the rail. Mobile still hides the sixth persistent target and uses the secondary settings shortcut.
-
-**Verify:** desktop browser acceptance requires the Settings rail target to be visible while the 320 px mobile test still requires exactly five primary bottom-nav targets.
+**Resolution:** desktop explicitly renders `[data-view="settings"]` at the bottom of the rail. Mobile still hides the sixth persistent target and uses the secondary settings shortcut.
 
 ## Visual Completion Gate
 
-Before merge, re-render and verify:
+Passed on the supplied desktop re-renders for:
 
-- desktop start screen: rail-only permanent branding, aligned catalog header, visible Settings, flatter quick access;
-- mobile start screen with compact header mark and five primary bottom targets;
-- desktop editor with one preview and approximately 65/35 work/preview hierarchy;
-- mobile editor or narrow editor state;
-- learning/session surface;
-- full CI including explicit brand-image gate, desktop Settings gate, 320 px overflow/accessibility, Chromium, WebKit and Mobile-WebKit.
+- rail-only permanent desktop branding,
+- aligned catalog/header/work grid,
+- visible bottom-anchored desktop Settings,
+- flatter secondary quick access,
+- single editor preview,
+- approximately 65/35 editor hierarchy,
+- final compact editor-toolbar geometry implemented after the render.
 
-PR remains Draft until the re-render closes VC-02, VC-03, VC-04, VC-05 and VC-06 and CI is green.
+Still required before merge:
+
+- full CI on the final toolbar-polish commit, including explicit brand-image gate, desktop Settings gate, 320 px overflow/accessibility, Chromium, WebKit and Mobile-WebKit;
+- mobile/narrow behavior remains covered by the automated acceptance suite and existing DESIGN.md constraints.
+
+PR may move from Draft to Ready for Review once final CI is green.
