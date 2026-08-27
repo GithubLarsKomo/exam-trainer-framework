@@ -33,6 +33,27 @@ async function expectTouchTargets(targets:Locator):Promise<void>{
   expect(undersized).toEqual([]);
 }
 
+test('renders visible ETF branding in desktop app chrome',async({page})=>{
+  await seedCatalog(page,[card('free_text',{id:'brand-a',prompt:'Branding'})]);
+  await page.setViewportSize({width:1440,height:900});
+
+  const headerBrand=page.locator('.app-brand-lockup');
+  const railBrand=page.locator('.rail-brand');
+  await expect(headerBrand).toBeVisible();
+  await expect(railBrand).toBeVisible();
+  await expect(headerBrand).toContainText('Exam Trainer');
+  await expect(headerBrand).toContainText('Framework');
+  await expect(railBrand).toContainText('Exam Trainer');
+
+  for(const image of [headerBrand.locator('img'),railBrand.locator('img')]){
+    await expect(image).toBeVisible();
+    const loaded=await image.evaluate((element:HTMLImageElement)=>({complete:element.complete,naturalWidth:element.naturalWidth,naturalHeight:element.naturalHeight}));
+    expect(loaded.complete).toBe(true);
+    expect(loaded.naturalWidth).toBeGreaterThan(0);
+    expect(loaded.naturalHeight).toBeGreaterThan(0);
+  }
+});
+
 test('keeps core product views inside a 320px viewport with five usable primary mobile targets',async({page})=>{
   await seedCatalog(page,[
     card('free_text',{id:'layout-a',prompt:'Layout A'}),
