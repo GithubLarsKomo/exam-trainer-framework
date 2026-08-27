@@ -2,66 +2,71 @@
 
 Status: implementation in progress  
 Authority: `PRODUCT.md`, `DESIGN.md`  
-Evidence: desktop start-screen and editor screenshots from local port 3001, current `main` implementation, prior green CI.
+Evidence: repeated desktop start-screen and editor screenshots from local port 3001, current feature-branch implementation, browser acceptance and CI.
 
 ## Findings
 
-### VC-01 — blocking — Brand presence is missing in rendered app chrome
-**Evidence:** desktop screenshots show only the textual product eyebrow and catalog title. The dedicated brand slot in the left rail is present geometrically, but its raster logo is effectively invisible. The previously embedded `exam-trainer-framework-logo.png` is an oversized generated raster canvas and is unsuitable as a compact UI lockup.
+### VC-01 — closed — Brand presence in rendered app chrome
+**Evidence:** the latest desktop render visibly shows the ETF vector mark and typographic wordmark in the left rail. The vector master mark is loaded from `/assets/etf-mark.svg` and the broken oversized raster lockup is no longer used for app chrome.
 
 **Authority:** `DESIGN.md` sections 6 and 14.
 
-**Impact:** the product still feels like a generic dark application instead of a coherent ETF-branded tool. Asset existence is not sufficient; branding must be visible in the actual rendered UI.
+**Resolution:** desktop keeps the permanent ETF identity in the rail. Mobile keeps the compact mark in the header. The desktop header no longer duplicates the full brand lockup and instead prioritises the active catalog context.
 
-**Change:** stop depending on the unsuitable horizontal raster for application chrome. Build a robust lockup from the approved square ETF app mark plus typographic wordmark `Exam Trainer Framework`. Render it as real DOM in the desktop header and left rail. On mobile use the compact square mark. Keep favicon/PWA/app icon on the same master mark.
+**Verification:** browser acceptance checks that the desktop rail mark and mobile header mark are visible, use the SVG master, have loaded natural dimensions and occupy a usable rendered size.
 
-**Verify:** header and rail lockups are visibly rendered; both image elements report loaded natural dimensions > 0; mobile remains compact. Browser acceptance explicitly gates these conditions.
+### VC-02 — high — Desktop geometry and context hierarchy
+**Evidence:** earlier desktop renders showed duplicated brand emphasis and a content island narrower than the available app workspace.
 
-### VC-02 — high — Desktop geometry leaves excessive dead space
-**Evidence:** on a wide desktop viewport the command centre is visually detached from the left rail and occupies a narrow centred island with large unused space.
+**Authority:** `DESIGN.md` sections 4, 6 and 7.
 
-**Authority:** `DESIGN.md` sections 4, 6 and 7: compact application surface, left rail, moderately compact command centre.
+**Change implemented:** desktop header is reduced to active catalog title plus operational status; header and main share the same left edge; the controlled content maximum is increased to 1160 px (1120 px in the narrower desktop breakpoint); command-centre surfaces use the full controlled work width.
 
-**Impact:** weak app character, inefficient scan path, lower information density than intended.
-
-**Change:** align header/main to a consistent left-anchored content grid after the rail; keep a controlled maximum work width instead of independent centring.
-
-**Verify:** rail, header and command-centre surfaces share a clear left alignment and use wide desktop space without becoming stretched.
+**Verify:** next desktop re-render shows `Fügetechnik` aligned to the hero/KPI/action surfaces with no duplicate desktop lockup and without excessive empty space.
 
 ### VC-03 — high — Editor contains duplicate preview content
-**Evidence:** the editor screenshot shows a new `Produktionsvorschau` followed by the legacy question/answer preview with the same content.
+**Evidence:** the first editor render showed a new `Produktionsvorschau` followed by the legacy question/answer preview with the same content.
 
 **Authority:** `DESIGN.md` section 10 plus product principle `Power without clutter`.
 
-**Impact:** competing hierarchy, unnecessary vertical length, ambiguity about which preview is authoritative.
-
-**Change:** keep exactly one production preview and remove the legacy sibling rendering once the enhanced preview is active.
+**Change implemented:** keep exactly one production preview and remove legacy siblings once the enhanced preview is active.
 
 **Verify:** one question preview, one model-answer preview, no repeated question/solution below it.
 
-### VC-04 — medium — Editor work/preview ratio is too balanced for a power surface
-**Evidence:** editor form and preview consume similar perceived weight despite the editor being the primary task.
-
+### VC-04 — medium — Editor work/preview ratio
 **Authority:** `DESIGN.md` section 10: form/editor left, sticky live preview right; dense authoring surface.
 
-**Change:** desktop ratio approximately 65/35 with a minimum usable preview width; stack on mobile.
+**Change implemented:** desktop ratio approximately 65/35 with a minimum usable preview width; stack on mobile.
 
-### VC-05 — medium — Quick access still risks template-card feel
-**Evidence:** start screen follows hero → metrics → generic quick-action block; while improved, the lower actions can still read as a reusable dashboard template.
+**Verify:** editor remains the dominant work surface while preview remains readable and sticky.
+
+### VC-05 — medium — Quick access template-card feel
+**Evidence:** the four secondary actions previously appeared as four equal mini-cards inside another bordered panel.
 
 **Authority:** `DESIGN.md` sections 7 and 17.
 
-**Change:** retain only a small set of functional actions and use a compact two-column desktop layout / single-column mobile layout.
+**Change implemented:** on desktop the quick-access container loses card treatment and the actions become a flatter two-column action list separated by hairlines. Mobile remains a single-column touch-friendly list.
+
+**Verify:** `Heute lernen` remains visually dominant and quick access reads clearly as secondary navigation rather than another dashboard card grid.
+
+### VC-06 — high — Desktop rail must expose Settings
+**Evidence:** the latest desktop screenshot shows Start, Lernen, Prüfung, Fortschritt and Kataloge but no visible `Einstellungen`, although `DESIGN.md` requires the complete desktop rail.
+
+**Authority:** `DESIGN.md` section 6.
+
+**Change implemented:** desktop explicitly renders `[data-view="settings"]` and anchors it to the bottom of the rail. Mobile still hides the sixth persistent target and uses the secondary settings shortcut.
+
+**Verify:** desktop browser acceptance requires the Settings rail target to be visible while the 320 px mobile test still requires exactly five primary bottom-nav targets.
 
 ## Visual Completion Gate
 
 Before merge, re-render and verify:
 
-- desktop start screen with visible header and rail branding,
-- mobile start screen with compact mark,
-- desktop editor with one preview,
-- mobile editor or narrow editor state,
-- learning/session surface,
-- CI including explicit brand-image load gate, 320px overflow/accessibility/browser matrix.
+- desktop start screen: rail-only permanent branding, aligned catalog header, visible Settings, flatter quick access;
+- mobile start screen with compact header mark and five primary bottom targets;
+- desktop editor with one preview and approximately 65/35 work/preview hierarchy;
+- mobile editor or narrow editor state;
+- learning/session surface;
+- full CI including explicit brand-image gate, desktop Settings gate, 320 px overflow/accessibility, Chromium, WebKit and Mobile-WebKit.
 
-No merge while VC-01..VC-03 remain open.
+PR remains Draft until the re-render closes VC-02, VC-03, VC-04, VC-05 and VC-06 and CI is green.
