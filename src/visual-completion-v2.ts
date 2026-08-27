@@ -5,7 +5,7 @@ function brandMarkup(className: string): HTMLElement {
   const brand = document.createElement('div');
   brand.className = className;
   brand.innerHTML = `
-    <img src="/icons/icon-512.png" alt="" decoding="async">
+    <img src="/assets/etf-mark.svg" alt="" decoding="async">
     <span class="brand-wordmark"><strong>Exam Trainer</strong><small>Framework</small></span>
   `;
   return brand;
