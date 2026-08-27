@@ -63,7 +63,7 @@ test('uses rail branding and complete navigation on desktop',async({page})=>{
   await expect(railBrand).toContainText('Framework');
   await expectLoadedMark(railBrand.locator('img'));
   await expect(page.locator('.bottom-nav [data-view="settings"]')).toBeVisible();
-  await expect(page.locator('.app-header h1')).toHaveText('Fügetechnik');
+  await expect(page.locator('.app-header h1')).toHaveText('E2E Katalog');
 });
 
 test('keeps core product views inside a 320px viewport with five usable primary mobile targets',async({page})=>{
