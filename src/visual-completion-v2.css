@@ -72,4 +72,9 @@
   .app-brand-lockup .brand-wordmark{display:none}
   .quick-grid{grid-template-columns:1fr!important}
   .editor-grid{grid-template-columns:1fr!important}
+
+  /* Five mobile targets must fit the viewport including safe-area padding. */
+  .bottom-nav{width:100%!important;max-width:100vw!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;padding-left:max(.25rem,env(safe-area-inset-left))!important;padding-right:max(.25rem,env(safe-area-inset-right))!important}
+  .bottom-nav button{min-width:0!important;width:100%!important}
+  .bottom-nav button small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
