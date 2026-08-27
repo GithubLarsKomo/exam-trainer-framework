@@ -29,6 +29,9 @@
   .bottom-nav button[data-view="settings"]{display:grid!important;margin-top:auto!important}
   .hero,.metrics,main>.panel{width:100%!important;max-width:var(--content-max)!important}
   .editor{max-width:none!important;margin:0!important}
+  .editor-head{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;align-items:center!important;justify-content:initial!important;gap:1rem!important;margin-bottom:1rem!important}
+  .editor-head>:nth-child(2){justify-self:start!important;text-align:left!important;min-width:0}
+  .editor-head>:last-child{justify-self:end!important}
   .editor-grid{grid-template-columns:minmax(0,1.9fr) minmax(320px,1fr)!important;gap:1.15rem!important;align-items:start}
   .preview{top:1rem!important}
   .legal-footer{margin-left:var(--rail-width)!important;max-width:var(--content-max)!important}
