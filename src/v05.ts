@@ -57,3 +57,6 @@ installExamDependencyEditorFeature();
 
 await import('./app-design.css');
 await import('./design-authority.css');
+await import('./visual-completion-v2.css');
+const { installVisualCompletionV2 } = await import('./visual-completion-v2');
+installVisualCompletionV2();
