@@ -12,8 +12,13 @@
 .app-header>div:first-child>h1{grid-area:title;margin:0;align-self:center}
 
 @media(min-width:720px){
+  :root{--content-max:1160px}
   .app-shell{padding-left:calc(var(--rail-width) + 2rem)!important;padding-right:2rem!important}
-  .app-header,main{max-width:1120px!important;margin-left:0!important;margin-right:auto!important;width:100%}
+  .app-header,main{max-width:var(--content-max)!important;margin-left:0!important;margin-right:auto!important;width:100%}
+  .app-header{min-height:60px;align-items:center!important}
+  .app-header>div:first-child{display:block!important}
+  .app-header .app-brand-lockup{display:none!important}
+  .app-header>div:first-child>h1{margin:0!important;font-size:1.42rem!important;line-height:1.15}
   .bottom-nav{width:var(--rail-width)!important;padding:1rem .75rem!important}
   .bottom-nav::before{display:none!important}
   .rail-brand{display:flex;align-items:center;gap:.6rem;min-height:78px;padding:.2rem .45rem 1rem;margin-bottom:.35rem;border-bottom:1px solid var(--line)}
@@ -21,14 +26,22 @@
   .rail-brand .brand-wordmark strong{font-size:.67rem;letter-spacing:.04em}
   .rail-brand .brand-wordmark small{font-size:.62rem;letter-spacing:.04em}
   .bottom-nav button{grid-template-columns:24px 1fr!important;min-height:48px!important}
-  .hero,.metrics,main>.panel{width:min(100%,1040px)}
+  .bottom-nav button[data-view="settings"]{display:grid!important;margin-top:auto!important}
+  .hero,.metrics,main>.panel{width:100%!important;max-width:var(--content-max)!important}
   .editor{max-width:none!important;margin:0!important}
   .editor-grid{grid-template-columns:minmax(0,1.9fr) minmax(320px,1fr)!important;gap:1.15rem!important;align-items:start}
   .preview{top:1rem!important}
-  .legal-footer{margin-left:var(--rail-width)!important;max-width:1120px!important}
+  .legal-footer{margin-left:var(--rail-width)!important;max-width:var(--content-max)!important}
+
+  /* Secondary actions read as a compact action list, not a card dashboard. */
+  main>.panel:has(.quick-grid){background:transparent!important;border-color:transparent!important;padding:.7rem 0 0!important;box-shadow:none!important}
+  main>.panel:has(.quick-grid) .section-head{padding:0 .1rem .25rem}
+  .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0 1rem!important;border-top:1px solid var(--line)}
+  .quick-grid button{min-height:46px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:transparent!important;padding:.72rem .2rem!important}
+  .quick-grid button:hover{background:rgba(113,141,255,.055)!important}
 }
 
-/* Command centre: reduce template-like empty space and keep the primary action dominant. */
+/* Command centre: keep the primary action dominant without marketing-hero scale. */
 .hero{padding:1.2rem 1.35rem!important}
 .hero h2{max-width:none!important}
 .metrics{margin-top:.65rem!important}
@@ -44,11 +57,8 @@
 .preview [data-production-preview] .answer-box{margin:.75rem 0 0}
 
 @media(max-width:900px) and (min-width:720px){
-  :root{--rail-width:168px}
+  :root{--rail-width:168px;--content-max:1120px}
   .app-shell{padding-left:calc(var(--rail-width) + 1.35rem)!important;padding-right:1.35rem!important}
-  .app-brand-lockup img{width:38px;height:38px}
-  .app-brand-lockup .brand-wordmark strong{font-size:.72rem}
-  .app-brand-lockup .brand-wordmark small{font-size:.66rem}
   .rail-brand .brand-wordmark{display:none}
 }
 
