@@ -47,10 +47,20 @@ test('renders visible ETF branding in desktop app chrome',async({page})=>{
 
   for(const image of [headerBrand.locator('img'),railBrand.locator('img')]){
     await expect(image).toBeVisible();
-    const loaded=await image.evaluate((element:HTMLImageElement)=>({complete:element.complete,naturalWidth:element.naturalWidth,naturalHeight:element.naturalHeight}));
+    const loaded=await image.evaluate((element:HTMLImageElement)=>({
+      src:element.getAttribute('src'),
+      complete:element.complete,
+      naturalWidth:element.naturalWidth,
+      naturalHeight:element.naturalHeight,
+      width:element.getBoundingClientRect().width,
+      height:element.getBoundingClientRect().height,
+    }));
+    expect(loaded.src).toBe('/assets/etf-mark.svg');
     expect(loaded.complete).toBe(true);
     expect(loaded.naturalWidth).toBeGreaterThan(0);
     expect(loaded.naturalHeight).toBeGreaterThan(0);
+    expect(loaded.width).toBeGreaterThanOrEqual(36);
+    expect(loaded.height).toBeGreaterThanOrEqual(36);
   }
 });
 
