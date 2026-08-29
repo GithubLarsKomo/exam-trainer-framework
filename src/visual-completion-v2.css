@@ -66,6 +66,7 @@
 }
 
 @media(max-width:719px){
+  .rail-brand{display:none!important}
   .app-header>div:first-child{grid-template-columns:38px 1fr!important;grid-template-areas:"brand title"!important;column-gap:.65rem!important;padding-left:0!important}
   .app-brand-lockup{width:38px;height:38px;overflow:hidden;gap:0}
   .app-brand-lockup img{width:36px!important;height:36px!important;max-width:none!important;border-radius:9px}
