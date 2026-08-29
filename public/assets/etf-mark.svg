@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Exam Trainer Framework</title>
+  <desc id="desc">Abstrakte Gehirnstruktur mit integriertem Prüfungs-Check</desc>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#111722" stroke="#718dff" stroke-width="3"/>
+  <path d="M30 17.5c-5.7-3-12.7 1-12.7 7.2 0 1.6.5 3.1 1.4 4.4-2.1 1.8-3.4 4.4-3.4 7.2 0 5.3 4.3 9.6 9.6 9.6H30V17.5Z" fill="none" stroke="#9aabff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25.3 22.5c-2.7.5-4.5 2.5-4.5 5.1M24.8 33.1c-2.7 0-4.9 1.9-5.5 4.4M29.8 27.2c-2.9 0-5.1 2.1-5.1 4.8" fill="none" stroke="#718dff" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M36 21h11M36 29h8" fill="none" stroke="#596987" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="m35.5 40.2 5.2 5.2L50 35.1" fill="none" stroke="#718dff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="36" cy="21" r="1.6" fill="#9aabff"/>
+  <circle cx="36" cy="29" r="1.6" fill="#9aabff"/>
+</svg>

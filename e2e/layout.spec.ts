@@ -33,12 +33,50 @@ async function expectTouchTargets(targets:Locator):Promise<void>{
   expect(undersized).toEqual([]);
 }
 
+async function expectLoadedMark(image:Locator):Promise<void>{
+  await expect(image).toBeVisible();
+  const loaded=await image.evaluate((element:HTMLImageElement)=>({
+    src:element.getAttribute('src'),
+    complete:element.complete,
+    naturalWidth:element.naturalWidth,
+    naturalHeight:element.naturalHeight,
+    width:element.getBoundingClientRect().width,
+    height:element.getBoundingClientRect().height,
+  }));
+  expect(loaded.src).toBe('/assets/etf-mark.svg');
+  expect(loaded.complete).toBe(true);
+  expect(loaded.naturalWidth).toBeGreaterThan(0);
+  expect(loaded.naturalHeight).toBeGreaterThan(0);
+  expect(loaded.width).toBeGreaterThanOrEqual(36);
+  expect(loaded.height).toBeGreaterThanOrEqual(36);
+}
+
+test('uses rail branding and complete navigation on desktop',async({page})=>{
+  await seedCatalog(page,[card('free_text',{id:'brand-a',prompt:'Branding'})]);
+  await page.setViewportSize({width:1440,height:900});
+
+  const headerBrand=page.locator('.app-brand-lockup');
+  const railBrand=page.locator('.rail-brand');
+  await expect(headerBrand).toBeHidden();
+  await expect(railBrand).toBeVisible();
+  await expect(railBrand).toContainText('Exam Trainer');
+  await expect(railBrand).toContainText('Framework');
+  await expectLoadedMark(railBrand.locator('img'));
+  await expect(page.locator('.bottom-nav [data-view="settings"]')).toBeVisible();
+  await expect(page.locator('.app-header h1')).toHaveText('E2E Katalog');
+});
+
 test('keeps core product views inside a 320px viewport with five usable primary mobile targets',async({page})=>{
   await seedCatalog(page,[
     card('free_text',{id:'layout-a',prompt:'Layout A'}),
     card('single_choice',{id:'layout-b',prompt:'Layout B',answer:{modelAnswer:'A',choices:[{id:'a',text:'A',correct:true},{id:'b',text:'B'}]}}),
   ]);
   await page.setViewportSize({width:320,height:800});
+
+  const headerBrand=page.locator('.app-brand-lockup');
+  await expect(headerBrand).toBeVisible();
+  await expectLoadedMark(headerBrand.locator('img'));
+  await expect(page.locator('.rail-brand')).toBeHidden();
 
   const primary=page.locator('nav.bottom-nav button:visible');
   await expect(primary).toHaveCount(5);
