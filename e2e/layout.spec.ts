@@ -76,6 +76,7 @@ test('keeps core product views inside a 320px viewport with five usable primary 
   const headerBrand=page.locator('.app-brand-lockup');
   await expect(headerBrand).toBeVisible();
   await expectLoadedMark(headerBrand.locator('img'));
+  await expect(page.locator('.rail-brand')).toBeHidden();
 
   const primary=page.locator('nav.bottom-nav button:visible');
   await expect(primary).toHaveCount(5);
