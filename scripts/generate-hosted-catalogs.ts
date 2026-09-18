@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { catalogExport } from '../src/catalog-repository';
+import { gunzipSync } from 'node:zlib';
+import { catalogExport, parseCatalogExport } from '../src/catalog-repository';
 import { activateFuegetechnikRuntimeCatalog } from '../src/fuegetechnik-catalog';
 import type { Catalog } from '../src/model';
 
@@ -38,8 +39,19 @@ const repoRoot = resolve(moduleDir, '..');
 const defaultPlanPath = join(repoRoot, 'catalogs', 'hosted-release-plan.json');
 const defaultOutputRoot = join(repoRoot, 'public', 'catalogs');
 
-const sourceFactories: Record<string, () => Catalog> = {
+type CatalogFactory = () => Catalog | Promise<Catalog>;
+
+async function loadCompressedCatalog(fileName: string): Promise<Catalog> {
+  const sourcePath = join(repoRoot, 'catalogs', 'sources', fileName);
+  const compressed = await readFile(sourcePath);
+  const text = gunzipSync(compressed).toString('utf8');
+  return parseCatalogExport(text);
+}
+
+const sourceFactories: Record<string, CatalogFactory> = {
   'fuegetechnik-runtime': activateFuegetechnikRuntimeCatalog,
+  'enterprise-leadership-n1-v0.3.0': () =>
+    loadCompressedCatalog('enterprise-leadership-n1-v0.3.0.json.gz'),
 };
 
 function nonEmpty(value: unknown, label: string): string {
@@ -114,7 +126,7 @@ export async function generateHostedCatalogs({
   for (const release of releases) {
     const factory = sourceFactories[release.source];
     if (!factory) throw new Error(`Unknown hosted catalog source: ${release.source}`);
-    const catalog = structuredClone(factory());
+    const catalog = structuredClone(await factory());
     assertReleaseableCatalog(catalog, release);
 
     const exported = catalogExport(catalog);
