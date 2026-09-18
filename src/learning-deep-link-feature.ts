@@ -1,4 +1,10 @@
-import { loadState, saveState, type PersistedState } from './db';
+import { createSnapshot, loadState, saveState, type PersistedState } from './db';
+import {
+  downloadHostedCatalog,
+  fetchHostedCatalogRegistry,
+  installDownloadedCatalog,
+  type HostedCatalogRegistryEntryV1,
+} from './hosted-catalog-registry';
 import {
   learningDeepLinkSignature,
   parseLearningDeepLink,
@@ -10,8 +16,12 @@ import {
   createRecoverableSession,
   type RecoverableSessionState,
 } from './recoverable-session';
+import type { Catalog } from './model';
 
 const LAUNCH_MARKER_KEY = 'etf:learning-deep-link:v1';
+const DEFAULT_REGISTRY_URL = '/catalogs/registry.json';
+let hostedInstallBusy = false;
+
 const fallbackState = (): PersistedState => ({
   schemaVersion: 3,
   progress: {},
@@ -122,6 +132,71 @@ function resumeMarkedLink(link: LearningDeepLink): void {
   if (sessionStorage.getItem(LAUNCH_MARKER_KEY) !== signature) observer.disconnect();
 }
 
+async function hostedReleaseFor(catalogId: string): Promise<{
+  entry: HostedCatalogRegistryEntryV1;
+  registryUrl: string;
+} | undefined> {
+  const registryUrl = new URL(DEFAULT_REGISTRY_URL, location.href).toString();
+  try {
+    const registry = await fetchHostedCatalogRegistry(registryUrl);
+    const entry = registry.catalogs.find(candidate => candidate.id === catalogId);
+    return entry ? { entry, registryUrl } : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function installHostedReleaseAndLaunch(
+  link: LearningDeepLink,
+  entry: HostedCatalogRegistryEntryV1,
+  registryUrl: string,
+): Promise<void> {
+  if (hostedInstallBusy) return;
+  hostedInstallBusy = true;
+  try {
+    const downloaded = await downloadHostedCatalog(entry, registryUrl);
+    const state = await loadState(fallbackState());
+    const catalogs = state.catalogs ?? [];
+    const existing = catalogs.find(catalog => catalog.catalogId === entry.id);
+
+    await createSnapshot(state, `deep-link-hosted-import-${entry.id}-${entry.version}`);
+    state.catalogs = installDownloadedCatalog(catalogs, downloaded, {
+      replaceExisting: Boolean(existing),
+    });
+    state.activeCatalogId = entry.id;
+    await saveState(state);
+
+    await launch(link);
+  } catch (error) {
+    alert(error instanceof Error ? error.message : 'Der freigegebene Katalog konnte nicht installiert werden.');
+  } finally {
+    hostedInstallBusy = false;
+  }
+}
+
+async function offerHostedRelease(link: LearningDeepLink, localCatalog?: Catalog): Promise<boolean> {
+  const hosted = await hostedReleaseFor(link.catalogId);
+  if (!hosted) return false;
+  if (localCatalog?.version === hosted.entry.version) return false;
+
+  const update = Boolean(localCatalog);
+  notice(
+    update ? 'Freigegebene Katalogversion verfügbar' : 'Freigegebener Katalog verfügbar',
+    update
+      ? `Für „${hosted.entry.title}“ ist die freigegebene Version ${hosted.entry.version} verfügbar. ETF lädt sie erst nach deiner Bestätigung, prüft SHA-256, ID, Version und Release-Status und ersetzt danach nur die lokale Katalogkopie; dein Lernfortschritt bleibt erhalten.`
+      : `„${hosted.entry.title}“ ist als freigegebener Hosted Catalog verfügbar. ETF lädt ihn erst nach deiner Bestätigung, prüft SHA-256, ID, Version und Release-Status und speichert ihn anschließend lokal in diesem Browser.`,
+    {
+      label: update
+        ? `Auf ${hosted.entry.version} aktualisieren & starten`
+        : 'Katalog installieren & starten',
+      run: () => {
+        void installHostedReleaseAndLaunch(link, hosted.entry, hosted.registryUrl);
+      },
+    },
+  );
+  return true;
+}
+
 async function launch(link: LearningDeepLink): Promise<void> {
   const signature = learningDeepLinkSignature(link);
   if (sessionStorage.getItem(LAUNCH_MARKER_KEY) === signature) {
@@ -133,9 +208,10 @@ async function launch(link: LearningDeepLink): Promise<void> {
   const catalogs = state.catalogs ?? [];
   const catalog = catalogs.find(candidate => candidate.catalogId === link.catalogId);
   if (!catalog) {
+    if (await offerHostedRelease(link)) return;
     notice(
       'Katalog noch nicht lokal verfügbar',
-      `Der Lernlink erwartet den Katalog „${link.catalogId}“. Importiere ihn zuerst über die kontrollierte Katalogverwaltung; der Lernlink installiert keine Inhalte stillschweigend.`,
+      `Der Lernlink erwartet den Katalog „${link.catalogId}“. Für diesen Katalog ist keine freigegebene Version in der ETF-Registry verfügbar; öffne die Katalogverwaltung für einen manuellen Import.`,
       { label: 'Kataloge öffnen', run: openCatalogs },
     );
     return;
@@ -145,6 +221,7 @@ async function launch(link: LearningDeepLink): Promise<void> {
   try {
     variant = resolveLearningDeepLinkVariant(catalog, link, state.reviewEvents ?? []);
   } catch (error) {
+    if (await offerHostedRelease(link, catalog)) return;
     notice(
       'Lernfokus nicht startbar',
       error instanceof Error ? error.message : 'Der Lernfokus konnte nicht aufgelöst werden.',
