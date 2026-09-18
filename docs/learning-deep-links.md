@@ -30,11 +30,13 @@ Supported modes:
 | `review` | adaptive | existing unseen/least-recently-seen ETF variant selection |
 | `repeat` | adaptive | alias for `review` |
 
-Example for *Unternehmen mitführen*:
+Example for *Unternehmen mitführen* using the existing v0.2 catalog identity:
 
 ```text
-?catalog=enterprise-leadership&focus=decision-architecture-rights&mode=practice
+?catalog=enterprise-leadership-n1&focus=decision-architecture-rights&mode=practice
 ```
+
+The current *Unternehmen mitführen* v0.2 trainer artifact is still a draft catalog. Its stable id is `enterprise-leadership-n1`; the deep-link contract must not be used as a shortcut around catalog release approval.
 
 ## Runtime rules
 
@@ -53,9 +55,9 @@ An EPUB can keep stable semantic focus ids while changing only the external ETF 
 For a three-step learning path, use three links to the same `focus`:
 
 ```text
-?catalog=enterprise-leadership&focus=<knowledgeItemId>&mode=retrieval
-?catalog=enterprise-leadership&focus=<knowledgeItemId>&mode=practice
-?catalog=enterprise-leadership&focus=<knowledgeItemId>&mode=transfer
+?catalog=enterprise-leadership-n1&focus=<knowledgeItemId>&mode=retrieval
+?catalog=enterprise-leadership-n1&focus=<knowledgeItemId>&mode=practice
+?catalog=enterprise-leadership-n1&focus=<knowledgeItemId>&mode=transfer
 ```
 
 For later repetition, use `mode=review` so ETF's existing variant rotation chooses the next retrieval surface.
