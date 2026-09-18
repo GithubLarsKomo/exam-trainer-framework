@@ -34,6 +34,8 @@ const { installUxPolishFeature } = await import('./ux-polish-feature');
 installUxPolishFeature();
 const { installRecoverableSessionFeature } = await import('./recoverable-session-feature');
 installRecoverableSessionFeature();
+const { installLearningDeepLinkFeature } = await import('./learning-deep-link-feature');
+installLearningDeepLinkFeature();
 const { installRecoverableOrderingBridge } = await import('./recoverable-ordering-bridge');
 installRecoverableOrderingBridge();
 const { installExamDependencyRuntimeFeature } = await import('./exam-dependency-runtime-feature');
