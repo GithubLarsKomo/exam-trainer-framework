@@ -55,7 +55,7 @@ function item(overrides: Partial<KnowledgeItem> = {}): KnowledgeItem {
 
 function catalog(overrides: Partial<Catalog> = {}): Catalog {
   return {
-    catalogId: 'enterprise-leadership',
+    catalogId: 'enterprise-leadership-n1',
     title: 'Unternehmen mitführen',
     version: '0.2.0',
     createdAt: at,
@@ -80,9 +80,9 @@ function review(questionVariantId: string, answeredAt: string): ReviewEvent {
 describe('learning deep links', () => {
   it('parses catalog, focus and explicit mode', () => {
     expect(parseLearningDeepLink(
-      '?catalog=enterprise-leadership&focus=decision-architecture-rights&mode=transfer',
+      '?catalog=enterprise-leadership-n1&focus=decision-architecture-rights&mode=transfer',
     )).toEqual({
-      catalogId: 'enterprise-leadership',
+      catalogId: 'enterprise-leadership-n1',
       focusId: 'decision-architecture-rights',
       mode: 'transfer',
     });
@@ -90,7 +90,7 @@ describe('learning deep links', () => {
 
   it('defaults a focused link to practice/application and preserves the legacy practice alias', () => {
     const link = parseLearningDeepLink(
-      '?catalog=enterprise-leadership&focus=decision-architecture-rights',
+      '?catalog=enterprise-leadership-n1&focus=decision-architecture-rights',
     );
     expect(link?.mode).toBe('practice');
     expect(deepLinkCompetencyClass('practice')).toBe('application');
@@ -100,7 +100,7 @@ describe('learning deep links', () => {
   it('requires catalog and focus together and rejects unknown modes', () => {
     expect(() => parseLearningDeepLink('?focus=decision-architecture-rights')).toThrow(/catalog/);
     expect(() => parseLearningDeepLink(
-      '?catalog=enterprise-leadership&focus=decision-architecture-rights&mode=magic',
+      '?catalog=enterprise-leadership-n1&focus=decision-architecture-rights&mode=magic',
     )).toThrow(/Unbekannter ETF-Lernmodus/);
   });
 
@@ -155,9 +155,9 @@ describe('learning deep links', () => {
 
   it('uses a stable launch signature without weakening semantic ids', () => {
     expect(learningDeepLinkSignature({
-      catalogId: 'enterprise-leadership',
+      catalogId: 'enterprise-leadership-n1',
       focusId: 'decision-architecture-rights',
       mode: 'practice',
-    })).toBe('enterprise-leadership\u0000decision-architecture-rights\u0000practice');
+    })).toBe('enterprise-leadership-n1\u0000decision-architecture-rights\u0000practice');
   });
 });
