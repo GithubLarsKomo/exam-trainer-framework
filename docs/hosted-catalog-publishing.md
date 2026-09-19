@@ -32,8 +32,6 @@ public/catalogs/
   registry.json
   fuegetechnik/
     0.5.10.json
-  enterprise-leadership-n1/
-    0.3.0.json
 ```
 
 The versioned catalog file is the canonical ETF catalog export (`format=etf-catalog`, `version=1`). The registry stores the SHA-256 hash of the exact UTF-8 bytes written to that file. Vite copies these generated files into `dist/catalogs/`; the production container serves the same paths.
@@ -64,3 +62,12 @@ Published catalog artifacts contain learning content only. ETF does not publish 
 ## Registry v1 limitation
 
 Catalogs containing `assetRefs` are rejected. Binary asset publication requires a future authenticated asset-manifest protocol with per-asset integrity metadata; publication must not silently bypass this restriction.
+
+
+## Enterprise-private catalogs
+
+Confidential enterprise catalogs are not publication candidates for the public Hosted Catalog Registry.
+
+`enterprise-leadership-n1` is distributed only by the enterprise/white-label build through its verified private-catalog path. The source remains versioned in the repository, but the generic build and public registry must not emit its content.
+
+Use `npm run build:enterprise` for the controlled enterprise artifact. See [deployment.md](deployment.md).
