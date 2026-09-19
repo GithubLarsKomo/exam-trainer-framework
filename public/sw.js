@@ -1,5 +1,5 @@
 const CACHE = 'etf-v0.5.2-legal';
-const CORE = ['./index.html', './manifest.webmanifest', './legal.css', './impressum.html', './datenschutz.html'];
+const CORE = ['./index.html', './manifest.webmanifest', './deployment-profile.json', './legal.css', './impressum.html', './datenschutz.html'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
