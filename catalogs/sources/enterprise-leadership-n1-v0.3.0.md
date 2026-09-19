@@ -1,6 +1,6 @@
 # Enterprise Leadership N-1 — Hosted Release Source
 
-Status: **approved hosted release source**  
+Status: **approved released enterprise source**  
 Release: `enterprise-leadership-n1@0.3.0`  
 Date: 2026-09-18
 
@@ -46,3 +46,17 @@ Stable KnowledgeItem IDs, QuestionVariant IDs, prompts, model answers, competenc
 The shared hosted release was explicitly requested on 2026-09-18 after the deep-link runtime and release boundaries were reviewed. Publication remains subject to ETF build validation and CI.
 
 This is a pedagogical content release. It is not an HR qualification, QMS training authorization, regulatory certification or employment assessment.
+
+
+## Distribution policy
+
+As of 2026-09-19 this released source is **enterprise-private**. It must not be emitted by the generic/public Hosted Catalog Registry.
+
+Authorized runtime path:
+
+- enterprise/white-label deployment profile;
+- protected HTTPS origin;
+- private same-origin catalog delivery;
+- SHA-256 / ID / version / release-state verification before local installation.
+
+The historical public-hosted release path is superseded by this enterprise distribution policy.
