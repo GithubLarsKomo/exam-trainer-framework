@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "generic",
+  "kind": "generic",
+  "branding": {
+    "productName": "Exam Trainer Framework",
+    "shortName": "ETF",
+    "wordmarkPrimary": "Exam Trainer",
+    "wordmarkSecondary": "Framework",
+    "theme": "default",
+    "logoUrl": "/assets/etf-mark.svg"
+  },
+  "access": {
+    "mode": "none",
+    "tenantRestricted": false,
+    "productionReady": true
+  },
+  "catalogPolicy": {
+    "publicRegistry": true,
+    "autoInstallPrivateCatalogOnDeepLink": false,
+    "autoUpdatePrivateCatalogOnDeepLink": false
+  },
+  "privateCatalogs": []
+}

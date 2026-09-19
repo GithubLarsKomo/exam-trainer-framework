@@ -1,13 +1,38 @@
+import { getDeploymentProfile } from './deployment-profile';
+
 let observer: MutationObserver | undefined;
 let scheduled = false;
 
 function brandMarkup(className: string): HTMLElement {
+  const profile = getDeploymentProfile();
   const brand = document.createElement('div');
   brand.className = className;
-  brand.innerHTML = `
-    <img src="/assets/etf-mark.svg" alt="" decoding="async">
-    <span class="brand-wordmark"><strong>Exam Trainer</strong><small>Framework</small></span>
-  `;
+
+  if (profile.branding.logoUrl) {
+    const image = document.createElement('img');
+    image.src = profile.branding.logoUrl;
+    image.alt = '';
+    image.decoding = 'async';
+    brand.append(image);
+  } else {
+    const mark = document.createElement('span');
+    mark.className = 'brand-mark-text';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = profile.branding.shortName.slice(0, 2).toUpperCase();
+    brand.append(mark);
+  }
+
+  const wordmark = document.createElement('span');
+  wordmark.className = 'brand-wordmark';
+  const primary = document.createElement('strong');
+  primary.textContent = profile.branding.wordmarkPrimary;
+  wordmark.append(primary);
+  if (profile.branding.wordmarkSecondary) {
+    const secondary = document.createElement('small');
+    secondary.textContent = profile.branding.wordmarkSecondary;
+    wordmark.append(secondary);
+  }
+  brand.append(wordmark);
   return brand;
 }
 
@@ -24,7 +49,7 @@ function ensureRailBrand(): void {
   const nav = document.querySelector<HTMLElement>('.bottom-nav');
   if (!nav || nav.querySelector('.rail-brand')) return;
   const brand = brandMarkup('rail-brand');
-  brand.setAttribute('aria-label', 'Exam Trainer Framework');
+  brand.setAttribute('aria-label', getDeploymentProfile().branding.productName);
   nav.prepend(brand);
 }
 

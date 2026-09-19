@@ -17,10 +17,16 @@ import {
   type RecoverableSessionState,
 } from './recoverable-session';
 import type { Catalog } from './model';
+import {
+  getDeploymentProfile,
+  getDeploymentProfileUrl,
+  privateCatalogFor,
+} from './deployment-profile';
 
 const LAUNCH_MARKER_KEY = 'etf:learning-deep-link:v1';
 const DEFAULT_REGISTRY_URL = '/catalogs/registry.json';
 let hostedInstallBusy = false;
+let privateInstallBusy = false;
 
 const fallbackState = (): PersistedState => ({
   schemaVersion: 3,
@@ -132,10 +138,66 @@ function resumeMarkedLink(link: LearningDeepLink): void {
   if (sessionStorage.getItem(LAUNCH_MARKER_KEY) !== signature) observer.disconnect();
 }
 
+async function privateReleaseFor(catalogId: string): Promise<{
+  entry: HostedCatalogRegistryEntryV1;
+  profileUrl: string;
+} | undefined> {
+  const entry = privateCatalogFor(catalogId);
+  const profileUrl = getDeploymentProfileUrl();
+  if (!entry || !profileUrl) return undefined;
+  return { entry, profileUrl };
+}
+
+async function installPrivateReleaseAndLaunch(
+  link: LearningDeepLink,
+  entry: HostedCatalogRegistryEntryV1,
+  profileUrl: string,
+): Promise<void> {
+  if (privateInstallBusy) return;
+  privateInstallBusy = true;
+  try {
+    const downloaded = await downloadHostedCatalog(entry, profileUrl);
+    const state = await loadState(fallbackState());
+    const catalogs = state.catalogs ?? [];
+    const existing = catalogs.find(catalog => catalog.catalogId === entry.id);
+
+    await createSnapshot(state, `deep-link-private-import-${entry.id}-${entry.version}`);
+    state.catalogs = installDownloadedCatalog(catalogs, downloaded, {
+      replaceExisting: Boolean(existing),
+    });
+    state.activeCatalogId = entry.id;
+    await saveState(state);
+    await launch(link);
+  } catch (error) {
+    notice(
+      'Privater Katalog konnte nicht geladen werden',
+      error instanceof Error ? error.message : 'Der private Enterprise-Katalog konnte nicht installiert werden.',
+    );
+  } finally {
+    privateInstallBusy = false;
+  }
+}
+
+async function usePrivateRelease(link: LearningDeepLink, localCatalog?: Catalog): Promise<boolean> {
+  const privateRelease = await privateReleaseFor(link.catalogId);
+  if (!privateRelease) return false;
+  if (localCatalog?.version === privateRelease.entry.version) return false;
+
+  const policy = getDeploymentProfile().catalogPolicy;
+  const allowed = localCatalog
+    ? policy.autoUpdatePrivateCatalogOnDeepLink
+    : policy.autoInstallPrivateCatalogOnDeepLink;
+  if (!allowed) return false;
+
+  await installPrivateReleaseAndLaunch(link, privateRelease.entry, privateRelease.profileUrl);
+  return true;
+}
+
 async function hostedReleaseFor(catalogId: string): Promise<{
   entry: HostedCatalogRegistryEntryV1;
   registryUrl: string;
 } | undefined> {
+  if (!getDeploymentProfile().catalogPolicy.publicRegistry) return undefined;
   const registryUrl = new URL(DEFAULT_REGISTRY_URL, location.href).toString();
   try {
     const registry = await fetchHostedCatalogRegistry(registryUrl);
@@ -208,6 +270,7 @@ async function launch(link: LearningDeepLink): Promise<void> {
   const catalogs = state.catalogs ?? [];
   const catalog = catalogs.find(candidate => candidate.catalogId === link.catalogId);
   if (!catalog) {
+    if (await usePrivateRelease(link)) return;
     if (await offerHostedRelease(link)) return;
     notice(
       'Katalog noch nicht lokal verfügbar',
@@ -221,6 +284,7 @@ async function launch(link: LearningDeepLink): Promise<void> {
   try {
     variant = resolveLearningDeepLinkVariant(catalog, link, state.reviewEvents ?? []);
   } catch (error) {
+    if (await usePrivateRelease(link, catalog)) return;
     if (await offerHostedRelease(link, catalog)) return;
     notice(
       'Lernfokus nicht startbar',

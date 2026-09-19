@@ -37,7 +37,6 @@ jobs:
           const registry = JSON.parse(fs.readFileSync('dist/catalogs/registry.json', 'utf8'));
           if (registry.schemaVersion !== 1 || !Array.isArray(registry.catalogs)) throw new Error('Unexpected hosted registry.');
           const expected = new Map([
-            ['enterprise-leadership-n1', '0.3.0'],
             ['fuegetechnik', '0.5.10'],
           ]);
           if (registry.catalogs.length !== expected.size) throw new Error(`Expected ${expected.size} hosted catalogs, got ${registry.catalogs.length}.`);
@@ -64,6 +63,82 @@ jobs:
             if (!registry.catalogs.some(entry => entry.id === id && entry.version === version)) {
               throw new Error(`Missing expected hosted release ${id}@${version}.`);
             }
+          }
+          NODE
+      - name: Verify generic build has no enterprise-private content
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e dist/private-catalogs
+          if grep -R -q --binary-files=without-match 'enterprise-leadership-n1' dist; then
+            echo "Confidential enterprise catalog identity leaked into generic dist."
+            exit 1
+          fi
+          if grep -R -q --binary-files=without-match 'Unternehmen mitführen – Leadership Trainer' dist; then
+            echo "Confidential enterprise catalog title leaked into generic dist."
+            exit 1
+          fi
+          node - <<'NODE'
+          const profile = JSON.parse(require('node:fs').readFileSync('dist/deployment-profile.json', 'utf8'));
+          if (profile.id !== 'generic' || profile.kind !== 'generic' || profile.privateCatalogs?.length) {
+            throw new Error('Generic deployment profile is not clean.');
+          }
+          NODE
+      - name: Verify enterprise white-label build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build:enterprise
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const profile = JSON.parse(fs.readFileSync('dist/deployment-profile.json', 'utf8'));
+          if (profile.id !== 'enterprise-euroimmun' || profile.kind !== 'enterprise') throw new Error('Wrong enterprise profile identity.');
+          if (profile.branding?.productName !== 'Euroimmun Learning') throw new Error('Enterprise branding missing.');
+          if (profile.catalogPolicy?.publicRegistry !== false) throw new Error('Enterprise profile must disable public registry.');
+          if (profile.access?.mode !== 'pending-entra' || profile.access?.productionReady !== false) {
+            throw new Error('Enterprise build must remain fail-closed for production until Entra is configured.');
+          }
+          const entry = profile.privateCatalogs?.find(x => x.id === 'enterprise-leadership-n1' && x.version === '0.3.0');
+          if (!entry) throw new Error('Private enterprise catalog missing.');
+          const file = path.join('dist', entry.catalogUrl.replace(/^\.\//, ''));
+          const bytes = fs.readFileSync(file);
+          const actual = `sha256:${crypto.createHash('sha256').update(bytes).digest('hex')}`;
+          if (actual !== entry.contentHash) throw new Error('Private enterprise catalog hash mismatch.');
+          const bundle = JSON.parse(bytes.toString('utf8'));
+          if (bundle.catalog?.catalogId !== entry.id || bundle.catalog?.version !== entry.version) throw new Error('Private catalog identity mismatch.');
+          const registry = JSON.parse(fs.readFileSync('dist/catalogs/registry.json', 'utf8'));
+          if (registry.catalogs.some(x => x.id === 'enterprise-leadership-n1')) throw new Error('Enterprise catalog must not appear in public registry.');
+          const manifest = JSON.parse(fs.readFileSync('dist/manifest.webmanifest', 'utf8'));
+          if (manifest.name !== 'Euroimmun Learning') throw new Error('Enterprise PWA manifest branding missing.');
+          NODE
+      - name: Verify tenant-restricted Entra release build
+        shell: bash
+        env:
+          ETF_ENTRA_TENANT_ID: 00000000-0000-0000-0000-000000000123
+        run: |
+          set -euo pipefail
+          npm run build:enterprise:release
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const profile = JSON.parse(fs.readFileSync('dist/deployment-profile.json', 'utf8'));
+          if (profile.access?.mode !== 'entra' || profile.access?.tenantRestricted !== true || profile.access?.productionReady !== true) {
+            throw new Error('Enterprise release profile is not Entra-ready.');
+          }
+          const config = JSON.parse(fs.readFileSync('dist/staticwebapp.config.json', 'utf8'));
+          const registration = config.auth?.identityProviders?.azureActiveDirectory?.registration;
+          if (registration?.openIdIssuer !== 'https://login.microsoftonline.com/00000000-0000-0000-0000-000000000123/v2.0') {
+            throw new Error('Tenant-specific Entra issuer missing.');
+          }
+          if (registration?.clientIdSettingName !== 'AZURE_CLIENT_ID' || registration?.clientSecretSettingName !== 'AZURE_CLIENT_SECRET') {
+            throw new Error('Entra application-setting names missing.');
+          }
+          if (!config.routes?.some(route => route.route === '/*' && route.allowedRoles?.includes('authenticated'))) {
+            throw new Error('Authenticated route protection missing.');
+          }
+          if (config.responseOverrides?.['401']?.redirect !== '/.auth/login/aad?post_login_redirect_uri=.referrer') {
+            throw new Error('Deep-link-preserving login redirect missing.');
           }
           NODE
 
@@ -95,11 +170,12 @@ jobs:
           curl --fail --silent --head http://127.0.0.1:3000/healthz | grep -qi 'cache-control: no-store'
           curl --fail --silent http://127.0.0.1:3000/catalogs/registry.json --output /tmp/registry.json
           curl --fail --silent http://127.0.0.1:3000/catalogs/fuegetechnik/0.5.10.json --output /tmp/fuegetechnik-0.5.10.json
-          curl --fail --silent http://127.0.0.1:3000/catalogs/enterprise-leadership-n1/0.3.0.json --output /tmp/enterprise-leadership-n1-0.3.0.json
           grep -q '"fuegetechnik"' /tmp/registry.json
-          grep -q '"enterprise-leadership-n1"' /tmp/registry.json
+          if grep -q '"enterprise-leadership-n1"' /tmp/registry.json; then
+            echo "Confidential enterprise catalog leaked into public registry."
+            exit 1
+          fi
           grep -q '"format": "etf-catalog"' /tmp/fuegetechnik-0.5.10.json
-          grep -q '"format": "etf-catalog"' /tmp/enterprise-leadership-n1-0.3.0.json
       - name: Show container logs on failure
         if: failure()
         run: docker logs etf-ci || true
@@ -144,6 +220,12 @@ jobs:
       - name: Run production PWA smoke
         if: matrix.project == 'chromium'
         run: npm run test:prod-smoke
+      - name: Build enterprise implementation profile
+        if: matrix.project == 'chromium'
+        run: npm run build:enterprise
+      - name: Run enterprise profile browser acceptance
+        if: matrix.project == 'chromium'
+        run: npm run test:e2e:enterprise
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -153,5 +235,6 @@ jobs:
             playwright-report/
             test-results/
             test-results-prod/
+            test-results-enterprise/
           if-no-files-found: ignore
           retention-days: 14

@@ -36,7 +36,7 @@ Example for *Unternehmen mitführen*:
 ?catalog=enterprise-leadership-n1&focus=decision-architecture-rights&mode=practice
 ```
 
-The shared hosted release is `enterprise-leadership-n1@0.3.0`. The earlier v0.2 artifact remains a historical draft source and is not silently promoted in-place.
+`enterprise-leadership-n1@0.3.0` is a released catalog, but it is no longer distributed through the generic public registry. The enterprise/white-label deployment profile delivers it through a verified private catalog path. The earlier v0.2 artifact remains a historical draft source and is not silently promoted in-place.
 
 ## Runtime rules
 
@@ -66,3 +66,18 @@ For a three-step learning path, use three links to the same `focus`:
 For later repetition, use `mode=review` so ETF's existing variant rotation chooses the next retrieval surface.
 
 The route contract is deployment-host agnostic. Do not bake an absolute hostname into an EPUB until the authoritative production ETF base URL is confirmed.
+
+
+## Enterprise profile behavior
+
+When the active deployment profile declares a matching private released catalog, ETF resolves that private entry before consulting any public registry.
+
+For the `enterprise-euroimmun` profile:
+
+- public registry discovery is disabled;
+- `enterprise-leadership-n1@0.3.0` is declared as a private same-origin catalog;
+- the catalog bytes are SHA-256 verified and checked for matching ID/version/release state before local installation;
+- the private catalog may be installed/updated automatically on a matching deep link according to the explicit profile policy;
+- learner progress remains in IndexedDB.
+
+The enterprise build is not production-ready until its Entra/hosting access gate is configured.
