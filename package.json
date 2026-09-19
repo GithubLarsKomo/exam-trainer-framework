@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "hosted:generate": "tsx scripts/generate-hosted-catalogs.ts",
-    "build": "npm run hosted:generate && tsc && vite build",
+    "build": "npm run profile:prepare && npm run hosted:generate && tsc && vite build",
     "preview": "vite preview",
     "start": "node server.mjs",
     "test": "vitest run",
@@ -14,7 +14,10 @@
     "test:e2e": "playwright test",
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:prod-smoke": "playwright test --config=playwright.prod.config.ts --project=chromium",
-    "check": "npm run test && npm run test:server && npm run build"
+    "check": "npm run test && npm run test:server && npm run build",
+    "profile:prepare": "tsx scripts/prepare-deployment-profile.ts",
+    "build:generic": "node scripts/build-profile.mjs generic",
+    "build:enterprise": "node scripts/build-profile.mjs enterprise-euroimmun"
   },
   "dependencies": {
     "fflate": "^0.8.3",
