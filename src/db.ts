@@ -80,6 +80,19 @@ export async function loadState(fallback:PersistedState):Promise<PersistedState>
 
 export async function saveState(state:PersistedState):Promise<void>{await persistStateAndCatalogs(state);}
 
+export async function clearAllLocalData():Promise<void>{
+  const db=await openExamTrainerDb();
+  try{
+    const tx=db.transaction([STATE_STORE,CATALOG_STORE,ASSET_STORE],'readwrite');
+    const done=transactionDone(tx);
+    tx.objectStore(STATE_STORE).clear();
+    tx.objectStore(CATALOG_STORE).clear();
+    tx.objectStore(ASSET_STORE).clear();
+    await done;
+    if(typeof localStorage!=='undefined')localStorage.removeItem(LEGACY_KEY);
+  }finally{db.close();}
+}
+
 export async function createSnapshot(state:PersistedState,reason:string):Promise<string>{const id=`snapshot:${new Date().toISOString()}:${reason}`;await write(id,structuredClone(state));return id;}
 
 export async function replaceState(next:PersistedState,current:PersistedState,reason:string):Promise<PersistedState>{await createSnapshot(current,reason);const migrated=migrate(next);await persistStateAndCatalogs(migrated);return migrated;}
