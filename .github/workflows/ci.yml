@@ -220,6 +220,12 @@ jobs:
       - name: Run production PWA smoke
         if: matrix.project == 'chromium'
         run: npm run test:prod-smoke
+      - name: Build enterprise implementation profile
+        if: matrix.project == 'chromium'
+        run: npm run build:enterprise
+      - name: Run enterprise profile browser acceptance
+        if: matrix.project == 'chromium'
+        run: npm run test:e2e:enterprise
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -229,5 +235,6 @@ jobs:
             playwright-report/
             test-results/
             test-results-prod/
+            test-results-enterprise/
           if-no-files-found: ignore
           retention-days: 14
