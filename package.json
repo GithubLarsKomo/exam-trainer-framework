@@ -17,7 +17,8 @@
     "check": "npm run test && npm run test:server && npm run build",
     "profile:prepare": "tsx scripts/prepare-deployment-profile.ts",
     "build:generic": "node scripts/build-profile.mjs generic",
-    "build:enterprise": "node scripts/build-profile.mjs enterprise-euroimmun"
+    "build:enterprise": "node scripts/build-profile.mjs enterprise-euroimmun",
+    "build:enterprise:release": "node scripts/build-profile.mjs enterprise-euroimmun --release"
   },
   "dependencies": {
     "fflate": "^0.8.3",
