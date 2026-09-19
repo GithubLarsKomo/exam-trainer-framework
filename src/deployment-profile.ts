@@ -46,7 +46,7 @@ const genericProfile: DeploymentProfile = {
     wordmarkPrimary: 'Exam Trainer',
     wordmarkSecondary: 'Framework',
     theme: 'default',
-    logoUrl: './assets/etf-mark.svg',
+    logoUrl: '/assets/etf-mark.svg',
   },
   access: {
     mode: 'none',
