@@ -25,9 +25,26 @@ self.addEventListener('fetch', event => {
   const isSensitiveEnterpriseRequest =
     url.pathname.startsWith('/.auth/')
     || url.pathname.includes('/private-catalogs/');
+  const isDeploymentProfileRequest = url.pathname.endsWith('/deployment-profile.json');
 
   if (isSensitiveEnterpriseRequest) {
     event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
+
+  if (isDeploymentProfileRequest) {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(request, { cache: 'no-store' });
+        if (fresh.ok) {
+          const cache = await caches.open(CACHE);
+          await cache.put(request, fresh.clone());
+        }
+        return fresh;
+      } catch {
+        return (await caches.match(request)) || Response.error();
+      }
+    })());
     return;
   }
 
