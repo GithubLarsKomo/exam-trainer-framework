@@ -1,0 +1,48 @@
+html[data-deployment-profile="enterprise-euroimmun"]{
+  --brand:#54b47a;
+  --brand-strong:#79d19a;
+  --brand-soft:#143322;
+  --focus:#8bd7a7;
+  --success:#6fd39a;
+  --success-soft:#10271a;
+  --surface-blue:#13251a;
+  --navy:#0d1711;
+}
+html[data-deployment-profile="enterprise-euroimmun"] .hero{
+  background:#0d1711;
+  border-color:#254332;
+  box-shadow:inset 3px 0 0 var(--brand);
+}
+html[data-deployment-profile="enterprise-euroimmun"] .answer-box{
+  background:#12251a;
+  border-color:#244933;
+  border-left-color:var(--brand);
+}
+html[data-deployment-profile="enterprise-euroimmun"] .bottom-nav button.active{
+  color:#bce6cb;
+  background:var(--brand-soft);
+}
+html[data-deployment-profile="enterprise-euroimmun"] .brand-mark-text{
+  display:grid;
+  place-items:center;
+  width:42px;
+  height:42px;
+  border:1px solid #3f7654;
+  border-radius:9px;
+  color:#d9f2e2;
+  background:#102419;
+  font-size:.72rem;
+  font-weight:820;
+  letter-spacing:.06em;
+}
+html[data-deployment-profile="enterprise-euroimmun"] .status-pill{
+  background:#10271a;
+  color:#86d9a6;
+  border-color:#28553a;
+}
+@media(max-width:719px){
+  html[data-deployment-profile="enterprise-euroimmun"] .app-brand-lockup .brand-mark-text{
+    width:36px;
+    height:36px;
+  }
+}
