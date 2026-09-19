@@ -3,8 +3,17 @@ import { loadState, saveState, type PersistedState } from './db';
 import { activateFuegetechnikRuntimeCatalog, FUEGETECHNIK_RUNTIME_VERSION } from './fuegetechnik-catalog';
 import type { Catalog } from './model';
 import { initializeDeploymentProfile } from './deployment-profile';
+import { enforceEnterpriseAccess, installEnterpriseAccessUi, renderEnterpriseAccessBlock } from './enterprise-access';
 
-await initializeDeploymentProfile();
+const deploymentProfile = await initializeDeploymentProfile();
+const enterpriseAccessState = await enforceEnterpriseAccess(deploymentProfile);
+if (enterpriseAccessState.status === 'blocked') {
+  renderEnterpriseAccessBlock(enterpriseAccessState);
+  await new Promise<never>(() => {});
+}
+if (enterpriseAccessState.status === 'redirecting') {
+  await new Promise<never>(() => {});
+}
 
 const builtinCatalog = activateFuegetechnikRuntimeCatalog();
 
@@ -66,3 +75,4 @@ await import('./visual-completion-v2.css');
 await import('./deployment-profile.css');
 const { installVisualCompletionV2 } = await import('./visual-completion-v2');
 installVisualCompletionV2();
+installEnterpriseAccessUi(deploymentProfile, enterpriseAccessState);
