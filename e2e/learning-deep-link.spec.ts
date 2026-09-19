@@ -132,7 +132,7 @@ test('opens a focused application session from an ETF learning deep link', async
   }).toEqual({ catalog: null, focus: null, mode: null });
 });
 
-test('offers one-click verified install for a published catalog and starts the requested focus', async ({ page }) => {
+test('does not expose the confidential enterprise catalog through the generic public registry', async ({ page }) => {
   await seedCatalog(page, []);
 
   await page.goto(
@@ -142,26 +142,14 @@ test('offers one-click verified install for a published catalog and starts the r
 
   const notice = page.locator('[data-learning-deep-link-notice]');
   await expect(notice).toBeVisible({ timeout: 10_000 });
-  await expect(notice).toContainText('Freigegebener Katalog verfügbar');
+  await expect(notice).toContainText('Katalog noch nicht lokal verfügbar');
+  await expect(page.locator('[data-recoverable-session]')).toHaveCount(0);
+  await expect.poll(() => localCatalogVersion(page, 'enterprise-leadership-n1')).toBeUndefined();
 
-  const install = notice.getByRole('button', { name: 'Katalog installieren & starten' });
-  await expect(install).toBeVisible();
-  await install.click();
-
-  await expect(page.locator('[data-recoverable-session]')).toBeVisible({ timeout: 10_000 });
-  await expect(page.locator('.question-card h2')).toHaveText(
-    'Eine Entscheidung wird formal im Team getroffen, tatsächlich warten alle auf informelles Okay von zwei Senior Leaders. Was änderst du?',
-  );
-  await expect.poll(() => localCatalogVersion(page, 'enterprise-leadership-n1')).toBe('0.3.0');
-
-  await expect.poll(() => {
-    const url = new URL(page.url());
-    return {
-      catalog: url.searchParams.get('catalog'),
-      focus: url.searchParams.get('focus'),
-      mode: url.searchParams.get('mode'),
-    };
-  }).toEqual({ catalog: null, focus: null, mode: null });
+  const registry = await page.request.get('/catalogs/registry.json');
+  expect(registry.ok()).toBe(true);
+  const payload = await registry.json() as { catalogs?: Array<{ id?: string }> };
+  expect(payload.catalogs?.some(entry => entry.id === 'enterprise-leadership-n1')).toBe(false);
 });
 
 test('does not silently import an unpublished missing catalog', async ({ page }) => {
