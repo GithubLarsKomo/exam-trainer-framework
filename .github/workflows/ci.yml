@@ -113,6 +113,34 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync('dist/manifest.webmanifest', 'utf8'));
           if (manifest.name !== 'Euroimmun Learning') throw new Error('Enterprise PWA manifest branding missing.');
           NODE
+      - name: Verify tenant-restricted Entra release build
+        shell: bash
+        env:
+          ETF_ENTRA_TENANT_ID: 00000000-0000-0000-0000-000000000123
+        run: |
+          set -euo pipefail
+          npm run build:enterprise:release
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const profile = JSON.parse(fs.readFileSync('dist/deployment-profile.json', 'utf8'));
+          if (profile.access?.mode !== 'entra' || profile.access?.tenantRestricted !== true || profile.access?.productionReady !== true) {
+            throw new Error('Enterprise release profile is not Entra-ready.');
+          }
+          const config = JSON.parse(fs.readFileSync('dist/staticwebapp.config.json', 'utf8'));
+          const registration = config.auth?.identityProviders?.azureActiveDirectory?.registration;
+          if (registration?.openIdIssuer !== 'https://login.microsoftonline.com/00000000-0000-0000-0000-000000000123/v2.0') {
+            throw new Error('Tenant-specific Entra issuer missing.');
+          }
+          if (registration?.clientIdSettingName !== 'AZURE_CLIENT_ID' || registration?.clientSecretSettingName !== 'AZURE_CLIENT_SECRET') {
+            throw new Error('Entra application-setting names missing.');
+          }
+          if (!config.routes?.some(route => route.route === '/*' && route.allowedRoles?.includes('authenticated'))) {
+            throw new Error('Authenticated route protection missing.');
+          }
+          if (config.responseOverrides?.['401']?.redirect !== '/.auth/login/aad?post_login_redirect_uri=.referrer') {
+            throw new Error('Deep-link-preserving login redirect missing.');
+          }
+          NODE
 
   production-container:
     needs: verify
