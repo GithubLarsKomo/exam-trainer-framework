@@ -1,4 +1,4 @@
-const CACHE = 'etf-v0.5.2-legal';
+const CACHE = 'etf-v0.5.3-enterprise-profile';
 const CORE = ['./index.html', './manifest.webmanifest', './deployment-profile.json', './legal.css', './impressum.html', './datenschutz.html'];
 
 self.addEventListener('install', event => {
@@ -21,6 +21,16 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const request = event.request;
+  const url = new URL(request.url);
+  const isSensitiveEnterpriseRequest =
+    url.pathname.startsWith('/.auth/')
+    || url.pathname.includes('/private-catalogs/');
+
+  if (isSensitiveEnterpriseRequest) {
+    event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
+
   const isNavigation = request.mode === 'navigate';
 
   if (isNavigation) {
@@ -34,8 +44,14 @@ self.addEventListener('fetch', event => {
       const cacheTarget = legalTarget ?? './index.html';
       try {
         const fresh = await fetch(request, { cache: 'no-store' });
-        const cache = await caches.open(CACHE);
-        await cache.put(cacheTarget, fresh.clone());
+        if (
+          fresh.ok
+          && !fresh.redirected
+          && new URL(fresh.url).origin === self.location.origin
+        ) {
+          const cache = await caches.open(CACHE);
+          await cache.put(cacheTarget, fresh.clone());
+        }
         return fresh;
       } catch {
         return (await caches.match(cacheTarget)) || Response.error();
