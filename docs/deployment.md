@@ -115,3 +115,49 @@ dist
 Learner data remains in the browser's IndexedDB and is not sent to Netlify by ETF itself.
 
 For the 1.0 service-worker gate, exercise an actual two-version deployment. The update notice must appear while the old version remains usable, and reload must occur only after the learner explicitly activates the waiting update.
+
+
+## Enterprise / white-label build
+
+ETF supports a second build profile from the same repository:
+
+```bash
+npm run build:enterprise
+```
+
+The current reference profile is `enterprise-euroimmun`.
+
+The enterprise build:
+
+- writes `dist/deployment-profile.json` with the active branding/access/catalog policy;
+- writes an enterprise-branded PWA manifest;
+- packages `enterprise-leadership-n1@0.3.0` below `dist/private-catalogs/`;
+- keeps the private catalog out of `dist/catalogs/registry.json`;
+- allows deep links to resolve the private catalog through the profile descriptor after SHA-256, ID, version and release-status verification;
+- is currently marked `pending-entra` / `productionReady=false`.
+
+The enterprise artifact is therefore **not a public deployment artifact yet**. It may be used for controlled implementation/acceptance work, but it must not be exposed on an unauthenticated origin.
+
+The intended production boundary is:
+
+```text
+OneDrive / SharePoint
+  -> confidential EPUB / release package
+  -> protected enterprise ETF HTTPS origin
+  -> Microsoft Entra access gate
+  -> private same-origin catalog
+  -> local IndexedDB learner state
+```
+
+OneDrive / SharePoint is a controlled distribution and artifact store, not the PWA runtime origin.
+
+### Public-build confidentiality gate
+
+The default `npm run build` remains the generic profile. CI verifies that the resulting `dist/`:
+
+- contains no `private-catalogs/` tree;
+- contains no `enterprise-leadership-n1` identity or confidential trainer title;
+- exposes only the explicitly public hosted catalog registry;
+- reports deployment profile `generic`.
+
+This negative-content check is a release gate.
