@@ -42,7 +42,7 @@ if (profileId === 'generic') {
       wordmarkPrimary: 'Exam Trainer',
       wordmarkSecondary: 'Framework',
       theme: 'default',
-      logoUrl: './assets/etf-mark.svg',
+      logoUrl: '/assets/etf-mark.svg',
     },
     access: {
       mode: 'none',
@@ -71,7 +71,7 @@ if (profileId === 'generic') {
     categories: ['education', 'productivity'],
     icons: [
       { src: './icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: './assets/etf-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/assets/etf-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
     ],
   };
 } else {
@@ -175,7 +175,7 @@ if (profileId === 'generic') {
     categories: ['education', 'productivity'],
     icons: [
       { src: './icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: './assets/etf-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/assets/etf-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
     ],
   };
 }
