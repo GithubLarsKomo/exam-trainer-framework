@@ -1,10 +1,10 @@
 # SPEC.md — Exam Trainer Framework (ETF)
 
-**Status:** Baseline specification  
-**Version:** 0.1.0  
-**Date:** 2026-07-24  
-**Reference implementation:** Fügetechnik  
-**Target deployment:** local static web server or Netlify  
+**Status:** Baseline specification with optional enterprise/white-label profile  
+**Version:** 0.2.0  
+**Date:** 2026-09-19  
+**Reference implementations:** Fügetechnik; enterprise leadership  
+**Target deployment:** local/static PWA, hosted static PWA, or authenticated enterprise/white-label PWA  
 **Primary language:** German  
 **License:** to be decided before public release
 
@@ -421,7 +421,9 @@ At first start and on an information page, the application shall state that incl
 
 **NFR-PRIV-002** No learner data shall leave the device.
 
-**NFR-PRIV-003** The application shall make no external network requests during normal use.
+**NFR-PRIV-003** In the core/local profile, the application shall make no external network requests during normal use.
+
+**NFR-PRIV-004** An enterprise/white-label profile may make only the network requests explicitly required for authentication, application delivery, same-origin/private catalog delivery, and update checks. Learner answers, ReviewEvents, progress, sessions, and exam attempts remain local unless a later specification explicitly introduces synchronization.
 
 ### 8.2 Compatibility
 
@@ -505,7 +507,7 @@ Recommended implementation:
 
 The project may begin with plain HTML, CSS, and JavaScript, but TypeScript is recommended because the catalog schema, migrations, assessment types, and learner-state rules are central to correctness.
 
-No backend is required.
+No application backend is required for the core profile. An enterprise/white-label profile may depend on an external identity provider such as Microsoft Entra ID and on an authenticated/static hosting layer without changing ETF into a server-side LMS.
 
 ---
 
@@ -1384,3 +1386,340 @@ ETF 1.0 is done when:
 8. deployment documentation covers local hosting and Netlify;
 9. automated and manual acceptance tests pass;
 10. the release is tagged and documented in the changelog.
+
+
+---
+
+## 29. Enterprise / white-label deployment profile
+
+### 29.1 Purpose and scope
+
+ETF shall support an optional **enterprise / white-label deployment profile** for confidential or organization-internal learning products.
+
+This profile extends the generic ETF product without creating a separate application fork. The generic/local profile remains the default product and keeps its local-first, no-login behavior.
+
+The first specified corporate use case is an internal leadership-learning deployment for *Unternehmen mitführen*. The architecture is intentionally reusable for future internal leadership, regulatory, compliance, product, quality, or technical learning catalogs.
+
+The enterprise profile separates four concerns:
+
+1. the reusable ETF application core;
+2. organization-specific branding and access policy;
+3. confidential organization-specific learning catalogs;
+4. controlled distribution of books and release artifacts.
+
+The enterprise profile shall not turn ETF into a general-purpose corporate LMS. Learning flow remains the primary product surface.
+
+### 29.2 Architecture decision
+
+The enterprise solution shall use **one codebase with multiple deployment profiles**.
+
+    exam-trainer-framework
+            |
+            +-- core / generic build
+            |     generic branding
+            |     local or public catalogs where permitted
+            |     no login required
+            |
+            +-- enterprise / white-label build
+                  organization branding
+                  private catalogs
+                  optional or required Entra ID access
+                  no public exposure of confidential content
+
+A separate long-lived source-code fork for each organization is prohibited unless a future architecture decision explicitly supersedes this requirement.
+
+### 29.3 OneDrive / SharePoint boundary
+
+OneDrive or SharePoint may be used as a **controlled organization-internal distribution and artifact store** for:
+
+- EPUB files;
+- release packages;
+- release notes;
+- catalog source packages;
+- approved static build artifacts used for deployment handoff or archival;
+- user-facing documentation.
+
+OneDrive / SharePoint shall **not** be treated as the runtime origin of the PWA merely by opening HTML files from the file store. ETF requires a normal HTTP(S) origin for service workers, module loading, manifest behavior, offline caching, deep links, and reliable PWA installation.
+
+The enterprise PWA shall therefore be served from an organization-controlled HTTPS origin. Suitable implementations include:
+
+- an internal static web server;
+- Azure Static Web Apps;
+- another approved static HTTPS hosting environment.
+
+The exact hosting product is deployment-specific and is not hard-coded into the ETF core.
+
+### 29.4 Enterprise reference flow
+
+The intended internal learning flow is:
+
+    OneDrive / SharePoint
+      -> confidential EPUB or learning package
+         -> ETF deep link
+            -> enterprise ETF HTTPS origin
+               -> organization authentication when required
+                  -> private/embedded catalog
+                     -> local IndexedDB learner state
+                        -> offline-capable subsequent learning
+
+For *Unternehmen mitführen*, deep links shall continue to use stable ETF identities rather than embedding question text or model answers in the URL.
+
+Canonical route shape:
+
+    ?catalog=<catalogId>&focus=<knowledgeItemId>&mode=<mode>
+
+Supported focus modes remain:
+
+- retrieval;
+- application / practice;
+- transfer;
+- review / repeat.
+
+URLs must contain identifiers and routing metadata only. Confidential question content, model answers, source excerpts, and assessment specifications shall not be encoded into ordinary query parameters.
+
+### 29.5 Functional requirements — deployment profiles
+
+**FR-ENT-001** ETF shall support named deployment profiles without duplicating the application core.
+
+**FR-ENT-002** A deployment profile shall be selectable at build or deployment configuration time.
+
+**FR-ENT-003** The generic/core profile shall remain usable without login and without enterprise-specific assets.
+
+**FR-ENT-004** Enterprise profile configuration shall be isolated from domain logic so that scheduling, assessment, ReviewEvents, learner state, and deep-link semantics behave consistently across profiles.
+
+**FR-ENT-005** A build shall expose its active deployment-profile identity for diagnostics and release verification.
+
+**FR-ENT-006** Enterprise profile configuration shall be version-controlled without committing secrets.
+
+### 29.6 Functional requirements — branding
+
+**FR-BRAND-001** An enterprise profile shall support organization-specific:
+
+- application name;
+- short name;
+- logo;
+- PWA icons;
+- accent/theme tokens;
+- browser/PWA manifest metadata;
+- optional organization-specific information/legal text.
+
+**FR-BRAND-002** Branding shall be implemented through configuration/assets and must not require a fork of learner or catalog logic.
+
+**FR-BRAND-003** Enterprise branding must not leak into the generic/core production build.
+
+**FR-BRAND-004** The build and automated tests shall make it possible to verify that the expected profile branding is present.
+
+**FR-BRAND-005** Organization-specific fonts or licensed assets shall only be packaged when redistribution and deployment rights permit it.
+
+### 29.7 Functional requirements — confidential catalogs
+
+**FR-ENT-CAT-001** Confidential enterprise catalogs shall not be published to a public hosted-catalog registry.
+
+**FR-ENT-CAT-002** An enterprise profile shall support at least one of these controlled content strategies:
+
+1. catalog bundled into the authenticated enterprise build;
+2. catalog served from the same authenticated organization-controlled origin;
+3. catalog obtained from another explicitly approved private endpoint.
+
+**FR-ENT-CAT-003** The selected enterprise content strategy shall preserve normal ETF catalog identity, versioning, release status, validation, and migration semantics.
+
+**FR-ENT-CAT-004** Enterprise catalogs shall remain versioned independently from the application shell.
+
+**FR-ENT-CAT-005** Released enterprise catalogs shall pass the same structural and lifecycle checks as other ETF catalogs.
+
+**FR-ENT-CAT-006** Public build artifacts shall be tested for accidental inclusion of enterprise-private catalog IDs, titles, source text, model answers, or assets.
+
+**FR-ENT-CAT-007** A failed enterprise catalog update shall leave the previously valid local catalog usable.
+
+**FR-ENT-CAT-008** Enterprise catalog updates may replace an older local version only through an explicit release/update policy; learner progress shall be preserved according to normal ETF migration rules.
+
+**FR-ENT-CAT-009** The initial *Unternehmen mitführen* enterprise catalog identity is "enterprise-leadership-n1". This identity is stable across deployment profiles.
+
+### 29.8 Authentication and authorization
+
+Authentication is optional for ETF in general but may be mandatory for an enterprise deployment profile.
+
+**FR-AUTH-001** An enterprise profile shall support Microsoft Entra ID as an authentication provider when configured.
+
+**FR-AUTH-002** Entra authentication shall be an access gate around the enterprise deployment and shall not replace ETF's local learner-state model.
+
+**FR-AUTH-003** Tenant restriction shall be configurable. When tenant restriction is enabled, users outside the configured tenant shall not gain access to the protected application/content.
+
+**FR-AUTH-004** Authentication configuration shall use public SPA/static-site identifiers where appropriate; client secrets shall never be embedded in the PWA.
+
+**FR-AUTH-005** Authentication tokens shall not be written into ETF catalog files, learner backups, ReviewEvents, or exported learning state.
+
+**FR-AUTH-006** Deep links opened before authentication shall preserve the requested "catalog", "focus", and "mode" across the authentication round trip and continue to the intended learning focus after successful access.
+
+**FR-AUTH-007** Authentication failure or unauthorized-tenant access shall fail closed for protected enterprise content.
+
+**FR-AUTH-008** Authentication must not silently enable cloud synchronization of learner answers or progress.
+
+### 29.9 Learner data and privacy boundary
+
+The enterprise profile keeps ETF **local-first**.
+
+**NFR-ENT-PRIV-001** Learner answers, progress, ReviewEvents, scheduler state, recoverable sessions, exam attempts, and local preferences shall remain in browser storage by default.
+
+**NFR-ENT-PRIV-002** Organization authentication may establish access to the application and catalogs but shall not by itself upload learner state.
+
+**NFR-ENT-PRIV-003** OneDrive / SharePoint shall not receive learner progress automatically.
+
+**NFR-ENT-PRIV-004** Any future synchronization, reporting, analytics, manager visibility, or server-side progress storage requires a separate explicit product/privacy specification.
+
+**NFR-ENT-PRIV-005** Telemetry remains disabled by default in the enterprise profile unless separately approved and specified.
+
+**NFR-ENT-PRIV-006** Network traffic in the enterprise profile shall be limited to declared authentication, application, catalog, asset, and update endpoints.
+
+### 29.10 Offline and PWA behavior
+
+**FR-ENT-PWA-001** After a successful authenticated first load and complete catalog acquisition, the enterprise PWA should remain usable offline to the greatest extent supported by the browser and identity architecture.
+
+**FR-ENT-PWA-002** The service worker may cache only resources authorized for the active enterprise deployment.
+
+**FR-ENT-PWA-003** Logout, account change, or a materially changed authorization context must not silently expose confidential content to a different user profile on a shared device.
+
+**FR-ENT-PWA-004** The implementation shall document browser/platform limitations where an identity provider requires renewed network access.
+
+**FR-ENT-PWA-005** PWA update behavior shall preserve the existing ETF rule: a new shell may download in the background but activation must not corrupt or discard local learner state.
+
+### 29.11 Deep-link requirements for confidential books
+
+**FR-ENT-LINK-001** Confidential EPUBs may contain normal HTTPS deep links to the enterprise ETF deployment.
+
+**FR-ENT-LINK-002** The link shall transmit identifiers and requested learning mode, not the full catalog, question text, model answer, or confidential book excerpt.
+
+**FR-ENT-LINK-003** A deep link shall resolve the requested released KnowledgeItem and QuestionVariant only after the required enterprise access policy has been satisfied.
+
+**FR-ENT-LINK-004** If the required catalog is bundled or otherwise available in the enterprise deployment, the user shall not be forced through public catalog discovery.
+
+**FR-ENT-LINK-005** If the enterprise catalog is missing or outdated, the application shall use the configured private/embedded update path rather than the public registry unless that public registry has been explicitly allowed for the profile.
+
+**FR-ENT-LINK-006** Stable KnowledgeItem IDs shall allow the EPUB and ETF catalog to evolve independently as long as semantic identity is preserved.
+
+### 29.12 Build and release policy
+
+Each enterprise release shall produce a traceable application artifact and content release.
+
+A release manifest should record at least:
+
+- deployment-profile ID;
+- ETF application version/commit;
+- branding package version;
+- catalog IDs and versions;
+- content hashes;
+- build timestamp;
+- release status.
+
+**FR-ENT-REL-001** The build pipeline shall be able to produce generic and enterprise artifacts from the same repository.
+
+**FR-ENT-REL-002** Enterprise release artifacts shall be distinguishable from generic/public artifacts.
+
+**FR-ENT-REL-003** Enterprise builds shall fail or be rejected when required branding, access-policy, or private-catalog configuration is missing.
+
+**FR-ENT-REL-004** Public builds shall fail or be rejected when an enterprise-private catalog or restricted organization asset is detected.
+
+**FR-ENT-REL-005** Enterprise catalog release shall remain an explicit action; a build must not silently promote draft content to "released".
+
+**FR-ENT-REL-006** Release packages may be copied to OneDrive / SharePoint for controlled internal distribution, archival, or deployment handoff.
+
+### 29.13 Example deployment-profile model
+
+The exact implementation format may evolve, but the semantics should be equivalent to:
+
+    id: enterprise-euroimmun
+
+    branding:
+      productName: "<organization learning name>"
+      shortName: "<short name>"
+      theme: "organization"
+      logo: "<approved asset>"
+      icons: "<approved PWA icon set>"
+
+    access:
+      mode: "entra"
+      tenantRestricted: true
+      tenantId: "<deployment configuration, not a secret>"
+
+    catalogPolicy:
+      publicRegistry: false
+      strategy: "embedded-or-private-same-origin"
+      allowedCatalogs:
+        - enterprise-leadership-n1
+
+    dataPolicy:
+      learnerState: "local-indexeddb"
+      telemetry: false
+      synchronization: false
+
+    distribution:
+      contentStore: "onedrive-or-sharepoint"
+      pwaRuntime: "approved-https-origin"
+
+This object is illustrative. A production implementation may use TypeScript, JSON, environment-backed configuration, or another validated representation.
+
+### 29.14 Reference implementation — Unternehmen mitführen
+
+For the first enterprise implementation:
+
+- learning product: *Unternehmen mitführen*;
+- catalog ID: "enterprise-leadership-n1";
+- learning-object model: 12 stable KnowledgeItems;
+- variants: retrieval/knowledge, application, transfer;
+- confidential EPUB distributed through an approved internal OneDrive / SharePoint location;
+- enterprise ETF build uses organization-specific branding;
+- enterprise catalog is not exposed through the generic public registry;
+- ETF deep links open the corresponding learning focus;
+- learner state remains local in IndexedDB;
+- Microsoft Entra ID is the preferred access mechanism when the runtime is hosted in a Microsoft 365/Azure enterprise context.
+
+The exact enterprise hostname, tenant/app registration, branding asset package, and static hosting service are deployment parameters and are intentionally not embedded into the generic source specification.
+
+### 29.15 Enterprise security requirements
+
+**NFR-ENT-SEC-001** Enterprise catalog content shall be treated as confidential application content when classified as such by the organization.
+
+**NFR-ENT-SEC-002** No confidential question or answer data shall be placed into URL query strings or URL fragments merely to avoid private hosting.
+
+**NFR-ENT-SEC-003** No static enterprise build shall contain client secrets.
+
+**NFR-ENT-SEC-004** Content Security Policy shall allow only the minimum origins required by the selected authentication and content-delivery architecture.
+
+**NFR-ENT-SEC-005** Private catalogs and private assets shall never be referenced by an unauthenticated public registry unless explicitly approved for public exposure.
+
+**NFR-ENT-SEC-006** Catalog validation and hash/version checks shall remain active in enterprise deployments.
+
+**NFR-ENT-SEC-007** The release process shall include a negative-content check proving that enterprise-private content is absent from the generic/public build.
+
+### 29.16 Enterprise acceptance criteria
+
+An enterprise/white-label implementation is accepted only when all of the following pass:
+
+1. generic and enterprise builds come from the same repository and shared domain core;
+2. the generic build contains no enterprise-private catalog or organization-specific confidential asset;
+3. the enterprise build displays the configured organization branding;
+4. protected deployment access requires the configured Entra policy when authentication is enabled;
+5. tenant restriction denies unauthorized tenants when enabled;
+6. an EPUB deep link survives authentication and starts the requested "focus" / "mode";
+7. the confidential catalog is obtained only through the configured embedded/private content path;
+8. ordinary enterprise learning does not upload learner progress or answers;
+9. the application remains usable after the first complete load under documented offline constraints;
+10. app/catalog updates preserve learner state;
+11. OneDrive / SharePoint is used as controlled content/release distribution, not as a substitute for the required HTTPS PWA runtime;
+12. iPhone Safari/PWA and desktop Edge or Chrome pass an end-to-end acceptance run;
+13. release provenance records the app commit, deployment profile, catalog version, and content hashes.
+
+### 29.17 Open deployment decisions
+
+The following are deployment-specific and do not block this architecture specification:
+
+- exact organization-facing product name;
+- exact logo/icon/font package;
+- exact organization HTTPS hostname;
+- Azure Static Web Apps versus another approved static HTTPS host;
+- exact Entra tenant ID and app registration;
+- whether the first private catalog is bundled directly into the build or loaded from an authenticated same-origin endpoint;
+- exact OneDrive / SharePoint folder structure and retention policy;
+- whether enterprise build artifacts are archived in OneDrive / SharePoint in addition to the deployment platform.
+
+These decisions shall be resolved in deployment/configuration documentation without changing the core architecture unless they alter the privacy, trust, or learner-state boundary.
