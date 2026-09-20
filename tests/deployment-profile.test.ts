@@ -39,7 +39,7 @@ describe('deployment profiles', () => {
         wordmarkSecondary: 'Learning',
         theme: 'euroimmun',
       },
-      access: { mode: 'pending-entra', tenantRestricted: true, productionReady: false },
+      access: { mode: 'pending-proxy', tenantRestricted: true, productionReady: false },
       catalogPolicy: {
         publicRegistry: false,
         autoInstallPrivateCatalogOnDeepLink: true,
@@ -80,7 +80,7 @@ describe('deployment profiles', () => {
         wordmarkPrimary: 'Enterprise',
         theme: 'enterprise',
       },
-      access: { mode: 'pending-entra', tenantRestricted: true, productionReady: false },
+      access: { mode: 'pending-proxy', tenantRestricted: true, productionReady: false },
       catalogPolicy: {
         publicRegistry: false,
         autoInstallPrivateCatalogOnDeepLink: true,
