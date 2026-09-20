@@ -1,6 +1,6 @@
 import type { HostedCatalogRegistryEntryV1 } from './hosted-catalog-registry';
 
-export const DEPLOYMENT_PROFILE_SCHEMA_VERSION = 1 as const;
+export const DEPLOYMENT_PROFILE_SCHEMA_VERSION = 2 as const;
 
 export type DeploymentProfileKind = 'generic' | 'enterprise';
 export type DeploymentAccessMode = 'none' | 'pending-proxy' | 'proxy';
@@ -16,7 +16,7 @@ export interface DeploymentBranding {
 
 export interface DeploymentAccess {
   mode: DeploymentAccessMode;
-  tenantRestricted: boolean;
+  proxyAuthorizationRequired: boolean;
   productionReady: boolean;
 }
 
@@ -50,7 +50,7 @@ const genericProfile: DeploymentProfile = {
   },
   access: {
     mode: 'none',
-    tenantRestricted: false,
+    proxyAuthorizationRequired: false,
     productionReady: true,
   },
   catalogPolicy: {
@@ -134,7 +134,7 @@ export function parseDeploymentProfile(value: unknown): DeploymentProfile {
     },
     access: {
       mode: accessMode,
-      tenantRestricted: value.access.tenantRestricted === true,
+      proxyAuthorizationRequired: value.access.proxyAuthorizationRequired === true,
       productionReady: value.access.productionReady === true,
     },
     catalogPolicy: {
