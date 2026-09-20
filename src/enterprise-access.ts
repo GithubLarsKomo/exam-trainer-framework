@@ -1,30 +1,24 @@
 import { clearAllLocalData } from './db';
 import type { DeploymentProfile } from './deployment-profile';
 
-interface StaticWebAppPrincipal {
+interface ProxyPrincipal {
   userId?: string;
   userDetails?: string;
-  userRoles?: string[];
 }
 
-interface StaticWebAppMeResponse {
-  clientPrincipal?: StaticWebAppPrincipal | null;
+interface ProxyUserResponse {
+  authenticated?: boolean;
+  principal?: ProxyPrincipal | null;
 }
 
 export type EnterpriseAccessState =
   | { status: 'not-required' }
-  | { status: 'pending-entra' }
+  | { status: 'pending-proxy' }
   | { status: 'authenticated'; userId: string; userDetails?: string }
   | { status: 'offline-bound'; userId: string }
-  | { status: 'redirecting' }
   | { status: 'blocked'; reason: string };
 
 const bindingKey = (profileId: string) => `etf:enterprise-user-binding:v1:${profileId}`;
-
-function loginUrl(): string {
-  const current = location.href;
-  return `/.auth/login/aad?post_login_redirect_uri=${encodeURIComponent(current)}`;
-}
 
 function binding(profileId: string): string | undefined {
   try {
@@ -38,7 +32,7 @@ function writeBinding(profileId: string, userId: string): void {
   try {
     localStorage.setItem(bindingKey(profileId), userId);
   } catch {
-    // If storage is unavailable, the protected host remains the primary access boundary.
+    // The reverse proxy remains the primary online access boundary.
   }
 }
 
@@ -50,13 +44,12 @@ export function clearEnterpriseUserBinding(profileId: string): void {
   }
 }
 
-async function readPrincipal(fetchImpl: typeof fetch): Promise<StaticWebAppPrincipal | undefined> {
-  const response = await fetchImpl('/.auth/me', { cache: 'no-store', credentials: 'same-origin' });
+async function readPrincipal(fetchImpl: typeof fetch): Promise<ProxyPrincipal | undefined> {
+  const response = await fetchImpl('/auth/user', { cache: 'no-store', credentials: 'same-origin' });
   if (!response.ok) return undefined;
-  const payload = await response.json() as StaticWebAppMeResponse;
-  const principal = payload.clientPrincipal ?? undefined;
+  const payload = await response.json() as ProxyUserResponse;
+  const principal = payload.authenticated === true ? payload.principal ?? undefined : undefined;
   if (!principal?.userId) return undefined;
-  if (!principal.userRoles?.includes('authenticated')) return undefined;
   return principal;
 }
 
@@ -65,16 +58,20 @@ export async function enforceEnterpriseAccess(
   fetchImpl: typeof fetch = fetch,
 ): Promise<EnterpriseAccessState> {
   if (profile.kind !== 'enterprise') return { status: 'not-required' };
-  if (profile.access.mode === 'pending-entra') return { status: 'pending-entra' };
-  if (profile.access.mode !== 'entra') return { status: 'blocked', reason: 'Unbekannter Enterprise-Zugriffsmodus.' };
+  if (profile.access.mode === 'pending-proxy') return { status: 'pending-proxy' };
+  if (profile.access.mode !== 'proxy') {
+    return { status: 'blocked', reason: 'Unbekannter Enterprise-Zugriffsmodus.' };
+  }
 
   const previousBinding = binding(profile.id);
 
   try {
     const principal = await readPrincipal(fetchImpl);
     if (!principal?.userId) {
-      location.replace(loginUrl());
-      return { status: 'redirecting' };
+      return {
+        status: 'blocked',
+        reason: 'Der vorgeschaltete Firmen-SSO-Gateway hat keine gültige Benutzeridentität bestätigt.',
+      };
     }
 
     if (previousBinding && previousBinding !== principal.userId) {
@@ -92,7 +89,7 @@ export async function enforceEnterpriseAccess(
     }
     return {
       status: 'blocked',
-      reason: 'Die Firmenanmeldung konnte nicht verifiziert werden. Für den ersten Zugriff ist eine Online-Verbindung erforderlich.',
+      reason: 'Die Firmenanmeldung konnte nicht über den vorgeschalteten SSO-Gateway verifiziert werden. Für den ersten Zugriff ist eine Online-Verbindung erforderlich.',
     };
   }
 }
@@ -105,7 +102,7 @@ function showPendingBanner(): void {
     const panel = document.createElement('section');
     panel.className = 'notice';
     panel.dataset.enterpriseAccessWarning = '';
-    panel.textContent = 'Enterprise-Implementierungsbuild: Entra-Zugriff ist noch nicht produktiv konfiguriert. Nicht öffentlich bereitstellen.';
+    panel.textContent = 'Enterprise-Implementierungsbuild: Der vorgeschaltete Firmen-SSO-/Reverse-Proxy-Zugang ist noch nicht produktiv konfiguriert. Nicht öffentlich bereitstellen.';
     main.insertAdjacentElement('afterbegin', panel);
     return true;
   };
@@ -131,8 +128,7 @@ function installLogoutControl(profile: DeploymentProfile): void {
       if (!confirm('Abmelden und alle lokal gespeicherten ETF-Firmendaten auf diesem Gerät löschen?')) return;
       await clearAllLocalData();
       clearEnterpriseUserBinding(profile.id);
-      const redirect = encodeURIComponent(new URL('/', location.href).toString());
-      location.href = `/.auth/logout?post_logout_redirect_uri=${redirect}`;
+      location.href = '/auth/logout';
     });
     settings.append(button);
     return true;
@@ -151,7 +147,7 @@ export function installEnterpriseAccessUi(
   profile: DeploymentProfile,
   state: EnterpriseAccessState,
 ): void {
-  if (state.status === 'pending-entra') showPendingBanner();
+  if (state.status === 'pending-proxy') showPendingBanner();
   if (profile.kind === 'enterprise' && (state.status === 'authenticated' || state.status === 'offline-bound')) {
     installLogoutControl(profile);
   }
