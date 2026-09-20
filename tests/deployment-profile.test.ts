@@ -4,7 +4,7 @@ import { parseDeploymentProfile } from '../src/deployment-profile';
 describe('deployment profiles', () => {
   it('parses a generic profile', () => {
     const profile = parseDeploymentProfile({
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'generic',
       kind: 'generic',
       branding: {
@@ -15,7 +15,7 @@ describe('deployment profiles', () => {
         theme: 'default',
         logoUrl: './assets/etf-mark.svg',
       },
-      access: { mode: 'none', tenantRestricted: false, productionReady: true },
+      access: { mode: 'none', proxyAuthorizationRequired: false, productionReady: true },
       catalogPolicy: {
         publicRegistry: true,
         autoInstallPrivateCatalogOnDeepLink: false,
@@ -29,7 +29,7 @@ describe('deployment profiles', () => {
 
   it('accepts a released private enterprise catalog and rejects malformed hashes', () => {
     const base = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'enterprise-euroimmun',
       kind: 'enterprise',
       branding: {
@@ -39,7 +39,7 @@ describe('deployment profiles', () => {
         wordmarkSecondary: 'Learning',
         theme: 'euroimmun',
       },
-      access: { mode: 'pending-proxy', tenantRestricted: true, productionReady: false },
+      access: { mode: 'pending-proxy', proxyAuthorizationRequired: true, productionReady: false },
       catalogPolicy: {
         publicRegistry: false,
         autoInstallPrivateCatalogOnDeepLink: true,
@@ -71,7 +71,7 @@ describe('deployment profiles', () => {
       status: 'released',
     };
     expect(() => parseDeploymentProfile({
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'enterprise',
       kind: 'enterprise',
       branding: {
@@ -80,7 +80,7 @@ describe('deployment profiles', () => {
         wordmarkPrimary: 'Enterprise',
         theme: 'enterprise',
       },
-      access: { mode: 'pending-proxy', tenantRestricted: true, productionReady: false },
+      access: { mode: 'pending-proxy', proxyAuthorizationRequired: true, productionReady: false },
       catalogPolicy: {
         publicRegistry: false,
         autoInstallPrivateCatalogOnDeepLink: true,
