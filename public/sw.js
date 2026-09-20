@@ -23,7 +23,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
   const isSensitiveEnterpriseRequest =
-    url.pathname.startsWith('/.auth/')
+    url.pathname.startsWith('/auth/')
     || url.pathname.includes('/private-catalogs/');
   const isDeploymentProfileRequest = url.pathname.endsWith('/deployment-profile.json');
 
