@@ -139,7 +139,7 @@ Attach `etf-authentik@file` to the HTTPS router that Coolify creates for `<enter
 
 Preserve any existing middleware such as gzip; append Authentik instead of replacing the existing middleware chain.
 
-The Authentik outpost route under `/outpost.goauthentik.io` must remain reachable according to the Authentik Forward Auth configuration so sign-in and sign-out can complete.
+The Authentik outpost route under `/outpost.goauthentik.io` must remain reachable according to the Authentik Forward Auth configuration so sign-in and sign-out can complete. As an operational check, `https://<enterprise-domain>/outpost.goauthentik.io/ping` should return the expected successful outpost response before the ETF release is accepted.
 
 ## ETF proxy identity contract
 
