@@ -13,11 +13,6 @@ if (release && profile !== 'enterprise-euroimmun') {
   process.exit(2);
 }
 
-if (release && !process.env.ETF_ENTRA_TENANT_ID?.trim()) {
-  console.error('ETF_ENTRA_TENANT_ID is required for an enterprise release build.');
-  process.exit(2);
-}
-
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const result = spawnSync(npm, ['run', 'build'], {
   stdio: 'inherit',
