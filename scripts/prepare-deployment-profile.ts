@@ -25,7 +25,6 @@ async function enterpriseLeadershipCatalog() {
 }
 
 await rm(join(publicRoot, 'private-catalogs'), { recursive: true, force: true });
-await rm(join(publicRoot, 'staticwebapp.config.json'), { force: true });
 
 let profile: Record<string, unknown>;
 let manifest: Record<string, unknown>;
@@ -97,7 +96,7 @@ if (profileId === 'generic') {
     },
     access: {
       mode: enterpriseRelease ? 'proxy' : 'pending-proxy',
-      proxyAuthorizationRequired: false,
+      proxyAuthorizationRequired: true,
       productionReady: enterpriseRelease,
     },
     catalogPolicy: {
