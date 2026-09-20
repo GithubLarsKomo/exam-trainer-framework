@@ -21,7 +21,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
-ENV ETF_TRUST_AUTH_PROXY=0
 
 COPY --chown=node:node --from=build /app/dist ./dist
 COPY --chown=node:node server.mjs ./server.mjs
