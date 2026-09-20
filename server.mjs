@@ -79,7 +79,7 @@ function sendFile(req, res, filePath, pathname) {
   }).pipe(res);
 }
 
-export function createStaticServer({ root = join(moduleDir, 'dist') } = {}) {
+export function createStaticServer({ root = join(moduleDir, 'dist'), trustAuthProxy = process.env.ETF_TRUST_AUTH_PROXY === '1' } = {}) {
   const absoluteRoot = resolve(root);
   return createServer(async (req, res) => {
     const method = req.method ?? 'GET';
@@ -100,6 +100,92 @@ export function createStaticServer({ root = join(moduleDir, 'dist') } = {}) {
       if (method === 'HEAD') res.end();
       else res.end(JSON.stringify({ status: 'ok' }));
       return;
+    }
+
+    if (pathname === '/auth/user') {
+      if (!trustAuthProxy) {
+        res.writeHead(503, {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json; charset=utf-8',
+        });
+        res.end(JSON.stringify({ authenticated: false, reason: 'auth-proxy-not-trusted' }));
+        return;
+      }
+
+      const userId = String(
+        req.headers['x-authentik-uid']
+        ?? req.headers['x-authentik-email']
+        ?? req.headers['x-authentik-username']
+        ?? ''
+      ).trim();
+      if (!userId) {
+        res.writeHead(401, {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json; charset=utf-8',
+        });
+        res.end(JSON.stringify({ authenticated: false }));
+        return;
+      }
+
+      const userDetails = String(
+        req.headers['x-authentik-name']
+        ?? req.headers['x-authentik-email']
+        ?? req.headers['x-authentik-username']
+        ?? userId
+      ).trim();
+
+      res.writeHead(200, {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json; charset=utf-8',
+      });
+      if (method === 'HEAD') res.end();
+      else res.end(JSON.stringify({
+        authenticated: true,
+        principal: { userId, userDetails },
+      }));
+      return;
+    }
+
+    if (pathname === '/auth/logout') {
+      if (!trustAuthProxy) {
+        res.writeHead(503, {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'text/plain; charset=utf-8',
+        });
+        res.end('Auth proxy not configured');
+        return;
+      }
+      res.writeHead(302, {
+        'Cache-Control': 'no-store',
+        Location: '/outpost.goauthentik.io/sign_out',
+      });
+      res.end();
+      return;
+    }
+
+    if (pathname.startsWith('/private-catalogs/')) {
+      if (!trustAuthProxy) {
+        res.writeHead(404, {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'text/plain; charset=utf-8',
+        });
+        res.end('Not Found');
+        return;
+      }
+      const identity = String(
+        req.headers['x-authentik-uid']
+        ?? req.headers['x-authentik-email']
+        ?? req.headers['x-authentik-username']
+        ?? ''
+      ).trim();
+      if (!identity) {
+        res.writeHead(401, {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'text/plain; charset=utf-8',
+        });
+        res.end('Unauthorized');
+        return;
+      }
     }
 
     const requestedPath = pathname === '/' ? '/index.html' : pathname;

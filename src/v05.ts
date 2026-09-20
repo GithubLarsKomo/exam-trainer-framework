@@ -11,10 +11,6 @@ if (enterpriseAccessState.status === 'blocked') {
   renderEnterpriseAccessBlock(enterpriseAccessState);
   await new Promise<never>(() => {});
 }
-if (enterpriseAccessState.status === 'redirecting') {
-  await new Promise<never>(() => {});
-}
-
 const builtinCatalog = activateFuegetechnikRuntimeCatalog();
 
 const fallback: PersistedState = {schemaVersion:3,progress:{},history:[],review:{},sessions:{},examAttempts:[],migrationLog:[]};

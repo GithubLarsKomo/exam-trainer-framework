@@ -80,4 +80,4 @@ For the `enterprise-euroimmun` profile:
 - the private catalog may be installed/updated automatically on a matching deep link according to the explicit profile policy;
 - learner progress remains in IndexedDB.
 
-The enterprise build is not production-ready until its Entra/hosting access gate is configured.
+The enterprise implementation build is not production-ready until its Hetzner/Coolify Traefik + Authentik access gate is configured. The release build assumes that protected proxy boundary.

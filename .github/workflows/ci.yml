@@ -97,8 +97,12 @@ jobs:
           if (profile.id !== 'enterprise-euroimmun' || profile.kind !== 'enterprise') throw new Error('Wrong enterprise profile identity.');
           if (profile.branding?.productName !== 'Euroimmun Learning') throw new Error('Enterprise branding missing.');
           if (profile.catalogPolicy?.publicRegistry !== false) throw new Error('Enterprise profile must disable public registry.');
-          if (profile.access?.mode !== 'pending-entra' || profile.access?.productionReady !== false) {
-            throw new Error('Enterprise build must remain fail-closed for production until Entra is configured.');
+          if (
+            profile.access?.mode !== 'pending-proxy'
+            || profile.access?.proxyAuthorizationRequired !== true
+            || profile.access?.productionReady !== false
+          ) {
+            throw new Error('Enterprise implementation build must remain fail-closed until the auth proxy is configured.');
           }
           const entry = profile.privateCatalogs?.find(x => x.id === 'enterprise-leadership-n1' && x.version === '0.3.0');
           if (!entry) throw new Error('Private enterprise catalog missing.');
@@ -113,32 +117,23 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync('dist/manifest.webmanifest', 'utf8'));
           if (manifest.name !== 'Euroimmun Learning') throw new Error('Enterprise PWA manifest branding missing.');
           NODE
-      - name: Verify tenant-restricted Entra release build
+      - name: Verify self-hosted reverse-proxy release build
         shell: bash
-        env:
-          ETF_ENTRA_TENANT_ID: 00000000-0000-0000-0000-000000000123
         run: |
           set -euo pipefail
           npm run build:enterprise:release
           node - <<'NODE'
           const fs = require('node:fs');
           const profile = JSON.parse(fs.readFileSync('dist/deployment-profile.json', 'utf8'));
-          if (profile.access?.mode !== 'entra' || profile.access?.tenantRestricted !== true || profile.access?.productionReady !== true) {
-            throw new Error('Enterprise release profile is not Entra-ready.');
+          if (
+            profile.access?.mode !== 'proxy'
+            || profile.access?.proxyAuthorizationRequired !== true
+            || profile.access?.productionReady !== true
+          ) {
+            throw new Error('Enterprise release profile is not reverse-proxy ready.');
           }
-          const config = JSON.parse(fs.readFileSync('dist/staticwebapp.config.json', 'utf8'));
-          const registration = config.auth?.identityProviders?.azureActiveDirectory?.registration;
-          if (registration?.openIdIssuer !== 'https://login.microsoftonline.com/00000000-0000-0000-0000-000000000123/v2.0') {
-            throw new Error('Tenant-specific Entra issuer missing.');
-          }
-          if (registration?.clientIdSettingName !== 'AZURE_CLIENT_ID' || registration?.clientSecretSettingName !== 'AZURE_CLIENT_SECRET') {
-            throw new Error('Entra application-setting names missing.');
-          }
-          if (!config.routes?.some(route => route.route === '/*' && route.allowedRoles?.includes('authenticated'))) {
-            throw new Error('Authenticated route protection missing.');
-          }
-          if (config.responseOverrides?.['401']?.redirect !== '/.auth/login/aad?post_login_redirect_uri=.referrer') {
-            throw new Error('Deep-link-preserving login redirect missing.');
+          if (fs.existsSync('dist/staticwebapp.config.json')) {
+            throw new Error('Azure Static Web Apps configuration must not be generated.');
           }
           NODE
 
@@ -238,3 +233,46 @@ jobs:
             test-results-enterprise/
           if-no-files-found: ignore
           retention-days: 14
+
+
+  enterprise-container:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build enterprise release image
+        run: |
+          docker build             --build-arg ETF_DEPLOYMENT_PROFILE=enterprise-euroimmun             --build-arg ETF_ENTERPRISE_RELEASE=1             -t exam-trainer-framework:enterprise-ci .
+      - name: Start enterprise release image behind simulated trusted proxy
+        run: |
+          docker run -d --name etf-enterprise-ci             -e ETF_TRUST_AUTH_PROXY=1             -p 3001:3000             exam-trainer-framework:enterprise-ci
+      - name: Verify enterprise runtime and trusted Authentik identity endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3001/healthz >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker logs etf-enterprise-ci
+              exit 1
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3001/deployment-profile.json --output /tmp/enterprise-profile.json
+          grep -q '"mode": "proxy"' /tmp/enterprise-profile.json
+          grep -q '"productionReady": true' /tmp/enterprise-profile.json
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/auth/user)" = "401"
+          curl --fail --silent -H 'X-authentik-uid: ci-user-123' -H 'X-authentik-email: ci@example.invalid' -H 'X-authentik-name: CI User' http://127.0.0.1:3001/auth/user --output /tmp/auth-user.json
+          grep -q '"userId":"ci-user-123"' /tmp/auth-user.json
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/private-catalogs/enterprise-leadership-n1/0.3.0.json)" = "401"
+          curl --fail --silent -H 'X-authentik-uid: ci-user-123' http://127.0.0.1:3001/private-catalogs/enterprise-leadership-n1/0.3.0.json --output /tmp/private-catalog.json
+          grep -q '"enterprise-leadership-n1"' /tmp/private-catalog.json
+      - name: Show enterprise container logs on failure
+        if: failure()
+        run: docker logs etf-enterprise-ci || true
+      - name: Stop enterprise image
+        if: always()
+        run: docker rm -f etf-enterprise-ci || true

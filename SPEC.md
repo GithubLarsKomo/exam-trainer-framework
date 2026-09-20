@@ -1,8 +1,8 @@
 # SPEC.md — Exam Trainer Framework (ETF)
 
 **Status:** Baseline specification with optional enterprise/white-label profile  
-**Version:** 0.2.0  
-**Date:** 2026-09-19  
+**Version:** 0.3.0  
+**Date:** 2026-09-20  
 **Reference implementations:** Fügetechnik; enterprise leadership  
 **Target deployment:** local/static PWA, hosted static PWA, or authenticated enterprise/white-label PWA  
 **Primary language:** German  
@@ -507,7 +507,7 @@ Recommended implementation:
 
 The project may begin with plain HTML, CSS, and JavaScript, but TypeScript is recommended because the catalog schema, migrations, assessment types, and learner-state rules are central to correctness.
 
-No application backend is required for the core profile. An enterprise/white-label profile may depend on an external identity provider such as Microsoft Entra ID and on an authenticated/static hosting layer without changing ETF into a server-side LMS.
+No application backend is required for the core profile. An enterprise/white-label profile may depend on an external authentication gateway or reverse proxy without changing ETF into a server-side LMS.
 
 ---
 
@@ -1423,7 +1423,7 @@ The enterprise solution shall use **one codebase with multiple deployment profil
             +-- enterprise / white-label build
                   organization branding
                   private catalogs
-                  optional or required Entra ID access
+                  required external auth-proxy access when protected
                   no public exposure of confidential content
 
 A separate long-lived source-code fork for each organization is prohibited unless a future architecture decision explicitly supersedes this requirement.
@@ -1441,13 +1441,18 @@ OneDrive or SharePoint may be used as a **controlled organization-internal distr
 
 OneDrive / SharePoint shall **not** be treated as the runtime origin of the PWA merely by opening HTML files from the file store. ETF requires a normal HTTP(S) origin for service workers, module loading, manifest behavior, offline caching, deep links, and reliable PWA installation.
 
-The enterprise PWA shall therefore be served from an organization-controlled HTTPS origin. Suitable implementations include:
+The enterprise PWA shall therefore be served from an organization-controlled HTTPS origin.
 
-- an internal static web server;
-- Azure Static Web Apps;
-- another approved static HTTPS hosting environment.
+For the *Unternehmen mitführen* reference deployment the approved target architecture is:
 
-The exact hosting product is deployment-specific and is not hard-coded into the ETF core.
+- a new organization-controlled HTTPS domain;
+- a Hetzner-hosted server;
+- Coolify for container deployment;
+- Traefik as reverse proxy;
+- Authentik Forward Auth as the authentication/authorization gate;
+- the ETF enterprise container as an upstream reachable only through the protected proxy path.
+
+ETF shall remain hosting-provider independent. No Azure runtime service is required by the reference deployment.
 
 ### 29.4 Enterprise reference flow
 
@@ -1539,21 +1544,27 @@ URLs must contain identifiers and routing metadata only. Confidential question c
 
 Authentication is optional for ETF in general but may be mandatory for an enterprise deployment profile.
 
-**FR-AUTH-001** An enterprise profile shall support Microsoft Entra ID as an authentication provider when configured.
+**FR-AUTH-001** The enterprise profile shall support an external reverse-proxy authentication gateway without requiring ETF to implement its own OAuth, OIDC, SAML, LDAP, or identity-provider client.
 
-**FR-AUTH-002** Entra authentication shall be an access gate around the enterprise deployment and shall not replace ETF's local learner-state model.
+**FR-AUTH-002** For the *Unternehmen mitführen* reference deployment, Authentik Forward Auth behind Coolify/Traefik shall be the preferred authentication gateway.
 
-**FR-AUTH-003** Tenant restriction shall be configurable. When tenant restriction is enabled, users outside the configured tenant shall not gain access to the protected application/content.
+**FR-AUTH-003** The external gateway shall enforce organization-defined authentication and authorization before requests reach the protected ETF application.
 
-**FR-AUTH-004** Authentication configuration shall use public SPA/static-site identifiers where appropriate; client secrets shall never be embedded in the PWA.
+**FR-AUTH-004** ETF shall consume only a minimal trusted identity contract from the upstream gateway. The initial Authentik contract uses X-authentik-uid, X-authentik-email, X-authentik-name, and X-authentik-username.
 
-**FR-AUTH-005** Authentication tokens shall not be written into ETF catalog files, learner backups, ReviewEvents, or exported learning state.
+**FR-AUTH-005** ETF shall trust proxy-supplied identity headers only when an explicit runtime trust flag is enabled and the deployment prevents direct untrusted access to the upstream container.
 
-**FR-AUTH-006** Deep links opened before authentication shall preserve the requested "catalog", "focus", and "mode" across the authentication round trip and continue to the intended learning focus after successful access.
+**FR-AUTH-006** Authentication tokens, provider secrets, session cookies, and identity-provider credentials shall not be written into ETF catalog files, learner backups, ReviewEvents, or exported learning state.
 
-**FR-AUTH-007** Authentication failure or unauthorized-tenant access shall fail closed for protected enterprise content.
+**FR-AUTH-007** Deep links opened before authentication shall preserve the requested catalog, focus, and mode through the external authentication flow and continue to the intended learning focus after successful access.
 
-**FR-AUTH-008** Authentication must not silently enable cloud synchronization of learner answers or progress.
+**FR-AUTH-008** Authentication or authorization failure shall fail closed for protected enterprise content.
+
+**FR-AUTH-009** Authentication must not silently enable cloud synchronization of learner answers or progress.
+
+**FR-AUTH-010** A change of authenticated user identity on the same browser profile shall purge locally stored enterprise learner/catalog state before the new user proceeds.
+
+**FR-AUTH-011** The enterprise deployment shall provide an explicit logout action that clears local corporate ETF state and terminates the upstream authentication session.
 
 ### 29.9 Learner data and privacy boundary
 
@@ -1637,9 +1648,8 @@ The exact implementation format may evolve, but the semantics should be equivale
       icons: "<approved PWA icon set>"
 
     access:
-      mode: "entra"
-      tenantRestricted: true
-      tenantId: "<deployment configuration, not a secret>"
+      mode: "proxy"
+      proxyAuthorizationRequired: true
 
     catalogPolicy:
       publicRegistry: false
@@ -1671,9 +1681,11 @@ For the first enterprise implementation:
 - enterprise catalog is not exposed through the generic public registry;
 - ETF deep links open the corresponding learning focus;
 - learner state remains local in IndexedDB;
-- Microsoft Entra ID is the preferred access mechanism when the runtime is hosted in a Microsoft 365/Azure enterprise context.
+- the protected reference runtime is self-hosted on Hetzner through Coolify/Traefik with Authentik Forward Auth;
+- no Azure hosting or Azure-specific application runtime is required;
+- the corporate identity source behind Authentik remains an organization policy/deployment choice.
 
-The exact enterprise hostname, tenant/app registration, branding asset package, and static hosting service are deployment parameters and are intentionally not embedded into the generic source specification.
+The exact enterprise hostname, Authentik application/provider identifiers, branding asset package, and internal proxy service names are deployment parameters and are intentionally not embedded into the generic source specification.
 
 ### 29.15 Enterprise security requirements
 
@@ -1691,6 +1703,12 @@ The exact enterprise hostname, tenant/app registration, branding asset package, 
 
 **NFR-ENT-SEC-007** The release process shall include a negative-content check proving that enterprise-private content is absent from the generic/public build.
 
+**NFR-ENT-SEC-008** A production enterprise container shall not be reachable through a public route that bypasses the configured authentication proxy.
+
+**NFR-ENT-SEC-009** Private catalog HTTP responses shall require the trusted proxy runtime boundary and an authenticated proxy identity in addition to application-level catalog validation.
+
+**NFR-ENT-SEC-010** The service worker shall not cache authentication endpoints or private catalog HTTP responses.
+
 ### 29.16 Enterprise acceptance criteria
 
 An enterprise/white-label implementation is accepted only when all of the following pass:
@@ -1698,8 +1716,8 @@ An enterprise/white-label implementation is accepted only when all of the follow
 1. generic and enterprise builds come from the same repository and shared domain core;
 2. the generic build contains no enterprise-private catalog or organization-specific confidential asset;
 3. the enterprise build displays the configured organization branding;
-4. protected deployment access requires the configured Entra policy when authentication is enabled;
-5. tenant restriction denies unauthorized tenants when enabled;
+4. protected deployment access requires the configured external auth-proxy policy when authentication is enabled;
+5. the configured Authentik policy denies unauthorized users/groups before ETF is reached;
 6. an EPUB deep link survives authentication and starts the requested "focus" / "mode";
 7. the confidential catalog is obtained only through the configured embedded/private content path;
 8. ordinary enterprise learning does not upload learner progress or answers;
@@ -1707,7 +1725,10 @@ An enterprise/white-label implementation is accepted only when all of the follow
 10. app/catalog updates preserve learner state;
 11. OneDrive / SharePoint is used as controlled content/release distribution, not as a substitute for the required HTTPS PWA runtime;
 12. iPhone Safari/PWA and desktop Edge or Chrome pass an end-to-end acceptance run;
-13. release provenance records the app commit, deployment profile, catalog version, and content hashes.
+13. release provenance records the app commit, deployment profile, catalog version, and content hashes;
+14. direct anonymous access to private catalog bytes fails;
+15. the protected application has no public bypass route around Traefik/Authentik;
+16. changing the authenticated identity clears prior local enterprise state.
 
 ### 29.17 Open deployment decisions
 
@@ -1715,9 +1736,9 @@ The following are deployment-specific and do not block this architecture specifi
 
 - exact organization-facing product name;
 - exact logo/icon/font package;
-- exact organization HTTPS hostname;
-- Azure Static Web Apps versus another approved static HTTPS host;
-- exact Entra tenant ID and app registration;
+- exact new enterprise domain;
+- exact Hetzner/Coolify resource and internal network naming;
+- exact Authentik application/provider and organization access policy;
 - whether the first private catalog is bundled directly into the build or loaded from an authenticated same-origin endpoint;
 - exact OneDrive / SharePoint folder structure and retention policy;
 - whether enterprise build artifacts are archived in OneDrive / SharePoint in addition to the deployment platform.

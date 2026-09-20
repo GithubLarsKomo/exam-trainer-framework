@@ -5,15 +5,18 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { createStaticServer } from '../server.mjs';
 
-async function withServer(run) {
+async function withServer(run, options = {}) {
   const root = await mkdtemp(join(tmpdir(), 'etf-static-'));
   await mkdir(join(root, 'assets'));
+  await mkdir(join(root, 'private-catalogs'));
+
   await writeFile(join(root, 'index.html'), '<!doctype html><title>ETF</title><div id="app"></div>');
   await writeFile(join(root, 'sw.js'), 'self.addEventListener("fetch",()=>{});');
   await writeFile(join(root, 'manifest.webmanifest'), '{"name":"ETF"}');
   await writeFile(join(root, 'assets', 'app-abc123.js'), 'console.log("asset");');
+  await writeFile(join(root, 'private-catalogs', 'secret.json'), '{"catalog":"secret"}');
 
-  const server = createStaticServer({ root });
+  const server = createStaticServer({ root, ...options });
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(0, '127.0.0.1', resolve);
@@ -64,4 +67,62 @@ test('HTML navigations receive SPA fallback without turning missing assets into 
     assert.equal(missingAsset.status, 404);
     assert.equal(await missingAsset.text(), 'Not Found');
   });
+});
+
+
+test('trusted Authentik proxy identity is exposed only when proxy trust is enabled', async () => {
+  await withServer(async base => {
+    const disabled = await fetch(`${base}/auth/user`, {
+      headers: {
+        'x-authentik-uid': 'user-123',
+        'x-authentik-email': 'person@example.invalid',
+      },
+    });
+    assert.equal(disabled.status, 503);
+  });
+
+  await withServer(async base => {
+    const missing = await fetch(`${base}/auth/user`);
+    assert.equal(missing.status, 401);
+
+    const response = await fetch(`${base}/auth/user`, {
+      headers: {
+        'x-authentik-uid': 'user-123',
+        'x-authentik-email': 'person@example.invalid',
+        'x-authentik-name': 'Example Person',
+      },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.deepEqual(await response.json(), {
+      authenticated: true,
+      principal: {
+        userId: 'user-123',
+        userDetails: 'Example Person',
+      },
+    });
+
+    const logout = await fetch(`${base}/auth/logout`, { redirect: 'manual' });
+    assert.equal(logout.status, 302);
+    assert.equal(logout.headers.get('location'), '/outpost.goauthentik.io/sign_out');
+  }, { trustAuthProxy: true });
+});
+
+
+test('private catalog bytes are hidden without a trusted authenticated proxy identity', async () => {
+  await withServer(async base => {
+    const hidden = await fetch(`${base}/private-catalogs/secret.json`);
+    assert.equal(hidden.status, 404);
+  });
+
+  await withServer(async base => {
+    const anonymous = await fetch(`${base}/private-catalogs/secret.json`);
+    assert.equal(anonymous.status, 401);
+
+    const authorized = await fetch(`${base}/private-catalogs/secret.json`, {
+      headers: { 'x-authentik-uid': 'user-123' },
+    });
+    assert.equal(authorized.status, 200);
+    assert.deepEqual(await authorized.json(), { catalog: 'secret' });
+  }, { trustAuthProxy: true });
 });

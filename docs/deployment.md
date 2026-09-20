@@ -134,9 +134,9 @@ The enterprise build:
 - packages `enterprise-leadership-n1@0.3.0` below `dist/private-catalogs/`;
 - keeps the private catalog out of `dist/catalogs/registry.json`;
 - allows deep links to resolve the private catalog through the profile descriptor after SHA-256, ID, version and release-status verification;
-- is currently marked `pending-entra` / `productionReady=false`.
+- is currently marked `pending-proxy` / `productionReady=false`.
 
-The enterprise artifact is therefore **not a public deployment artifact yet**. It may be used for controlled implementation/acceptance work, but it must not be exposed on an unauthenticated origin.
+The enterprise implementation artifact is therefore **not a public deployment artifact yet**. The release build is intended for a protected Hetzner/Coolify deployment behind Traefik + Authentik Forward Auth and must not be exposed through a bypass route.
 
 The intended production boundary is:
 
@@ -144,7 +144,7 @@ The intended production boundary is:
 OneDrive / SharePoint
   -> confidential EPUB / release package
   -> protected enterprise ETF HTTPS origin
-  -> Microsoft Entra access gate
+  -> Authentik Forward Auth gate
   -> private same-origin catalog
   -> local IndexedDB learner state
 ```
@@ -161,3 +161,18 @@ The default `npm run build` remains the generic profile. CI verifies that the re
 - reports deployment profile `generic`.
 
 This negative-content check is a release gate.
+
+
+### Hetzner / Coolify reference deployment
+
+For the confidential corporate learning deployment, use the self-hosted reference path documented in [enterprise-deployment.md](enterprise-deployment.md):
+
+- new enterprise HTTPS domain;
+- Hetzner host;
+- Coolify deployment;
+- Traefik reverse proxy;
+- Authentik Forward Auth;
+- enterprise ETF container;
+- private same-origin catalog.
+
+The enterprise Docker image is built with `ETF_DEPLOYMENT_PROFILE=enterprise-euroimmun` and `ETF_ENTERPRISE_RELEASE=1`. At runtime `ETF_TRUST_AUTH_PROXY=1` is permitted only when the container cannot be reached by an untrusted route that bypasses Authentik.
