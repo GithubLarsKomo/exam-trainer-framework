@@ -32,7 +32,7 @@ let manifest: Record<string, unknown>;
 
 if (profileId === 'generic') {
   profile = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: 'generic',
     kind: 'generic',
     branding: {
@@ -45,7 +45,7 @@ if (profileId === 'generic') {
     },
     access: {
       mode: 'none',
-      tenantRestricted: false,
+      proxyAuthorizationRequired: false,
       productionReady: true,
     },
     catalogPolicy: {
@@ -85,7 +85,7 @@ if (profileId === 'generic') {
   await writeFile(target, exported, 'utf8');
 
   profile = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: 'enterprise-euroimmun',
     kind: 'enterprise',
     branding: {
@@ -97,7 +97,7 @@ if (profileId === 'generic') {
     },
     access: {
       mode: enterpriseRelease ? 'proxy' : 'pending-proxy',
-      tenantRestricted: false,
+      proxyAuthorizationRequired: false,
       productionReady: enterpriseRelease,
     },
     catalogPolicy: {
