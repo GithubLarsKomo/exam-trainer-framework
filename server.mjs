@@ -163,6 +163,31 @@ export function createStaticServer({ root = join(moduleDir, 'dist'), trustAuthPr
       return;
     }
 
+    if (pathname.startsWith('/private-catalogs/')) {
+      if (!trustAuthProxy) {
+        res.writeHead(404, {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'text/plain; charset=utf-8',
+        });
+        res.end('Not Found');
+        return;
+      }
+      const identity = String(
+        req.headers['x-authentik-uid']
+        ?? req.headers['x-authentik-email']
+        ?? req.headers['x-authentik-username']
+        ?? ''
+      ).trim();
+      if (!identity) {
+        res.writeHead(401, {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'text/plain; charset=utf-8',
+        });
+        res.end('Unauthorized');
+        return;
+      }
+    }
+
     const requestedPath = pathname === '/' ? '/index.html' : pathname;
     const candidate = safeFilePath(absoluteRoot, requestedPath);
     if (candidate && await fileExists(candidate)) {
