@@ -10,7 +10,6 @@ const repoRoot = resolve(import.meta.dirname, '..');
 const publicRoot = join(repoRoot, 'public');
 const profileId = (process.env.ETF_DEPLOYMENT_PROFILE?.trim() || 'generic') as ProfileId;
 const enterpriseRelease = process.env.ETF_ENTERPRISE_RELEASE === '1';
-const entraTenantId = process.env.ETF_ENTRA_TENANT_ID?.trim();
 
 if (profileId !== 'generic' && profileId !== 'enterprise-euroimmun') {
   throw new Error(`Unknown ETF_DEPLOYMENT_PROFILE: ${profileId}`);
@@ -75,13 +74,6 @@ if (profileId === 'generic') {
     ],
   };
 } else {
-  if (enterpriseRelease && !entraTenantId) {
-    throw new Error('ETF_ENTRA_TENANT_ID is required for an enterprise release build.');
-  }
-  if (entraTenantId && !/^[A-Za-z0-9.-]+$/.test(entraTenantId)) {
-    throw new Error('ETF_ENTRA_TENANT_ID contains invalid characters.');
-  }
-
   const catalog = await enterpriseLeadershipCatalog();
   if (catalog.catalogId !== 'enterprise-leadership-n1' || catalog.version !== '0.3.0') {
     throw new Error('Enterprise catalog source identity mismatch.');
@@ -104,9 +96,9 @@ if (profileId === 'generic') {
       theme: 'euroimmun',
     },
     access: {
-      mode: entraTenantId ? 'entra' : 'pending-entra',
-      tenantRestricted: true,
-      productionReady: Boolean(enterpriseRelease && entraTenantId),
+      mode: enterpriseRelease ? 'proxy' : 'pending-proxy',
+      tenantRestricted: false,
+      productionReady: enterpriseRelease,
     },
     catalogPolicy: {
       publicRegistry: false,
@@ -124,42 +116,6 @@ if (profileId === 'generic') {
       status: 'released',
     }],
   };
-  if (entraTenantId) {
-    const staticWebAppConfig = {
-      auth: {
-        identityProviders: {
-          azureActiveDirectory: {
-            registration: {
-              openIdIssuer: `https://login.microsoftonline.com/${entraTenantId}/v2.0`,
-              clientIdSettingName: 'AZURE_CLIENT_ID',
-              clientSecretSettingName: 'AZURE_CLIENT_SECRET',
-            },
-          },
-        },
-      },
-      routes: [
-        {
-          route: '/*',
-          allowedRoles: ['authenticated'],
-        },
-      ],
-      responseOverrides: {
-        '401': {
-          statusCode: 302,
-          redirect: '/.auth/login/aad?post_login_redirect_uri=.referrer',
-        },
-      },
-      navigationFallback: {
-        rewrite: '/index.html',
-      },
-    };
-    await writeFile(
-      join(publicRoot, 'staticwebapp.config.json'),
-      JSON.stringify(staticWebAppConfig, null, 2) + '\n',
-      'utf8',
-    );
-  }
-
   manifest = {
     id: './',
     name: 'Euroimmun Learning',
