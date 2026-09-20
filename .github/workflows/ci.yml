@@ -265,9 +265,11 @@ jobs:
           grep -q '"mode": "proxy"' /tmp/enterprise-profile.json
           grep -q '"productionReady": true' /tmp/enterprise-profile.json
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/auth/user)" = "401"
-          curl --fail --silent -H 'X-authentik-uid: ci-user-123' -H 'X-authentik-email: ci@example.invalid' -H 'X-authentik-name: CI User' http://127.0.0.1:3001/auth/user | grep -q '"userId":"ci-user-123"'
+          curl --fail --silent -H 'X-authentik-uid: ci-user-123' -H 'X-authentik-email: ci@example.invalid' -H 'X-authentik-name: CI User' http://127.0.0.1:3001/auth/user --output /tmp/auth-user.json
+          grep -q '"userId":"ci-user-123"' /tmp/auth-user.json
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/private-catalogs/enterprise-leadership-n1/0.3.0.json)" = "401"
-          curl --fail --silent -H 'X-authentik-uid: ci-user-123' http://127.0.0.1:3001/private-catalogs/enterprise-leadership-n1/0.3.0.json | grep -q '"enterprise-leadership-n1"'
+          curl --fail --silent -H 'X-authentik-uid: ci-user-123' http://127.0.0.1:3001/private-catalogs/enterprise-leadership-n1/0.3.0.json --output /tmp/private-catalog.json
+          grep -q '"enterprise-leadership-n1"' /tmp/private-catalog.json
       - name: Show enterprise container logs on failure
         if: failure()
         run: docker logs etf-enterprise-ci || true
