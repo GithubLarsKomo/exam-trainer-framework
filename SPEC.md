@@ -1703,6 +1703,12 @@ The exact enterprise hostname, Authentik application/provider identifiers, brand
 
 **NFR-ENT-SEC-007** The release process shall include a negative-content check proving that enterprise-private content is absent from the generic/public build.
 
+**NFR-ENT-SEC-008** A production enterprise container shall not be reachable through a public route that bypasses the configured authentication proxy.
+
+**NFR-ENT-SEC-009** Private catalog HTTP responses shall require the trusted proxy runtime boundary and an authenticated proxy identity in addition to application-level catalog validation.
+
+**NFR-ENT-SEC-010** The service worker shall not cache authentication endpoints or private catalog HTTP responses.
+
 ### 29.16 Enterprise acceptance criteria
 
 An enterprise/white-label implementation is accepted only when all of the following pass:
@@ -1719,7 +1725,10 @@ An enterprise/white-label implementation is accepted only when all of the follow
 10. app/catalog updates preserve learner state;
 11. OneDrive / SharePoint is used as controlled content/release distribution, not as a substitute for the required HTTPS PWA runtime;
 12. iPhone Safari/PWA and desktop Edge or Chrome pass an end-to-end acceptance run;
-13. release provenance records the app commit, deployment profile, catalog version, and content hashes.
+13. release provenance records the app commit, deployment profile, catalog version, and content hashes;
+14. direct anonymous access to private catalog bytes fails;
+15. the protected application has no public bypass route around Traefik/Authentik;
+16. changing the authenticated identity clears prior local enterprise state.
 
 ### 29.17 Open deployment decisions
 
