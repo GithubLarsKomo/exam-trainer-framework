@@ -3,7 +3,7 @@ import type { HostedCatalogRegistryEntryV1 } from './hosted-catalog-registry';
 export const DEPLOYMENT_PROFILE_SCHEMA_VERSION = 1 as const;
 
 export type DeploymentProfileKind = 'generic' | 'enterprise';
-export type DeploymentAccessMode = 'none' | 'pending-entra' | 'entra';
+export type DeploymentAccessMode = 'none' | 'pending-proxy' | 'proxy';
 
 export interface DeploymentBranding {
   productName: string;
@@ -103,7 +103,7 @@ export function parseDeploymentProfile(value: unknown): DeploymentProfile {
   const kind = value.kind;
   if (kind !== 'generic' && kind !== 'enterprise') throw new Error('Unbekannter Deployment-Profile-Typ.');
   const accessMode = value.access.mode;
-  if (accessMode !== 'none' && accessMode !== 'pending-entra' && accessMode !== 'entra') {
+  if (accessMode !== 'none' && accessMode !== 'pending-proxy' && accessMode !== 'proxy') {
     throw new Error('Unbekannter Access-Modus.');
   }
 
