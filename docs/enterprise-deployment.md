@@ -212,6 +212,31 @@ The catalog is not listed in the generic public Hosted Catalog Registry.
 
 When a deep link requests the catalog, ETF verifies hash, ID, version and release state before installing or updating the local IndexedDB copy.
 
+## Canonical catalog export for downstream release packages
+
+The enterprise catalog has exactly one released source:
+
+`catalogs/sources/enterprise-leadership-n1-v0.3.0.json.gz`
+
+Book, EPUB and OneDrive / SharePoint release-package builders must **not** synthesize or promote their own copy of this catalog. The default package policy is to omit catalog bytes entirely and let the protected ETF runtime deliver the private same-origin catalog.
+
+If a controlled release package explicitly requires a catalog snapshot for archive or handoff, export the canonical released bytes only:
+
+```bash
+npm run catalog:enterprise:verify
+npm run catalog:enterprise:export -- --output /path/to/ETF-LEADERSHIP-CATALOG-v0.3.0.json
+```
+
+The export command fails closed unless:
+
+- compressed source SHA-256 is `22aa8af7b180aa251c7f4abc4d3c8262369e0c4f3a3cd3b1d686628ba1a1c747`;
+- decompressed JSON SHA-256 is `a7b8a45f307be0024472b1fd85b62db9aea9b7fb363e029fbb3de24a0e9c26ee`;
+- catalog identity is `enterprise-leadership-n1@0.3.0`;
+- exactly 12 KnowledgeItems and 36 QuestionVariants are present;
+- every KnowledgeItem and QuestionVariant is `released`.
+
+A downstream package copy has no release authority of its own. In particular, older `leadership-trainer-v0.2*`, `leadership-trainer-v0.3-integration-candidate*` or book-package-local `ETF-LEADERSHIP-CATALOG-v0.3.json` artifacts must not be used as runtime or release inputs.
+
 ## Deep-link behavior
 
 The confidential EPUB links only to stable routing metadata:
