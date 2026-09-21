@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { gunzipSync } from 'node:zlib';
-import { catalogExport, parseCatalogExport } from '../src/catalog-repository';
+import { loadEnterpriseLeadershipCatalogSource } from './enterprise-catalog-source';
 
 type ProfileId = 'generic' | 'enterprise-euroimmun';
 
@@ -17,11 +16,6 @@ if (profileId !== 'generic' && profileId !== 'enterprise-euroimmun') {
 
 function sha256(text: string): string {
   return `sha256:${createHash('sha256').update(Buffer.from(text, 'utf8')).digest('hex')}`;
-}
-
-async function enterpriseLeadershipCatalog() {
-  const compressed = await readFile(join(repoRoot, 'catalogs', 'sources', 'enterprise-leadership-n1-v0.3.0.json.gz'));
-  return parseCatalogExport(gunzipSync(compressed).toString('utf8'));
 }
 
 await rm(join(publicRoot, 'private-catalogs'), { recursive: true, force: true });
@@ -73,11 +67,7 @@ if (profileId === 'generic') {
     ],
   };
 } else {
-  const catalog = await enterpriseLeadershipCatalog();
-  if (catalog.catalogId !== 'enterprise-leadership-n1' || catalog.version !== '0.3.0') {
-    throw new Error('Enterprise catalog source identity mismatch.');
-  }
-  const exported = catalogExport(catalog);
+  const { catalog, sourceText: exported } = await loadEnterpriseLeadershipCatalogSource();
   const relativeCatalogPath = 'private-catalogs/enterprise-leadership-n1/0.3.0.json';
   const target = join(publicRoot, relativeCatalogPath);
   await mkdir(join(publicRoot, 'private-catalogs', 'enterprise-leadership-n1'), { recursive: true });
