@@ -19,7 +19,9 @@
     "build:generic": "node scripts/build-profile.mjs generic",
     "build:enterprise": "node scripts/build-profile.mjs enterprise-euroimmun",
     "build:enterprise:release": "node scripts/build-profile.mjs enterprise-euroimmun --release",
-    "test:e2e:enterprise": "playwright test --config=playwright.enterprise.config.ts --project=chromium"
+    "test:e2e:enterprise": "playwright test --config=playwright.enterprise.config.ts --project=chromium",
+    "catalog:enterprise:verify": "tsx scripts/export-enterprise-catalog.ts --verify-only",
+    "catalog:enterprise:export": "tsx scripts/export-enterprise-catalog.ts"
   },
   "dependencies": {
     "fflate": "^0.8.3",

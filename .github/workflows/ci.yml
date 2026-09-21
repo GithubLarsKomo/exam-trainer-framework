@@ -24,6 +24,7 @@ jobs:
       - run: npm install
       - run: npm run test
       - run: npm run test:server
+      - run: npm run catalog:enterprise:verify
       - run: npm run build
       - name: Verify generated hosted catalog releases
         shell: bash
@@ -110,6 +111,9 @@ jobs:
           const bytes = fs.readFileSync(file);
           const actual = `sha256:${crypto.createHash('sha256').update(bytes).digest('hex')}`;
           if (actual !== entry.contentHash) throw new Error('Private enterprise catalog hash mismatch.');
+          if (entry.contentHash !== 'sha256:a7b8a45f307be0024472b1fd85b62db9aea9b7fb363e029fbb3de24a0e9c26ee') {
+            throw new Error('Private enterprise catalog is not byte-identical to the canonical released source.');
+          }
           const bundle = JSON.parse(bytes.toString('utf8'));
           if (bundle.catalog?.catalogId !== entry.id || bundle.catalog?.version !== entry.version) throw new Error('Private catalog identity mismatch.');
           const registry = JSON.parse(fs.readFileSync('dist/catalogs/registry.json', 'utf8'));
